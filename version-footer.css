@@ -1,0 +1,66 @@
+/* Aggressive fix for white background on overscroll */
+html {
+    background: #1a1a2e !important;
+    background-color: #1a1a2e !important;
+    overflow-x: hidden;
+    height: 100%;
+}
+
+body {
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%) !important;
+    background-color: #1a1a2e !important;
+    min-height: 100vh;
+    overflow-x: hidden;
+    position: relative;
+}
+
+/* Prevent white flash on iOS Safari */
+html,
+body {
+    -webkit-overflow-scrolling: touch;
+}
+
+/* Extra layer to prevent white showing through */
+body::before {
+    content: '';
+    position: fixed;
+    top: -100vh;
+    left: 0;
+    right: 0;
+    height: 200vh;
+    background: #1a1a2e;
+    z-index: -1;
+}
+
+body::after {
+    content: '';
+    position: fixed;
+    bottom: -100vh;
+    left: 0;
+    right: 0;
+    height: 200vh;
+    background: #1a1a2e;
+    z-index: -1;
+}
+
+/* Version Footer Styling */
+.version-footer {
+    text-align: center;
+    padding: 15px 10px 10px;
+    margin-top: 15px;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.version-text {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--primary-color);
+    margin-bottom: 4px;
+    letter-spacing: 0.5px;
+}
+
+.tagline {
+    font-size: 0.7rem;
+    color: rgba(255, 255, 255, 0.6);
+    font-weight: 400;
+}

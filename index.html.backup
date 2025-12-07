@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="description" content="Live bus tracker for ETUSA Algiers with real-time countdowns">
+    <meta name="theme-color" content="#00d2ff">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="وصل الباص">
+    <meta name="mobile-web-app-capable" content="yes">
+
+    <title>وصل الباص - Wsal El Bus</title>
+
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="./manifest.webmanifest">
+
+    <!-- Stylesheets -->
+    <link rel="stylesheet" href="./styles.css">
+    <link rel="stylesheet" href="./pwa-mobile.css">
+    <link rel="stylesheet" href="./station-modal.css">
+    <link rel="stylesheet" href="./version-footer.css">
+    <link rel="stylesheet" href="./universal-install.css">
+    <link rel="stylesheet" href="./weather-display.css">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="./leaflet.css" />
+
+    <!-- Icons -->
+    <link rel="icon" type="image/png" sizes="16x16" href="./images/icon16.png">
+    <link rel="icon" type="image/png" sizes="48x48" href="./images/icon48.png">
+    <link rel="icon" type="image/png" sizes="128x128" href="./images/icon128.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="./images/icon192.png">
+    <link rel="icon" type="image/png" sizes="512x512" href="./images/icon512.png">
+    <link rel="apple-touch-icon" href="./images/icon192.png">
+</head>
+
+<body>
+    <div class="app-container">
+        <header class="glass-header">
+            <div class="logo-area">
+                <h1 class="arabic-title">وصل الباص</h1>
+                <span class="live-badge">LIVE</span>
+            </div>
+            <div class="time-display" id="algiers-time" style="display: none;">--:--</div>
+        </header>
+
+        <!-- Map View (Top 60%) -->
+        <div id="map-view" class="map-view-container">
+            <div id="map-container"></div>
+            <!-- Hidden element for JS compatibility -->
+            <p id="map-distance" style="display: none;"></p>
+        </div>
+
+        <!-- Walking Time Badge (floating above map) -->
+        <div class="walking-time-badge" id="walking-time">
+            <svg class="walk-icon" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                xmlns="http://www.w3.org/2000/svg">
+                <path
+                    d="M13.5 5.5C13.5 6.88071 12.3807 8 11 8C9.61929 8 8.5 6.88071 8.5 5.5C8.5 4.11929 9.61929 3 11 3C12.3807 3 13.5 4.11929 13.5 5.5Z"
+                    fill="currentColor" />
+                <path d="M9.5 9L7 13L9 14L10 18L8 21H10L11.5 17.5L13 21H15L13 18L14 14L16 13L13.5 9H9.5Z"
+                    fill="currentColor" />
+            </svg>
+            <span id="walk-time-text">Calculating...</span>
+        </div>
+
+        <!-- Floating Station Control (Middle Overlap) -->
+        <div id="floating-controls" class="floating-controls">
+            <div class="station-selector-card" id="station-selector-trigger">
+                <div class="station-info-left">
+                    <span class="station-icon">🚏</span>
+                    <div class="station-text-group">
+                        <h2 id="station-name">Loading...</h2>
+                        <div class="station-subtext">Tap to change station</div>
+                    </div>
+                </div>
+                <div class="station-select-icon">⋮</div>
+            </div>
+        </div>
+
+        <!-- Arrivals Panel (Bottom 40%) -->
+        <div id="arrivals-panel" class="arrivals-panel">
+            <div class="panel-handle"></div>
+
+            <div class="routes-header">
+                <h3>Next Arrivals</h3>
+                <span class="live-indicator">● Live</span>
+            </div>
+
+            <div class="routes-list" id="routes-list">
+                <div class="loading-spinner"></div>
+            </div>
+        </div>
+
+        <!-- Simplified Footer (Inside Arrivals or removed? User requested citymapper style which usually has bottom nav, but 60/40 implies list goes to bottom. I will keep a minimal footer inside the panel if needed, or remove if distinct "Get Me Home" buttons are preferred. For now, hiding the old footer as it conflicts with the bottom sheet concept.) -->
+
+        <!-- Version Footer -->
+        <div class="version-footer">
+            <div class="version-text">Wsal El Bus 1.10a</div>
+            <div class="tagline">Made with ❤️ for Algiers commuters</div>
+        </div>
+    </div>
+
+    <!-- Station Selector Modal -->
+    <div id="station-modal" class="modal-overlay hidden">
+        <div class="modal-content glass-panel">
+            <div class="modal-header">
+                <h3>Select Station</h3>
+                <button id="close-modal" class="close-btn">✕</button>
+            </div>
+            <input type="text" id="station-search" class="station-search" placeholder="Search stations...">
+            <div class="station-list" id="station-list">
+                <!-- Station items will be injected here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Install Instructions Modal -->
+    <div id="install-modal" class="install-modal hidden">
+        <div class="install-modal-content">
+            <div class="install-modal-header">
+                <h3>📱 Install Wsal El Bus</h3>
+                <button id="close-install-modal" class="install-modal-close">✕</button>
+            </div>
+
+            <div id="install-instructions" class="install-instructions">
+                <!-- Instructions will be dynamically inserted based on browser -->
+            </div>
+
+            <button id="install-now-btn" class="install-now-btn hidden">Install Now</button>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="./leaflet.js"></script>
+    <script src="./weather.js"></script>
+    <script src="./app.js"></script>
+
+    <!-- Service Worker Registration -->
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./service-worker.js')
+                    .then(registration => {
+                        console.log('ServiceWorker registered:', registration.scope);
+                    })
+                    .catch(err => {
+                        console.log('ServiceWorker registration failed:', err);
+                    });
+            });
+        }
+
+        // Universal Install System - Works on ALL browsers
+        let deferredPrompt;
+        const universalInstallBtn = document.getElementById('universal-install-btn');
+        const installModal = document.getElementById('install-modal');
+        const closeInstallModal = document.getElementById('close-install-modal');
+        const installInstructions = document.getElementById('install-instructions');
+        const installNowBtn = document.getElementById('install-now-btn');
+
+        // Detect browser and device
+        function detectBrowserAndDevice() {
+            const ua = navigator.userAgent;
+            const isAndroid = /Android/i.test(ua);
+            const isIOS = /iPhone|iPad|iPod/i.test(ua);
+            const isChrome = /Chrome/i.test(ua) && !/Edg/i.test(ua);
+            const isSafari = /Safari/i.test(ua) && !/Chrome/i.test(ua);
+            const isFirefox = /Firefox/i.test(ua);
+            const isMobile = isAndroid || isIOS;
+
+            return { isAndroid, isIOS, isChrome, isSafari, isFirefox, isMobile };
+        }
+
+        // Check if desktop - hide button initially, let Chrome show its banner
+        const { isMobile } = detectBrowserAndDevice();
+        if (!isMobile) {
+            universalInstallBtn.classList.add('hidden');
+        }
+
+        // Generate install instructions based on browser
+        function getInstallInstructions() {
+            const { isAndroid, isIOS, isChrome, isSafari, isMobile } = detectBrowserAndDevice();
+
+            if (isIOS && isSafari) {
+                return `
+                    <div class="install-step">
+                        <span class="install-step-number">1</span>
+                        <span class="install-step-text">Tap the <strong>Share</strong> button <span class="browser-badge">⬆️</span> at the bottom</span>
+                    </div>
+                    <div class="install-step">
+                        <span class="install-step-number">2</span>
+                        <span class="install-step-text">Scroll and tap <strong>"Add to Home Screen"</strong> <span class="browser-badge">➕</span></span>
+                    </div>
+                    <div class="install-step">
+                        <span class="install-step-number">3</span>
+                        <span class="install-step-text">Tap <strong>"Add"</strong> in the top right</span>
+                    </div>
+                `;
+            } else if (isAndroid && isChrome) {
+                return `
+                    <div class="install-step">
+                        <span class="install-step-number">1</span>
+                        <span class="install-step-text">Tap the <strong>menu</strong> button <span class="browser-badge">⋮</span> in the top right</span>
+                    </div>
+                    <div class="install-step">
+                        <span class="install-step-number">2</span>
+                        <span class="install-step-text">Select <strong>"Add to Home screen"</strong> (works on all devices)</span>
+                    </div>
+                    <div class="install-step">
+                        <span class="install-step-number">3</span>
+                        <span class="install-step-text">Tap <strong>"Add"</strong> to create the app shortcut</span>
+                    </div>
+                `;
+            } else if (isAndroid) {
+                // Check if it's Android Go (low RAM device)
+                const isLowRAM = navigator.deviceMemory && navigator.deviceMemory <= 2;
+
+                if (isLowRAM) {
+                    return `
+                        <div class="install-step">
+                            <span class="install-step-text" style="color: var(--accent-color); margin-bottom: 10px; display: block;">
+                                <strong>📱 Your device uses Android Go Edition</strong>
+                            </span>
+                        </div>
+                        <div class="install-step">
+                            <span class="install-step-number">1</span>
+                            <span class="install-step-text"><strong>Bookmark this page</strong> for quick access</span>
+                        </div>
+                        <div class="install-step">
+                            <span class="install-step-number">2</span>
+                            <span class="install-step-text">Tap <strong>⋮</strong> menu → <strong>⭐ Bookmark</strong></span>
+                        </div>
+                        <div class="install-step">
+                            <span class="install-step-number">3</span>
+                            <span class="install-step-text">Access from bookmarks anytime - works offline!</span>
+                        </div>
+                    `;
+                }
+
+                return `
+                    <div class="install-step">
+                        <span class="install-step-number">1</span>
+                        <span class="install-step-text">Tap the <strong>menu</strong> button <span class="browser-badge">⋮</span></span>
+                    </div>
+                    <div class="install-step">
+                        <span class="install-step-number">2</span>
+                        <span class="install-step-text">Select <strong>"Add to Home screen"</strong></span>
+                    </div>
+                    <div class="install-step">
+                        <span class="install-step-number">3</span>
+                        <span class="install-step-text">Confirm to add the shortcut</span>
+                    </div>
+                `;
+            } else {
+                // Desktop
+                return `
+                    <div class="install-step">
+                        <span class="install-step-number">1</span>
+                        <span class="install-step-text">Look for the <strong>install icon</strong> <span class="browser-badge">⊕</span> in the address bar</span>
+                    </div>
+                    <div class="install-step">
+                        <span class="install-step-number">2</span>
+                        <span class="install-step-text">Or click the button below to install directly</span>
+                    </div>
+                `;
+            }
+        }
+
+        // Listen for beforeinstallprompt event
+        window.addEventListener('beforeinstallprompt', (e) => {
+            console.log('🎉 beforeinstallprompt event fired!');
+            deferredPrompt = e;
+
+            // Desktop: Don't prevent default - let Chrome show its banner
+            // Mobile: Show our custom button since native options may be limited
+            if (isMobile) {
+                e.preventDefault();
+                universalInstallBtn.classList.remove('hidden');
+            }
+
+            // Show the "Install Now" button in modal for both
+            installNowBtn.classList.remove('hidden');
+        });
+
+        // Universal install button click
+        universalInstallBtn.addEventListener('click', () => {
+            installInstructions.innerHTML = getInstallInstructions();
+            installModal.classList.remove('hidden');
+        });
+
+        // Close modal
+        closeInstallModal.addEventListener('click', () => {
+            installModal.classList.add('hidden');
+        });
+
+        // Click outside modal to close
+        installModal.addEventListener('click', (e) => {
+            if (e.target === installModal) {
+                installModal.classList.add('hidden');
+            }
+        });
+
+        // Install Now button (only shows if beforeinstallprompt fired)
+        installNowBtn.addEventListener('click', async () => {
+            if (deferredPrompt) {
+                deferredPrompt.prompt();
+                const { outcome } = await deferredPrompt.userChoice;
+                console.log(`User response: ${outcome}`);
+                if (outcome === 'accepted') {
+                    installModal.classList.add('hidden');
+                }
+                deferredPrompt = null;
+            }
+        });
+
+        // Log when app is installed
+        window.addEventListener('appinstalled', () => {
+            console.log('✅ PWA was installed successfully');
+            universalInstallBtn.classList.add('hidden');
+            installModal.classList.add('hidden');
+        });
+
+        // Check if app is already installed (on page load)
+        if (window.matchMedia('(display-mode: standalone)').matches ||
+            window.navigator.standalone === true) {
+            console.log('✅ App is running in standalone mode (already installed)');
+            universalInstallBtn.classList.add('hidden');
+        }
+    </script>
+</body>
+
+</html>

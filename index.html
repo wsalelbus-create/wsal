@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="description" content="Live bus tracker for ETUSA Algiers with real-time countdowns">
+    <meta name="theme-color" content="#00d2ff">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="وصل الباص">
+    <meta name="mobile-web-app-capable" content="yes">
+
+    <title>وصل الباص - Wsal El Bus</title>
+
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="./manifest.webmanifest">
+
+    <!-- Stylesheets -->
+    <link rel="stylesheet" href="./styles.css">
+    <link rel="stylesheet" href="./pwa-mobile.css">
+    <link rel="stylesheet" href="./station-modal.css">
+    <link rel="stylesheet" href="./version-footer.css">
+    <link rel="stylesheet" href="./weather-display.css">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="./leaflet.css" />
+
+    <!-- Icons -->
+    <link rel="icon" type="image/png" sizes="16x16" href="./images/icon16.png">
+    <link rel="icon" type="image/png" sizes="48x48" href="./images/icon48.png">
+    <link rel="icon" type="image/png" sizes="128x128" href="./images/icon128.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="./images/icon192.png">
+    <link rel="icon" type="image/png" sizes="512x512" href="./images/icon512.png">
+    <link rel="apple-touch-icon" href="./images/icon192.png">
+</head>
+
+<body>
+    
+    <div class="app-container">
+        <header class="glass-header">
+            <div class="logo-area">
+                <h1 class="arabic-title">وصل الباص</h1>
+                <span class="live-badge">LIVE</span>
+            </div>
+            <div class="time-display" id="algiers-time" style="display: none;">--:--</div>
+        </header>
+
+        <!-- Map View (Top 60%) -->
+        <div id="map-view" class="map-view-container">
+            <div id="map-container"></div>
+            <!-- Hidden element for JS compatibility -->
+            <p id="map-distance" style="display: none;"></p>
+        </div>
+
+        <!-- Walking Time Badge (floating above map) -->
+        <div class="walking-time-badge" id="walking-time">
+            <svg class="walk-icon" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                xmlns="http://www.w3.org/2000/svg">
+                <path
+                    d="M13.5 5.5C13.5 6.88071 12.3807 8 11 8C9.61929 8 8.5 6.88071 8.5 5.5C8.5 4.11929 9.61929 3 11 3C12.3807 3 13.5 4.11929 13.5 5.5Z"
+                    fill="currentColor" />
+                <path d="M9.5 9L7 13L9 14L10 18L8 21H10L11.5 17.5L13 21H15L13 18L14 14L16 13L13.5 9H9.5Z"
+                    fill="currentColor" />
+            </svg>
+            <span id="walk-time-text">Calculating...</span>
+        </div>
+
+        <!-- Map Controls Stack (below walking badge) -->
+        <div class="map-controls-stack">
+            <!-- Location Button -->
+            <button class="map-control-btn" id="locate-btn" title="Center on my location">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <circle cx="12" cy="12" r="3" fill="currentColor" />
+                    <path d="M12 2V6M12 18V22M22 12H18M6 12H2" stroke="currentColor" stroke-width="2"
+                        stroke-linecap="round" />
+                </svg>
+            </button>
+
+            <!-- Compass Button -->
+            <button class="map-control-btn" id="compass-btn" title="North indicator">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M12 2L15 10L12 8L9 10L12 2Z" fill="#FF0055" />
+                    <path d="M12 22L9 14L12 16L15 14L12 22Z" fill="#666" />
+                    <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="1.5" fill="none" />
+                </svg>
+                <span class="compass-label">N</span>
+            </button>
+        </div>
+
+        <!-- Floating Station Control (Middle Overlap) -->
+        <div id="floating-controls" class="floating-controls">
+            <div class="station-selector-card" id="station-selector-trigger">
+                <div class="station-info-left">
+                    <span class="station-icon">🚏</span>
+                    <div class="station-text-group">
+                        <h2 id="station-name">Loading...</h2>
+                        <div class="station-subtext">Tap to change station</div>
+                    </div>
+                </div>
+                <div class="station-select-icon">⋮</div>
+            </div>
+        </div>
+
+        <!-- Arrivals Panel (Bottom 40%) -->
+        <div id="arrivals-panel" class="arrivals-panel">
+
+            <div class="routes-header">
+                <h3>Next Arrivals</h3>
+                <span class="live-indicator">● Live</span>
+            </div>
+
+            <div class="routes-list" id="routes-list">
+                <div class="loading-spinner"></div>
+            </div>
+        </div>
+
+        <!-- Simplified Footer (Inside Arrivals or removed? User requested citymapper style which usually has bottom nav, but 60/40 implies list goes to bottom. I will keep a minimal footer inside the panel if needed, or remove if distinct "Get Me Home" buttons are preferred. For now, hiding the old footer as it conflicts with the bottom sheet concept.) -->
+
+        <!-- Version Footer -->
+        <div class="version-footer">
+            <div class="version-text">Wsal El Bus 1.10a</div>
+            <div class="tagline">Made with ❤️ for Algiers commuters</div>
+        </div>
+    </div>
+
+    <!-- Station Selector Modal -->
+    <div id="station-modal" class="modal-overlay hidden">
+        <div class="modal-content glass-panel">
+            <div class="modal-header">
+                <h3>Select Station</h3>
+                <button id="close-modal" class="close-btn">✕</button>
+            </div>
+            <input type="text" id="station-search" class="station-search" placeholder="Search stations...">
+            <div class="station-list" id="station-list">
+                <!-- Station items will be injected here -->
+            </div>
+        </div>
+    </div>
+
+    
+
+    <!-- Scripts -->
+    <script src="./leaflet.js"></script>
+    <script src="./tile-cache.js"></script>
+    <script src="./weather.js"></script>
+    <script src="./app.js"></script>
+
+    <!-- Service Worker Registration for Tile Caching -->
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./service-worker.js')
+                    .then(registration => {
+                        console.log('✅ Service Worker registered for tile caching:', registration.scope);
+                        // Force update to get new version
+                        registration.update();
+                    })
+                    .catch(error => {
+                        console.log('❌ Service Worker registration failed:', error);
+                    });
+            });
+        }
+    </script>
+
+    <!-- Install UI removed -->
+</body>
+
+</html>

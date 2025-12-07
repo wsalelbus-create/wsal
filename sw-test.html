@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Service Worker Test</title>
+</head>
+
+<body>
+    <h1>Service Worker Tile Caching Test</h1>
+    <div id="status"></div>
+    <div id="cache-info"></div>
+
+    <script>
+        const statusEl = document.getElementById('status');
+        const cacheInfoEl = document.getElementById('cache-info');
+
+        // Check if Service Worker is registered
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.getRegistrations().then(registrations => {
+                statusEl.innerHTML = `<h2>Service Worker Status:</h2>`;
+                if (registrations.length === 0) {
+                    statusEl.innerHTML += `<p style="color: red;">❌ No Service Worker registered!</p>`;
+                } else {
+                    registrations.forEach((reg, index) => {
+                        statusEl.innerHTML += `
+                            <p style="color: green;">✅ Service Worker ${index + 1} registered</p>
+                            <p>Scope: ${reg.scope}</p>
+                            <p>State: ${reg.active ? reg.active.state : 'No active worker'}</p>
+                        `;
+                    });
+                }
+            });
+
+            // Check caches
+            caches.keys().then(cacheNames => {
+                cacheInfoEl.innerHTML = `<h2>Cache Storage:</h2>`;
+                if (cacheNames.length === 0) {
+                    cacheInfoEl.innerHTML += `<p style="color: orange;">⚠️ No caches found</p>`;
+                } else {
+                    cacheNames.forEach(cacheName => {
+                        cacheInfoEl.innerHTML += `<p>📦 Cache: ${cacheName}</p>`;
+
+                        caches.open(cacheName).then(cache => {
+                            cache.keys().then(keys => {
+                                cacheInfoEl.innerHTML += `<p style="margin-left: 20px;">Items: ${keys.length}</p>`;
+                                if (cacheName.includes('tile')) {
+                                    cacheInfoEl.innerHTML += `<p style="margin-left: 20px; color: blue;">🗺️ This is the tile cache!</p>`;
+                                }
+                            });
+                        });
+                    });
+                }
+            });
+        } else {
+            statusEl.innerHTML = `<p style="color: red;">❌ Service Workers not supported</p>`;
+        }
+    </script>
+</body>
+
+</html>
