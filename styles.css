@@ -333,9 +333,9 @@ body {
     box-shadow: 0 -5px 20px rgba(0, 0, 0, 0.05);
     z-index: 100;
     padding: 16px;
-    padding-top: 4px;
+    padding-top: 40px;              /* leave room under station selector card */
     /* Space for overlapping bar */
-    padding-bottom: calc(2px + env(safe-area-inset-bottom));
+    padding-bottom: calc(4px + env(safe-area-inset-bottom));
     /* Safe area for bottom */
     overflow-y: visible;
     /* No scroll - page scrolls */
@@ -664,7 +664,7 @@ body {
     gap: 6px;                       /* slightly smaller gap between tiles */
     justify-content: center;
     align-items: center;
-    margin: 4px 0 4px 0;            /* tighter spacing above and below */
+    margin: 6px 0 4px 0;            /* sit clearly below the station card */
     box-shadow: none;               /* flat */
 }
 
