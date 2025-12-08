@@ -484,8 +484,8 @@ function renderStation(station) {
     // Update Floating Badge
     stationNameEl.textContent = station.name;
 
-    // Update walking time
-    updateWalkingTime(station);
+    // Update walking time (OSRM-only; legacy model disabled)
+    // updateWalkingTime(station);
 
     // Render Routes
     renderRoutes(station);
@@ -496,37 +496,25 @@ function renderStation(station) {
     }
 }
 
+/*
+// Legacy walking-time model (DISABLED). Kept for reference.
 function updateWalkingTime(station) {
     const walkTimeText = document.getElementById('walk-time-text');
-
     if (!userLat || !userLon) {
         walkTimeText.textContent = 'Location unavailable';
         return;
     }
-
-    // Calculate straight-line distance to station
     const straightLineDistance = getDistanceFromLatLonInKm(userLat, userLon, station.lat, station.lon);
-
-    // Apply route factor: actual walking routes in Algiers are ~2x longer than straight-line
-    const routeFactor = 2.0;
+    const routeFactor = 2.0; // approximate streets vs straight-line
     const actualWalkingDistance = straightLineDistance * routeFactor;
-
-    // Average walking speed: 5 km/h
     const walkingSpeedKmh = 5;
     const walkingTimeHours = actualWalkingDistance / walkingSpeedKmh;
     const walkingMinutes = Math.ceil(walkingTimeHours * 60);
-
-    console.log('🚶 Walking Time Calculation:');
-    console.log('  Straight-line distance:', straightLineDistance.toFixed(3), 'km');
-    console.log('  Route factor: 2x');
-    console.log('  Actual walking distance:', actualWalkingDistance.toFixed(3), 'km');
-    console.log('  Walking time:', walkingMinutes, 'minutes');
-
-    // Update walking time badge (compact: icon + number only)
     if (walkTimeText) {
-        walkTimeText.textContent = `${walkingMinutes}'`; // Just number with apostrophe (minute symbol)
+        walkTimeText.textContent = `${walkingMinutes}'`;
     }
 }
+*/
 
 function renderRoutes(station) {
     const arrivals = calculateArrivals(station);
@@ -851,6 +839,10 @@ async function renderOsrmRoute(fromLat, fromLon, toLat, toLon) {
             dashArray: '10, 10',
             lineCap: 'round'
         }).addTo(map);
+        // Make it explicit the walking time is not available from OSRM
+        if (walkTimeText) {
+            walkTimeText.textContent = '—';
+        }
     }
 }
 
