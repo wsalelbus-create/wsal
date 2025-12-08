@@ -651,13 +651,13 @@ body {
 /* =============================
    ARRIVALS PANEL THEME (ALWAYS GREEN)
    ============================= */
-.arrivals-panel.panel-green { background: #359D2E; }
+.arrivals-panel.panel-green { background: rgb(64, 115, 148); }
 
 /* =============================
    QUICK ACTIONS (Citymapper-style)
    ============================= */
 .quick-actions-panel {
-    background: #359D2E;            /* blend with panel */
+    background: rgb(64, 115, 148);  /* blend with panel */
     border-radius: 16px;
     padding: 6px 8px;               /* tighter container padding */
     display: flex;
@@ -671,7 +671,7 @@ body {
 .qa-btn {
     appearance: none;
     border: none;                   /* no outline */
-    background: #2F8F2B;            /* badge background */
+    background: rgb(60, 107, 139);  /* badge background */
     color: #fff;
     width: 64px;                    /* square tile */
     height: 64px;                   /* square tile */
