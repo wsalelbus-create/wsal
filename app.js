@@ -932,12 +932,9 @@ function setUIMode(mode) {
         else routesListEl.classList.add('hidden');
     }
 
-    // Panel background: green for idle/walk, white for bus
+    // Panel background: always green in all modes
     const panelEl = document.querySelector('.arrivals-panel');
-    if (panelEl) {
-        if (mode === 'bus') panelEl.classList.remove('panel-green');
-        else panelEl.classList.add('panel-green');
-    }
+    if (panelEl) { panelEl.classList.add('panel-green'); }
 
     // Choose nearest station when switching modes if we have a location
     if (userLat && userLon) {

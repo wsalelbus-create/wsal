@@ -640,3 +640,50 @@ body {
     color: #ccc;
     font-size: 0.7rem;
 }
+
+/* =============================
+   UTILITIES
+   ============================= */
+.hidden { display: none !important; }
+
+/* =============================
+   ARRIVALS PANEL THEME (ALWAYS GREEN)
+   ============================= */
+.arrivals-panel.panel-green { background: #359D2E; }
+
+/* =============================
+   QUICK ACTIONS (Citymapper-style)
+   ============================= */
+.quick-actions-panel {
+    background: #359D2E;            /* blend with panel */
+    border-radius: 16px;
+    padding: 12px 14px;
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    align-items: center;
+    margin: -24px 0 12px 0;         /* slight overlap with panel top */
+    box-shadow: none;               /* flat */
+}
+
+.qa-btn {
+    appearance: none;
+    border: 1px solid rgba(255,255,255,0.22);
+    background: #2F8F2B;            /* badge background */
+    color: #fff;
+    padding: 8px 12px;
+    min-height: 40px;
+    border-radius: 12px;            /* rounded rectangle (not full pill) */
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 800;
+    letter-spacing: 0.2px;
+    box-shadow: none;               /* fully flat */
+    transition: transform .15s ease, background .2s ease;
+}
+
+.qa-btn:active { transform: scale(0.98); }
+.qa-icon { display: flex; align-items: center; justify-content: center; }
+.qa-icon svg { width: 22px; height: 22px; }
+.qa-label { font-size: 0.95rem; }
