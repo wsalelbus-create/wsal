@@ -17,6 +17,8 @@
     --glass-border: rgba(0, 0, 0, 0.05);
     --shadow-soft: 0 4px 20px rgba(0, 0, 0, 0.1);
     --shadow-strong: 0 10px 40px rgba(0, 0, 0, 0.2);
+    /* Dark blue used for quick-action icons (consistent with map icons) */
+    --icon-dark-blue: #0A5AA3;
 }
 
 * {
@@ -331,9 +333,9 @@ body {
     box-shadow: 0 -5px 20px rgba(0, 0, 0, 0.05);
     z-index: 100;
     padding: 16px;
-    padding-top: 56px;
+    padding-top: 4px;
     /* Space for overlapping bar */
-    padding-bottom: calc(16px + env(safe-area-inset-bottom));
+    padding-bottom: calc(2px + env(safe-area-inset-bottom));
     /* Safe area for bottom */
     overflow-y: visible;
     /* No scroll - page scrolls */
@@ -374,7 +376,7 @@ body {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 12px;
+    margin-bottom: 4px;             /* reduce gap under badges */
 }
 
 .routes-header h3 {
@@ -657,12 +659,12 @@ body {
 .quick-actions-panel {
     background: #359D2E;            /* blend with panel */
     border-radius: 16px;
-    padding: 12px 14px;
+    padding: 6px 8px;               /* tighter container padding */
     display: flex;
-    gap: 10px;
+    gap: 6px;                       /* slightly smaller gap between tiles */
     justify-content: center;
     align-items: center;
-    margin: 24px 0 24px 0;          /* equal spacing above and below */
+    margin: 4px 0 4px 0;            /* tighter spacing above and below */
     box-shadow: none;               /* flat */
 }
 
