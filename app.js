@@ -161,6 +161,8 @@ let userLat = null;
 let userLon = null;
 // Layer to hold the OSRM route so we can clear/update it
 let routeLayer = null;
+let busStationsLayer = null; // LayerGroup for all bus stop markers (bus mode)
+let uiMode = 'idle'; // 'idle' | 'walk' | 'bus'
 
 // --- DOM Elements ---
 const stationSelectorTrigger = document.getElementById('station-selector-trigger');
@@ -168,6 +170,11 @@ const stationNameEl = document.getElementById('station-name');
 const walkTimeText = document.getElementById('walk-time-text');
 const routesListEl = document.getElementById('routes-list');
 const mapDistanceEl = document.getElementById('map-distance');
+const routesHeaderEl = document.querySelector('.routes-header');
+const quickActionsEl = document.getElementById('quick-actions');
+const actionBusBtn = document.getElementById('action-bus');
+const actionWalkBtn = document.getElementById('action-walk');
+const walkingBadgeEl = document.getElementById('walking-time');
 
 // Calculate total distance for a route path
 function calculateRouteDistance(waypoints) {
@@ -749,25 +756,15 @@ function updateMap() {
         try { map.removeLayer(routeLayer); } catch (e) {}
         routeLayer = null;
     }
+    // Remove bus stations layer if present
+    if (busStationsLayer) {
+        try { map.removeLayer(busStationsLayer); } catch (e) {}
+        busStationsLayer = null;
+    }
 
     const station = currentStation;
     // mapStationName removed, we only update distance text
-
-    // Add station marker with blue bus icon (ETUSA blue color)
-    const stationMarker = L.marker([station.lat, station.lon], {
-        icon: L.divIcon({
-            className: 'custom-marker',
-            html: `<svg width="32" height="32" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                <rect x="4" y="4" width="16" height="14" rx="2" fill="#0066CC" stroke="white" stroke-width="1.5"/>
-                <rect x="6" y="6" width="12" height="6" fill="#E6F2FF"/>
-                <circle cx="8" cy="16" r="1.5" fill="white"/>
-                <circle cx="16" cy="16" r="1.5" fill="white"/>
-                <line x1="12" y1="6" x2="12" y2="12" stroke="#0066CC" stroke-width="1"/>
-            </svg>`,
-            iconSize: [32, 32],
-            iconAnchor: [16, 16]
-        })
-    }).addTo(map);
+    // Do not add a station marker by default; markers are controlled by uiMode
 
     // If we have user location, add user marker and draw line
     if (userLat && userLon) {
@@ -781,19 +778,59 @@ function updateMap() {
             })
         }).addTo(map);
 
-        // Fetch and draw a realistic street route using OSRM (walking profile)
-        renderOsrmRoute(userLat, userLon, station.lat, station.lon);
+        if (uiMode === 'walk' && station) {
+            // Add target station marker
+            L.marker([station.lat, station.lon], {
+                icon: L.divIcon({
+                    className: 'custom-marker',
+                    html: `<svg width="32" height="32" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <rect x="4" y="4" width="16" height="14" rx="2" fill="#0066CC" stroke="white" stroke-width="1.5"/>
+                        <rect x="6" y="6" width="12" height="6" fill="#E6F2FF"/>
+                        <circle cx="8" cy="16" r="1.5" fill="white"/>
+                        <circle cx="16" cy="16" r="1.5" fill="white"/>
+                        <line x1="12" y1="6" x2="12" y2="12" stroke="#0066CC" stroke-width="1"/>
+                    </svg>`,
+                    iconSize: [32, 32],
+                    iconAnchor: [16, 16]
+                })
+            }).addTo(map);
+            // Fetch and draw a realistic street route using OSRM (walking profile)
+            renderOsrmRoute(userLat, userLon, station.lat, station.lon);
+        } else if (uiMode === 'bus') {
+            // Show all stations
+            const markers = STATIONS.map(s => L.marker([s.lat, s.lon], {
+                icon: L.divIcon({
+                    className: 'custom-marker',
+                    html: `<svg width="26" height="26" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <rect x="4" y="5" width="16" height="11" rx="2" fill="#00d2ff" stroke="white" stroke-width="1.5"/>
+                        <circle cx="8" cy="17" r="1.3" fill="white"/>
+                        <circle cx="16" cy="17" r="1.3" fill="white"/>
+                    </svg>`,
+                    iconSize: [26, 26],
+                    iconAnchor: [13, 13]
+                })
+            }));
+            busStationsLayer = L.layerGroup(markers).addTo(map);
+        }
 
-        // Calculate and display distance
-        const distance = getDistanceFromLatLonInKm(userLat, userLon, station.lat, station.lon);
-        mapDistanceEl.textContent = `📍 ${distance.toFixed(2)} km away`;
+        if (uiMode === 'walk' && station) {
+            // Calculate and display distance
+            const distance = getDistanceFromLatLonInKm(userLat, userLon, station.lat, station.lon);
+            mapDistanceEl.textContent = `📍 ${distance.toFixed(2)} km away`;
+        }
 
-        // Fit map to show both markers
-        const bounds = L.latLngBounds([[userLat, userLon], [station.lat, station.lon]]);
-        map.fitBounds(bounds, { padding: [50, 50] });
+        if (uiMode === 'walk' && station) {
+            // Fit map to show both markers
+            const bounds = L.latLngBounds([[userLat, userLon], [station.lat, station.lon]]);
+            map.fitBounds(bounds, { padding: [50, 50] });
+        } else if (uiMode === 'idle') {
+            map.setView([userLat, userLon], 16);
+        }
     } else {
-        // No user location, just center on station
-        map.setView([station.lat, station.lon], 15);
+        // No user location
+        if (uiMode === 'walk' && station) {
+            map.setView([station.lat, station.lon], 15);
+        }
         mapDistanceEl.textContent = '📍 Location unavailable';
     }
 }
@@ -872,6 +909,52 @@ async function renderOsrmRoute(fromLat, fromLon, toLat, toLon) {
     }
 }
 
+// --- UI Mode switching (idle | walk | bus) ---
+function setUIMode(mode) {
+    uiMode = mode;
+
+    // Toggle map walking badge visibility
+    if (walkingBadgeEl) {
+        if (mode === 'walk') {
+            walkingBadgeEl.classList.remove('hidden');
+        } else {
+            walkingBadgeEl.classList.add('hidden');
+        }
+    }
+
+    // Toggle arrivals panel visibility
+    if (routesHeaderEl) {
+        if (mode === 'bus') routesHeaderEl.classList.remove('hidden');
+        else routesHeaderEl.classList.add('hidden');
+    }
+    if (routesListEl) {
+        if (mode === 'bus') routesListEl.classList.remove('hidden');
+        else routesListEl.classList.add('hidden');
+    }
+
+    // Panel background: green for idle/walk, white for bus
+    const panelEl = document.querySelector('.arrivals-panel');
+    if (panelEl) {
+        if (mode === 'bus') panelEl.classList.remove('panel-green');
+        else panelEl.classList.add('panel-green');
+    }
+
+    // Choose nearest station when switching modes if we have a location
+    if (userLat && userLon) {
+        const nearest = findNearestStation(userLat, userLon);
+        if (nearest) {
+            currentStation = nearest;
+            if (mode === 'bus') {
+                // Populate arrivals for nearest stop
+                renderStation(currentStation);
+            }
+        }
+    }
+
+    // Update the map for the selected mode
+    if (mapInitialized) updateMap();
+}
+
 // --- Event Listeners ---
 
 // Floating Station Selector Click
@@ -903,6 +986,18 @@ if (locateBtn) {
             // Try to get location if not available
             refreshGeolocation();
         }
+    });
+}
+
+// Quick Actions: Bus and Walk
+if (actionWalkBtn) {
+    actionWalkBtn.addEventListener('click', () => {
+        setUIMode('walk');
+    });
+}
+if (actionBusBtn) {
+    actionBusBtn.addEventListener('click', () => {
+        setUIMode('bus');
     });
 }
 
@@ -950,6 +1045,10 @@ if (mapViewContainer && arrivalsPanel) {
 // Init
 initMap(); // Initialize map immediately (background)
 initGeolocation();
+// Default UI mode: idle (only location and quick actions visible)
+if (typeof setUIMode === 'function') {
+    setUIMode('idle');
+}
 
 // Initialize weather module (handles its own display updates)
 if (window.WeatherModule) {

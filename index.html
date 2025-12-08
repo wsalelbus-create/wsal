@@ -25,6 +25,48 @@
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="./leaflet.css" />
+    <style>
+      /* Utility */
+      .hidden { display: none !important; }
+
+      /* Quick Actions (Citymapper-style) */
+      .quick-actions-panel {
+        background: linear-gradient(180deg, #34C759 0%, #2BAE56 100%); /* Citymapper-like green */
+        border-radius: 16px;
+        padding: 16px 18px;
+        display: flex;
+        gap: 12px;
+        justify-content: center;
+        align-items: center;
+        margin: -24px 0 12px 0; /* slight overlap top of panel */
+        box-shadow: inset 0 1px 0 rgba(255,255,255,0.12), 0 8px 24px rgba(0,0,0,0.12);
+      }
+      .qa-btn {
+        appearance: none;
+        border: none;
+        background: #0D5B2B; /* darker green chip */
+        color: #fff;
+        padding: 10px 18px;
+        min-height: 44px;
+        border-radius: 999px; /* pill */
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-weight: 800;
+        letter-spacing: 0.2px;
+        box-shadow: 0 6px 16px rgba(0,0,0,0.25);
+        border: 1px solid rgba(255,255,255,0.22);
+        transition: transform .15s ease, background .2s ease;
+      }
+      .qa-btn:active { transform: scale(0.98); }
+      .qa-icon { display: flex; align-items: center; justify-content: center; }
+      .qa-label { font-size: 1rem; }
+
+      /* Panel turns green in idle/walk modes for Citymapper feel */
+      .arrivals-panel.panel-green {
+        background: linear-gradient(180deg, #34C759 0%, #2BAE56 100%);
+      }
+    </style>
 
     <!-- Icons -->
     <link rel="icon" type="image/png" sizes="16x16" href="./images/icon16.png">
@@ -54,7 +96,7 @@
         </div>
 
         <!-- Walking Time Badge (floating above map) -->
-        <div class="walking-time-badge" id="walking-time">
+        <div class="walking-time-badge hidden" id="walking-time">
             <svg class="walk-icon" width="20" height="20" viewBox="0 0 24 24" fill="none"
                 xmlns="http://www.w3.org/2000/svg">
                 <path
@@ -104,13 +146,35 @@
 
         <!-- Arrivals Panel (Bottom 40%) -->
         <div id="arrivals-panel" class="arrivals-panel">
+            <!-- Quick Actions: Citymapper-style two badges -->
+            <div id="quick-actions" class="quick-actions-panel">
+                <button id="action-bus" class="qa-btn" title="Show buses">
+                    <div class="qa-icon">
+                        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <rect x="4" y="5" width="16" height="11" rx="2" fill="#00d2ff" stroke="#ffffff" stroke-width="2" />
+                            <circle cx="8" cy="17" r="1.6" fill="#ffffff" />
+                            <circle cx="16" cy="17" r="1.6" fill="#ffffff" />
+                        </svg>
+                    </div>
+                    <div class="qa-label">Bus</div>
+                </button>
+                <button id="action-walk" class="qa-btn" title="Walk to stop">
+                    <div class="qa-icon">
+                        <svg width="28" height="28" viewBox="0 0 24 24" fill="#00d2ff" stroke="#ffffff" stroke-width="2" xmlns="http://www.w3.org/2000/svg">
+                            <circle cx="11" cy="5.5" r="2" />
+                            <path d="M9.5 9L7 13L9 14L10 18L8 21H10L11.5 17.5L13 21H15L13 18L14 14L16 13L13.5 9H9.5Z" />
+                        </svg>
+                    </div>
+                    <div class="qa-label">Walk</div>
+                </button>
+            </div>
 
-            <div class="routes-header">
+            <div class="routes-header hidden">
                 <h3>Next Arrivals</h3>
                 <span class="live-indicator">● Live</span>
             </div>
 
-            <div class="routes-list" id="routes-list">
+            <div class="routes-list hidden" id="routes-list">
                 <div class="loading-spinner"></div>
             </div>
         </div>
