@@ -562,8 +562,8 @@ function initGeolocation() {
             const { lat, lon, timestamp } = JSON.parse(cachedLocation);
             const age = Date.now() - timestamp;
 
-            // Use cached location if less than 1 hour old
-            if (age < 60 * 60 * 1000) {
+            // Use cached location if less than 2 minutes old (avoid stale positions)
+            if (age < 2 * 60 * 1000) {
                 console.log('📍 Using cached location (age: ' + Math.round(age / 1000 / 60) + ' min)');
                 userLat = lat;
                 userLon = lon;
@@ -800,49 +800,75 @@ function updateMap() {
 
 // Fetch a street route from user -> station using OSRM and draw it on the map
 async function renderOsrmRoute(fromLat, fromLon, toLat, toLon) {
-    try {
-        const primaryUrl = `https://router.project-osrm.org/route/v1/foot/${fromLon},${fromLat};${toLon},${toLat}?overview=full&geometries=geojson&steps=true`;
-        const fallbackUrl = `https://routing.openstreetmap.de/routed-foot/route/v1/foot/${fromLon},${fromLat};${toLon},${toLat}?overview=full&geometries=geojson&steps=true`;
-        let res = await fetch(primaryUrl);
-        if (!res.ok) {
-            res = await fetch(fallbackUrl);
-        }
-        const data = await res.json();
-        if (!data || data.code !== 'Ok' || !data.routes || !data.routes[0]) {
-            throw new Error('OSRM bad response');
-        }
-        const route = data.routes[0];
-        const coords = route.geometry.coordinates.map(([lon, lat]) => [lat, lon]);
-        routeLayer = L.polyline(coords, {
-            color: '#00d2ff',
-            weight: 5,
-            opacity: 0.85
-        }).addTo(map);
+    // Use the foot-only server to avoid accidentally getting car profiles from the demo
+    const candidates = [
+        `https://routing.openstreetmap.de/routed-foot/route/v1/foot/${fromLon},${fromLat};${toLon},${toLat}?overview=full&geometries=geojson&steps=true&annotations=duration,distance`
+    ];
+
+    let route = null;
+    let usedUrl = null;
+    let lastError = null;
+    for (const url of candidates) {
         try {
-            const bounds = routeLayer.getBounds();
-            map.fitBounds(bounds, { padding: [50, 50] });
-        } catch (e) {}
-        if (typeof route.duration === 'number' && walkTimeText) {
-            const mins = Math.max(1, Math.ceil(route.duration / 60));
-            walkTimeText.textContent = `${mins}'`;
+            const res = await fetch(url);
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
+            const data = await res.json();
+            if (!data || data.code !== 'Ok' || !data.routes || !data.routes[0]) {
+                throw new Error('Bad OSRM payload');
+            }
+            const r = data.routes[0];
+            // Validate that this looks like a walking route
+            const steps = (r.legs && r.legs[0] && r.legs[0].steps) || [];
+            const modes = steps.map(s => (s.mode || '').toLowerCase());
+            const allWalking = modes.length > 0 && modes.every(m => m === 'walking');
+            const avgSpeed = (r.distance && r.duration) ? (r.distance / r.duration) : null; // m/s
+            // Be stricter: typical walking ~1.2–1.6 m/s; accept up to 2.0 m/s (~7.2 km/h)
+            const looksWalking = allWalking || (avgSpeed !== null && avgSpeed <= 2.0);
+            if (!looksWalking) {
+                console.warn('OSRM route appears non-walking, trying next candidate', { avgSpeed, modes, url });
+                continue; // try next server
+            }
+            route = r;
+            usedUrl = url;
+            break;
+        } catch (e) {
+            lastError = e;
+            console.warn('OSRM candidate failed:', url, e);
         }
-    } catch (err) {
-        console.warn('OSRM route fetch failed, falling back to straight line:', err);
-        const latlngs = [
-            [fromLat, fromLon],
-            [toLat, toLon]
-        ];
+    }
+
+    if (!route) {
+        // No valid walking route from OSRM sources — draw fallback and show em dash
+        const latlngs = [ [fromLat, fromLon], [toLat, toLon] ];
         routeLayer = L.polyline(latlngs, {
-            color: '#00d2ff',
-            weight: 4,
-            opacity: 0.7,
-            dashArray: '10, 10',
-            lineCap: 'round'
+            color: '#00d2ff', weight: 4, opacity: 0.7, dashArray: '10, 10', lineCap: 'round'
         }).addTo(map);
-        // Make it explicit the walking time is not available from OSRM
-        if (walkTimeText) {
-            walkTimeText.textContent = '—';
-        }
+        if (walkTimeText) walkTimeText.textContent = '—';
+        return;
+    }
+
+    // Draw the accepted walking route
+    const coords = route.geometry.coordinates.map(([lon, lat]) => [lat, lon]);
+    try {
+        const avgMps = route.distance && route.duration ? (route.distance / route.duration) : null;
+        console.log('🧭 OSRM walking route accepted', {
+            server: usedUrl,
+            from: { lat: fromLat, lon: fromLon },
+            to: { lat: toLat, lon: toLon },
+            distance_m: route.distance,
+            duration_s: route.duration,
+            avg_speed_mps: avgMps,
+            steps_count: (route.legs && route.legs[0] && route.legs[0].steps) ? route.legs[0].steps.length : 0
+        });
+    } catch {}
+    routeLayer = L.polyline(coords, { color: '#00d2ff', weight: 5, opacity: 0.85 }).addTo(map);
+    try {
+        const bounds = routeLayer.getBounds();
+        map.fitBounds(bounds, { padding: [50, 50] });
+    } catch {}
+    if (typeof route.duration === 'number' && walkTimeText) {
+        const mins = Math.max(1, Math.ceil(route.duration / 60));
+        walkTimeText.textContent = `${mins}'`;
     }
 }
 
