@@ -159,6 +159,8 @@ let mapInitialized = false;
 let currentStation = null; // Will be set after STATIONS is defined
 let userLat = null;
 let userLon = null;
+// Layer to hold the OSRM route so we can clear/update it
+let routeLayer = null;
 
 // --- DOM Elements ---
 const stationSelectorTrigger = document.getElementById('station-selector-trigger');
@@ -754,6 +756,12 @@ function updateMap() {
         }
     });
 
+    // Also remove existing OSRM route layer if present
+    if (routeLayer) {
+        try { map.removeLayer(routeLayer); } catch (e) {}
+        routeLayer = null;
+    }
+
     const station = currentStation;
     // mapStationName removed, we only update distance text
 
@@ -785,19 +793,8 @@ function updateMap() {
             })
         }).addTo(map);
 
-        // Draw dashed blue line between user and station (walking route)
-        const latlngs = [
-            [userLat, userLon],
-            [station.lat, station.lon]
-        ];
-
-        L.polyline(latlngs, {
-            color: '#00d2ff',
-            weight: 4,
-            opacity: 0.7,
-            dashArray: '10, 10', // Dashed line pattern
-            lineCap: 'round'
-        }).addTo(map);
+        // Fetch and draw a realistic street route using OSRM (walking profile)
+        renderOsrmRoute(userLat, userLon, station.lat, station.lon);
 
         // Calculate and display distance
         const distance = getDistanceFromLatLonInKm(userLat, userLon, station.lat, station.lon);
@@ -810,6 +807,50 @@ function updateMap() {
         // No user location, just center on station
         map.setView([station.lat, station.lon], 15);
         mapDistanceEl.textContent = '📍 Location unavailable';
+    }
+}
+
+// Fetch a street route from user -> station using OSRM and draw it on the map
+async function renderOsrmRoute(fromLat, fromLon, toLat, toLon) {
+    try {
+        const primaryUrl = `https://router.project-osrm.org/route/v1/foot/${fromLon},${fromLat};${toLon},${toLat}?overview=full&geometries=geojson&steps=true`;
+        const fallbackUrl = `https://routing.openstreetmap.de/routed-foot/route/v1/foot/${fromLon},${fromLat};${toLon},${toLat}?overview=full&geometries=geojson&steps=true`;
+        let res = await fetch(primaryUrl);
+        if (!res.ok) {
+            res = await fetch(fallbackUrl);
+        }
+        const data = await res.json();
+        if (!data || data.code !== 'Ok' || !data.routes || !data.routes[0]) {
+            throw new Error('OSRM bad response');
+        }
+        const route = data.routes[0];
+        const coords = route.geometry.coordinates.map(([lon, lat]) => [lat, lon]);
+        routeLayer = L.polyline(coords, {
+            color: '#00d2ff',
+            weight: 5,
+            opacity: 0.85
+        }).addTo(map);
+        try {
+            const bounds = routeLayer.getBounds();
+            map.fitBounds(bounds, { padding: [50, 50] });
+        } catch (e) {}
+        if (typeof route.duration === 'number' && walkTimeText) {
+            const mins = Math.max(1, Math.ceil(route.duration / 60));
+            walkTimeText.textContent = `${mins}'`;
+        }
+    } catch (err) {
+        console.warn('OSRM route fetch failed, falling back to straight line:', err);
+        const latlngs = [
+            [fromLat, fromLon],
+            [toLat, toLon]
+        ];
+        routeLayer = L.polyline(latlngs, {
+            color: '#00d2ff',
+            weight: 4,
+            opacity: 0.7,
+            dashArray: '10, 10',
+            lineCap: 'round'
+        }).addTo(map);
     }
 }
 
