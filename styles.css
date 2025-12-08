@@ -662,21 +662,24 @@ body {
     gap: 10px;
     justify-content: center;
     align-items: center;
-    margin: -24px 0 12px 0;         /* slight overlap with panel top */
+    margin: 24px 0 24px 0;          /* equal spacing above and below */
     box-shadow: none;               /* flat */
 }
 
 .qa-btn {
     appearance: none;
-    border: 1px solid rgba(255,255,255,0.22);
+    border: none;                   /* no outline */
     background: #2F8F2B;            /* badge background */
     color: #fff;
-    padding: 8px 12px;
-    min-height: 40px;
-    border-radius: 12px;            /* rounded rectangle (not full pill) */
+    width: 64px;                    /* square tile */
+    height: 64px;                   /* square tile */
+    padding: 8px;
+    border-radius: 12px;            /* rounded square */
     display: flex;
+    flex-direction: column;         /* icon above label */
     align-items: center;
-    gap: 8px;
+    justify-content: center;
+    gap: 6px;
     font-weight: 800;
     letter-spacing: 0.2px;
     box-shadow: none;               /* fully flat */
@@ -685,5 +688,5 @@ body {
 
 .qa-btn:active { transform: scale(0.98); }
 .qa-icon { display: flex; align-items: center; justify-content: center; }
-.qa-icon svg { width: 22px; height: 22px; }
-.qa-label { font-size: 0.95rem; }
+.qa-icon svg { width: 24px; height: 24px; }
+.qa-label { font-size: 0.8rem; font-weight: 700; }
