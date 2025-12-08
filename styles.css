@@ -690,5 +690,5 @@ body {
 
 .qa-btn:active { transform: scale(0.98); }
 .qa-icon { display: flex; align-items: center; justify-content: center; }
-.qa-icon svg { width: 24px; height: 24px; }
+.qa-icon svg { width: 32px; height: 32px; }
 .qa-label { font-size: 0.8rem; font-weight: 700; }
