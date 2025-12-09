@@ -164,6 +164,13 @@ let routeLayer = null;
 let busStationsLayer = null; // LayerGroup for all bus stop markers (bus mode)
 let uiMode = 'idle'; // 'idle' | 'walk' | 'bus'
 
+// User marker and heading state
+let userMarker = null;            // Leaflet marker with dot + heading cone
+let currentHeading = null;        // Degrees [0..360)
+let geoWatchId = null;            // Geolocation watch ID
+let deviceOrientationActive = false;
+let orientationPermissionRequested = false;
+
 // --- DOM Elements ---
 const stationSelectorTrigger = document.getElementById('station-selector-trigger');
 const stationNameEl = document.getElementById('station-name');
@@ -175,6 +182,7 @@ const quickActionsEl = document.getElementById('quick-actions');
 const actionBusBtn = document.getElementById('action-bus');
 const actionWalkBtn = document.getElementById('action-walk');
 const walkingBadgeEl = document.getElementById('walking-time');
+const locateBtn = document.getElementById('locate-btn');
 
 // Calculate total distance for a route path
 function calculateRouteDistance(waypoints) {
@@ -621,6 +629,9 @@ function refreshGeolocation() {
                 const nearest = findNearestStation(userLat, userLon);
                 currentStation = nearest;
                 renderStation(currentStation);
+
+                // Begin passive watching for movement/heading updates
+                startGeoWatch();
             },
             (error) => {
                 console.error('Geolocation error:', error.code, error.message);
@@ -653,6 +664,91 @@ function refreshGeolocation() {
     } else {
         console.error('Geolocation not supported');
         renderStation(currentStation);
+    }
+}
+
+// Start continuous position watch (also yields heading when moving)
+function startGeoWatch() {
+    if (geoWatchId != null || !navigator.geolocation) return;
+    geoWatchId = navigator.geolocation.watchPosition(
+        (pos) => {
+            userLat = pos.coords.latitude;
+            userLon = pos.coords.longitude;
+            if (typeof pos.coords.heading === 'number' && isFinite(pos.coords.heading)) {
+                updateHeading(pos.coords.heading);
+            }
+            // Update marker position without redrawing everything
+            if (userMarker) {
+                try { userMarker.setLatLng([userLat, userLon]); } catch (e) {}
+            }
+        },
+        (err) => {
+            console.warn('watchPosition error:', err);
+        },
+        {
+            enableHighAccuracy: true,
+            maximumAge: 5000,
+            timeout: 20000
+        }
+    );
+}
+
+// Initialize device orientation sensors (requires gesture on iOS 13+)
+function initHeadingSensors() {
+    // iOS 13+: request permission upon first gesture (locate button or first tap)
+    const tryRequestPermission = () => {
+        if (orientationPermissionRequested) return;
+        orientationPermissionRequested = true;
+        if (window.DeviceOrientationEvent && typeof DeviceOrientationEvent.requestPermission === 'function') {
+            DeviceOrientationEvent.requestPermission().then(state => {
+                if (state === 'granted') attachOrientationListener();
+            }).catch(() => {/* ignore */});
+        }
+    };
+
+    if (locateBtn) locateBtn.addEventListener('click', tryRequestPermission, { once: true });
+    window.addEventListener('touchstart', tryRequestPermission, { once: true });
+
+    // For browsers that don't require permission
+    if (window.DeviceOrientationEvent && typeof DeviceOrientationEvent.requestPermission !== 'function') {
+        attachOrientationListener();
+    }
+}
+
+function attachOrientationListener() {
+    if (deviceOrientationActive) return;
+    deviceOrientationActive = true;
+    window.addEventListener('deviceorientation', handleDeviceOrientation, true);
+}
+
+function handleDeviceOrientation(e) {
+    let heading = null;
+    // iOS Safari provides webkitCompassHeading (0..360, 0 = North)
+    if (typeof e.webkitCompassHeading === 'number') {
+        heading = e.webkitCompassHeading;
+    } else if (e && typeof e.alpha === 'number') {
+        // Fallback: alpha (0..360). Convert to compass-like heading.
+        heading = 360 - e.alpha; // approximate: 0 = North
+    }
+    if (heading != null && isFinite(heading)) {
+        if (heading < 0) heading += 360;
+        if (heading >= 360) heading -= 360;
+        updateHeading(heading);
+    }
+}
+
+function updateHeading(deg) {
+    currentHeading = deg;
+    // Rotate the cone inside the user marker, if present
+    if (userMarker) {
+        const el = userMarker.getElement();
+        if (el) {
+            const rotor = el.querySelector('.user-heading-rotor');
+            if (rotor) {
+                rotor.style.transform = `translate(-50%, -50%) rotate(${currentHeading}deg)`;
+                rotor.style.opacity = '1';
+            }
+        }
     }
 }
 
@@ -739,6 +835,9 @@ function initMap() {
     setTimeout(() => {
         map.invalidateSize();
     }, 200);
+
+    // Initialize heading sensors (permission will be requested on first gesture if needed)
+    initHeadingSensors();
 }
 
 function updateMap() {
@@ -768,15 +867,43 @@ function updateMap() {
 
     // If we have user location, add user marker and draw line
     if (userLat && userLon) {
-        // Add user marker
-        const userMarker = L.marker([userLat, userLon], {
-            icon: L.divIcon({
-                className: 'custom-marker',
-                html: '<div style="background: #ff0055; width: 20px; height: 20px; border-radius: 50%; border: 3px solid white; box-shadow: 0 2px 8px rgba(0,0,0,0.3);"></div>',
-                iconSize: [20, 20],
-                iconAnchor: [10, 10]
-            })
-        }).addTo(map);
+        // Add or update user marker with heading cone + dot
+        const markerHtml = `
+            <div class="user-orientation">
+                <div class="user-heading-rotor" style="position:absolute; left:50%; top:50%; transform: translate(-50%, -50%) rotate(${currentHeading ?? 0}deg); opacity:${currentHeading==null?0:1};">
+                    <svg width="56" height="56" viewBox="0 0 56 56" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M28 28 L28 6 L40 22 Z" fill="rgba(0,106,204,0.25)" stroke="rgba(0,106,204,0.45)" stroke-width="1.5"/>
+                    </svg>
+                </div>
+                <div class="user-dot" style="position:absolute; left:50%; top:50%; width: 20px; height: 20px; background: #0066CC; border-radius: 50%; border: 3px solid white; box-shadow: 0 2px 8px rgba(0,0,0,0.3); transform: translate(-50%, -50%);"></div>
+            </div>`;
+
+        if (userMarker) {
+            try { userMarker.setLatLng([userLat, userLon]); } catch (e) {}
+        } else {
+            userMarker = L.marker([userLat, userLon], {
+                interactive: false,
+                icon: L.divIcon({
+                    className: 'custom-marker user-orientation-icon',
+                    html: markerHtml,
+                    iconSize: [56, 56],
+                    iconAnchor: [28, 28]
+                })
+            }).addTo(map);
+        }
+        // If userMarker exists but was removed by layer clear, add it back
+        if (userMarker && !map.hasLayer(userMarker)) {
+            try { userMarker.addTo(map); } catch (e) {}
+        }
+        // Ensure rotor reflects the latest heading
+        const el = userMarker.getElement();
+        if (el) {
+            const rotor = el.querySelector('.user-heading-rotor');
+            if (rotor) {
+                rotor.style.transform = `translate(-50%, -50%) rotate(${currentHeading ?? 0}deg)`;
+                rotor.style.opacity = currentHeading == null ? '0' : '1';
+            }
+        }
 
         if (uiMode === 'walk' && station) {
             // Add target station marker
@@ -962,7 +1089,6 @@ if (stationSelectorTrigger) {
 }
 
 // Location Button - Center map on user location
-const locateBtn = document.getElementById('locate-btn');
 if (locateBtn) {
     locateBtn.addEventListener('click', () => {
         if (userLat && userLon) {
@@ -998,13 +1124,10 @@ if (actionBusBtn) {
     });
 }
 
-// Compass Button - Always points north (decorative)
+// Compass Button - Simple visual feedback (Leaflet has no bearing by default)
 const compassBtn = document.getElementById('compass-btn');
 if (compassBtn) {
     compassBtn.addEventListener('click', () => {
-        // Reset map bearing to north (0 degrees)
-        map.setBearing(0);
-
         // Visual feedback
         compassBtn.style.transform = 'rotate(360deg) scale(1.1)';
         setTimeout(() => {
