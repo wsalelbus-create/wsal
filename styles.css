@@ -330,7 +330,7 @@ body {
     /* Minimum height, grows with content */
     background: white;
     border-radius: 24px 24px 0 0;
-    box-shadow: 0 -5px 20px rgba(0, 0, 0, 0.05);
+    box-shadow: none;               /* remove shadow to avoid separation line */
     z-index: 100;
     padding: 16px;
     padding-top: 40px;              /* leave room under station selector card */
