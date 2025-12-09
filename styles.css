@@ -637,10 +637,14 @@ body {
 }
 
 .version-footer {
+    position: relative;
+    height: 140px;                 /* skyline band height */
+    background: rgb(64, 115, 148); /* match arrivals panel blue */
+    overflow: hidden;              /* clip skyline */
     text-align: center;
-    padding: 20px;
     color: #ccc;
     font-size: 0.7rem;
+    padding: 0;                    /* no padding to keep exact height */
 }
 
 /* =============================
