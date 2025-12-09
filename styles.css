@@ -645,7 +645,12 @@ body {
     color: #ccc;
     font-size: 0.7rem;
     padding: 0;                    /* no padding to keep exact height */
+    margin-top: -2px;              /* pull up slightly more to eliminate hairline */
+    border-top: none;              /* ensure no border draws a line */
 }
+
+/* Ensure no accidental bottom border on the arrivals panel */
+.arrivals-panel { border-bottom: 0; }
 
 /* =============================
    UTILITIES
