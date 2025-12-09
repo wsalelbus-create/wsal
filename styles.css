@@ -96,7 +96,7 @@ body {
 /* Header Floating on Map */
 .glass-header {
     position: absolute;
-    top: calc(16px + env(safe-area-inset-top));
+    top: calc(11px + env(safe-area-inset-top));
     /* Below status bar */
     left: 16px;
     right: 16px;
@@ -107,6 +107,12 @@ body {
 }
 
 /* Logo Area */
+.logo-area {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+}
 .logo-area h1 {
     font-family: 'Cairo', sans-serif;
     font-size: 1.4rem;
@@ -119,6 +125,22 @@ body {
     border-radius: 20px;
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
 }
+
+/* Settings badge (gear) placed below the Arabic title */
+.settings-badge {
+    appearance: none;
+    border: none;
+    cursor: pointer;
+    background: white;
+    color: #333;
+    padding: 6px;
+    border-radius: 16px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+.settings-badge:active { transform: scale(0.98); }
 
 .live-badge {
     background: var(--primary-color);
@@ -165,7 +187,7 @@ body {
 .walking-time-badge {
     position: absolute;
     /* Stays with map, not viewport */
-    top: calc(16px + env(safe-area-inset-top));
+    top: calc(11px + env(safe-area-inset-top));
     /* Below status bar/notch */
     right: 16px;
     z-index: 200;
