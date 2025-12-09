@@ -1,3 +1,12 @@
+function shouldShowCone() {
+    const hasPermissionApi = !!(window.DeviceOrientationEvent && typeof DeviceOrientationEvent.requestPermission === 'function');
+    if (hasPermissionApi) {
+        // On iOS 13+, show only when explicit permission granted and we have a heading fix
+        return orientationPermissionGranted && hasHeadingFix;
+    }
+    // On other platforms, show after we have any heading fix
+    return hasHeadingFix;
+}
 // Route Paths - GPS waypoints for all routes
 // Each route has waypoints representing major stops along the path
 const ROUTE_PATHS = {
@@ -172,6 +181,7 @@ const HEADING_SMOOTH = 0.25;      // 0..1 (higher = snappier)
 let geoWatchId = null;            // Geolocation watch ID
 let deviceOrientationActive = false;
 let orientationPermissionGranted = false;
+let hasHeadingFix = false;        // True after first heading value observed
 
 // --- DOM Elements ---
 const stationSelectorTrigger = document.getElementById('station-selector-trigger');
@@ -775,6 +785,7 @@ function handleDeviceOrientation(e) {
 
 function updateHeading(deg) {
     currentHeading = normalizeBearing(deg);
+    hasHeadingFix = true;
     // Smooth transitions to avoid flip/jitter and 359→0 jumps
     if (smoothedHeading == null) smoothedHeading = currentHeading;
     const delta = smallestAngleDelta(smoothedHeading, currentHeading);
@@ -787,7 +798,7 @@ function updateHeading(deg) {
             const rotor = el.querySelector('.user-heading-rotor');
             if (rotor) {
                 rotor.style.transform = `translate(-50%, -50%) rotate(${smoothedHeading}deg)`;
-                rotor.style.opacity = '1';
+                rotor.style.opacity = shouldShowCone() ? '1' : '0';
             }
         }
     }
@@ -989,26 +1000,31 @@ function updateMap() {
 
     // If we have user location, add user marker and draw line
     if (userLat && userLon) {
-        // Add or update user marker with heading cone + dot
+        // Decide initial visibility of the cone based on permission/heading availability
+        const showCone = shouldShowCone();
+        // Add or update user marker with heading cone + halo + dot
         const markerHtml = `
-            <div class="user-orientation">
-                <div class="user-heading-rotor" style="position:absolute; left:50%; top:50%; transform: translate(-50%, -50%) rotate(${currentHeading ?? 0}deg); opacity:${currentHeading==null?0.5:1};">
+            <div class="user-orientation" style="position: relative; pointer-events: none;">
+                <div class="user-heading-rotor" style="position:absolute; left:50%; top:50%; transform: translate(-50%, -50%) rotate(${currentHeading ?? 0}deg); opacity:${showCone?1:0};">
                     <svg width="140" height="140" viewBox="0 0 140 140" xmlns="http://www.w3.org/2000/svg" style="overflow: visible;">
                         <defs>
-                            <radialGradient id="coneGrad" cx="0.5" cy="0.6" r="0.8">
-                                <stop offset="0%" stop-color="rgba(0,106,204,0.35)"/>
-                                <stop offset="65%" stop-color="rgba(0,106,204,0.18)"/>
-                                <stop offset="100%" stop-color="rgba(0,106,204,0.00)"/>
-                            </radialGradient>
+                            <!-- Green fog only on lower half (near center). Absolute units for precise fade. -->
+                            <linearGradient id="coneGrad" x1="70" y1="70" x2="70" y2="34" gradientUnits="userSpaceOnUse">
+                                <stop offset="0%"  stop-color="rgba(53,199,89,0.28)"/>
+                                <stop offset="55%" stop-color="rgba(53,199,89,0.14)"/>
+                                <stop offset="100%" stop-color="rgba(53,199,89,0.00)"/>
+                            </linearGradient>
                         </defs>
-                        <!-- Filled wedge (no base stroke), longer and slightly narrower -->
-                        <path d="M70 70 L52 4 L88 4 Z" fill="url(#coneGrad)" stroke="none"/>
-                        <!-- Edge strokes only (no closed base) -->
-                        <line x1="70" y1="70" x2="52" y2="4" stroke="rgba(0,106,204,0.50)" stroke-width="2.2" stroke-linecap="round"/>
-                        <line x1="70" y1="70" x2="88" y2="4" stroke="rgba(0,106,204,0.50)" stroke-width="2.2" stroke-linecap="round"/>
+                        <!-- Shorter, wider, Citymapper-like wedge (no base stroke) -->
+                        <path d="M70 70 L46 34 L94 34 Z" fill="url(#coneGrad)" stroke="none"/>
+                        <!-- Thinner edge bars, green -->
+                        <line x1="70" y1="70" x2="46" y2="34" stroke="rgba(53,199,89,0.60)" stroke-width="1.2" stroke-linecap="round"/>
+                        <line x1="70" y1="70" x2="94" y2="34" stroke="rgba(53,199,89,0.60)" stroke-width="1.2" stroke-linecap="round"/>
                     </svg>
                 </div>
-                <div class="user-dot" style="position:absolute; left:50%; top:50%; width: 18px; height: 18px; background: #0066CC; border-radius: 50%; border: 3px solid white; box-shadow: 0 2px 8px rgba(0,0,0,0.3); transform: translate(-50%, -50%);"></div>
+                <!-- Soft halo behind the blue location dot -->
+                <div class="user-dot-halo" style="position:absolute; left:50%; top:50%; width: 36px; height: 36px; border-radius: 50%; transform: translate(-50%, -50%); background: radial-gradient(circle, rgba(0,102,204,0.35) 0%, rgba(0,102,204,0.18) 45%, rgba(0,102,204,0.00) 75%);"></div>
+                <div class="user-dot" style="position:absolute; left:50%; top:50%; width: 18px; height: 18px; background: #0066CC; border-radius: 50%; border: 3px solid white; box-shadow: 0 2px 8px rgba(0,0,0,0.30); transform: translate(-50%, -50%);"></div>
             </div>`;
 
         if (userMarker) {
@@ -1034,7 +1050,7 @@ function updateMap() {
             const rotor = el.querySelector('.user-heading-rotor');
             if (rotor) {
                 rotor.style.transform = `translate(-50%, -50%) rotate(${smoothedHeading ?? currentHeading ?? 0}deg)`;
-                rotor.style.opacity = (currentHeading == null && smoothedHeading == null) ? '0.5' : '1';
+                rotor.style.opacity = shouldShowCone() ? '1' : '0';
             }
         }
 
