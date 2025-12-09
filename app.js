@@ -702,7 +702,8 @@ function startGeoWatch() {
 // Initialize device orientation sensors (requires gesture on iOS 13+)
 function initHeadingSensors() {
     // iOS 13+: request permission on user gesture; allow multiple attempts
-    const tryRequestPermission = async () => {
+    // Expose a reusable function so we can call it from various UI interactions
+    async function requestCompassPermission() {
         let granted = false;
         try {
             if (window.DeviceOrientationEvent && typeof DeviceOrientationEvent.requestPermission === 'function') {
@@ -727,19 +728,28 @@ function initHeadingSensors() {
         if (granted) {
             orientationPermissionGranted = true;
             attachOrientationListener();
+            if (enableCompassBtn) enableCompassBtn.classList.add('hidden');
         } else {
             // Keep the UI button visible for another try
             if (enableCompassBtn) enableCompassBtn.classList.remove('hidden');
         }
-    };
+        return granted;
+    }
+    // Expose globally so other modules/UI can trigger it (e.g., map container)
+    try { window.requestCompassPermission = requestCompassPermission; } catch {}
 
-    if (locateBtn) locateBtn.addEventListener('click', tryRequestPermission);
+    if (locateBtn) locateBtn.addEventListener('click', requestCompassPermission);
     if (enableCompassBtn) enableCompassBtn.addEventListener('click', () => {
-        tryRequestPermission();
+        requestCompassPermission();
     });
-    // Do not use once: true so user can retry if they toggled Safari settings
-    window.addEventListener('touchstart', tryRequestPermission, { passive: true });
-    window.addEventListener('click', tryRequestPermission);
+    // First-chance: capture the very first gesture anywhere on the page
+    // This maximizes the chance iOS treats the call as a direct user-activation.
+    document.addEventListener('pointerdown', requestCompassPermission, { capture: true, once: true });
+    document.addEventListener('touchstart', requestCompassPermission, { capture: true, once: true });
+    document.addEventListener('keydown', requestCompassPermission, { capture: true, once: true });
+    // Retry hooks: allow subsequent attempts if the user changes Safari settings mid-session
+    window.addEventListener('touchstart', requestCompassPermission, { passive: true });
+    window.addEventListener('click', requestCompassPermission);
 
     // For browsers that don't require permission
     if (window.DeviceOrientationEvent && typeof DeviceOrientationEvent.requestPermission !== 'function') {
