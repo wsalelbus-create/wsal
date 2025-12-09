@@ -28,9 +28,16 @@
     -webkit-tap-highlight-color: transparent;
 }
 
+html {
+    height: 100%;
+    overflow: hidden;              /* fully lock viewport scrolling */
+    overscroll-behavior: none;     /* prevent rubber-band in modern browsers */
+    background: rgb(64, 115, 148); /* unify off-screen background */
+}
+
 body {
     font-family: 'Outfit', sans-serif;
-    background: #f2f2f7;
+    background: rgb(64, 115, 148); /* unify off-screen background */
     color: var(--text-main);
     width: 100vw;
     min-height: 100vh;
@@ -49,7 +56,8 @@ body {
     min-height: 100dvh;  /* dynamic viewport height on mobile */
     height: 100dvh;
     /* Allow container to grow */
-    position: relative;
+    position: fixed;     /* pin to viewport to avoid any root scroll */
+    inset: 0;            /* top:0; right:0; bottom:0; left:0 */
     background: #e5e5ea;
     /* Extend behind status bar */
     margin-top: 0;
@@ -340,6 +348,8 @@ body {
     /* Safe area for bottom */
     overflow-y: auto;               /* scroll inside panel */
     -webkit-overflow-scrolling: touch; /* momentum scroll on iOS */
+    overscroll-behavior: contain;   /* don't chain to viewport */
+    touch-action: pan-y;            /* allow vertical scroll gestures */
     position: relative;
     transition: min-height 0.3s ease;
     /* Smooth resize */
@@ -501,6 +511,7 @@ body {
     display: flex;
     flex-direction: column;
     animation: slideUp 0.3s ease;
+    overscroll-behavior: contain;   /* prevent chaining from modal to viewport */
 }
 
 .modal-header {
@@ -550,6 +561,9 @@ body {
     flex: 1;
     overflow-y: auto;
     padding: 0 16px 20px;
+    -webkit-overflow-scrolling: touch; /* smooth list scroll */
+    overscroll-behavior: contain;      /* no viewport bounce when list hits edges */
+    touch-action: pan-y;
 }
 
 .station-list-item {
