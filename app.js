@@ -702,12 +702,19 @@ function initHeadingSensors() {
         if (window.DeviceOrientationEvent && typeof DeviceOrientationEvent.requestPermission === 'function') {
             DeviceOrientationEvent.requestPermission().then(state => {
                 if (state === 'granted') attachOrientationListener();
-            }).catch(() => {/* ignore */});
+                else console.warn('DeviceOrientation permission not granted:', state);
+            }).catch((e) => { console.warn('DeviceOrientation permission error', e); });
+        }
+        if (window.DeviceMotionEvent && typeof DeviceMotionEvent.requestPermission === 'function') {
+            DeviceMotionEvent.requestPermission().then(state => {
+                if (state !== 'granted') console.warn('DeviceMotion permission not granted:', state);
+            }).catch((e) => { console.warn('DeviceMotion permission error', e); });
         }
     };
 
     if (locateBtn) locateBtn.addEventListener('click', tryRequestPermission, { once: true });
     window.addEventListener('touchstart', tryRequestPermission, { once: true });
+    window.addEventListener('click', tryRequestPermission, { once: true });
 
     // For browsers that don't require permission
     if (window.DeviceOrientationEvent && typeof DeviceOrientationEvent.requestPermission !== 'function') {
@@ -719,6 +726,8 @@ function attachOrientationListener() {
     if (deviceOrientationActive) return;
     deviceOrientationActive = true;
     window.addEventListener('deviceorientation', handleDeviceOrientation, true);
+    // Some Safari builds dispatch deviceorientationabsolute instead
+    window.addEventListener('deviceorientationabsolute', handleDeviceOrientation, true);
 }
 
 function handleDeviceOrientation(e) {
@@ -871,11 +880,12 @@ function updateMap() {
         const markerHtml = `
             <div class="user-orientation">
                 <div class="user-heading-rotor" style="position:absolute; left:50%; top:50%; transform: translate(-50%, -50%) rotate(${currentHeading ?? 0}deg); opacity:${currentHeading==null?0:1};">
-                    <svg width="56" height="56" viewBox="0 0 56 56" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M28 28 L28 6 L40 22 Z" fill="rgba(0,106,204,0.25)" stroke="rgba(0,106,204,0.45)" stroke-width="1.5"/>
+                    <svg width="100" height="100" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" style="overflow: visible;">
+                        <!-- Large symmetric cone: tip towards top, base around center -->
+                        <path d="M50 50 L32 6 L68 6 Z" fill="rgba(0,106,204,0.28)" stroke="rgba(0,106,204,0.55)" stroke-width="2"/>
                     </svg>
                 </div>
-                <div class="user-dot" style="position:absolute; left:50%; top:50%; width: 20px; height: 20px; background: #0066CC; border-radius: 50%; border: 3px solid white; box-shadow: 0 2px 8px rgba(0,0,0,0.3); transform: translate(-50%, -50%);"></div>
+                <div class="user-dot" style="position:absolute; left:50%; top:50%; width: 18px; height: 18px; background: #0066CC; border-radius: 50%; border: 3px solid white; box-shadow: 0 2px 8px rgba(0,0,0,0.3); transform: translate(-50%, -50%);"></div>
             </div>`;
 
         if (userMarker) {
@@ -886,8 +896,8 @@ function updateMap() {
                 icon: L.divIcon({
                     className: 'custom-marker user-orientation-icon',
                     html: markerHtml,
-                    iconSize: [56, 56],
-                    iconAnchor: [28, 28]
+                    iconSize: [100, 100],
+                    iconAnchor: [50, 50]
                 })
             }).addTo(map);
         }
