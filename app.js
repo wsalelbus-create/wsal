@@ -611,6 +611,9 @@ function initGeolocation() {
 
     // Get fresh geolocation
     refreshGeolocation();
+    // Also start continuous watch immediately so heading/position updates begin
+    // without requiring a manual press on the locate button.
+    startGeoWatch();
 }
 
 // Refresh geolocation (can be called separately)
