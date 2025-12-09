@@ -692,3 +692,21 @@ body {
 .qa-icon { display: flex; align-items: center; justify-content: center; }
 .qa-icon svg { width: 32px; height: 32px; }
 .qa-label { font-size: 0.8rem; font-weight: 700; }
+
+/* =============================
+   CITY SKYLINE BACKDROP (Algiers-inspired)
+   ============================= */
+.skyline-bg {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 140px;                 /* skyline band height */
+    pointer-events: none;          /* non-interactive */
+    z-index: 0;                    /* behind panel content */
+}
+.skyline-bg svg { width: 100%; height: 100%; display: block; }
+.arrivals-panel .quick-actions-panel,
+.arrivals-panel .routes-header,
+.arrivals-panel .routes-list,
+.arrivals-panel .version-footer { position: relative; z-index: 1; }
