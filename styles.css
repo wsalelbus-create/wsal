@@ -86,11 +86,9 @@ body {
     /* Leaflet needs explicit height */
     background: #f2f2f7;
     /* Solid background - no transparency */
-    /* Performance optimizations */
-    transform: translate3d(0, 0, 0);
-    /* Force GPU acceleration */
-    will-change: transform;
-    /* Hint browser for optimization */
+    /* IMPORTANT: Do NOT apply CSS transforms to the map container.
+       Leaflet relies on specific transform chains; adding transforms
+       here causes marker/overlay positions to drift from coordinates. */
 }
 
 /* Header Floating on Map */
