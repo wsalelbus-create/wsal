@@ -171,7 +171,7 @@ let smoothedHeading = null;       // Smoothed heading for UI
 const HEADING_SMOOTH = 0.25;      // 0..1 (higher = snappier)
 let geoWatchId = null;            // Geolocation watch ID
 let deviceOrientationActive = false;
-let orientationPermissionRequested = false;
+let orientationPermissionGranted = false;
 
 // --- DOM Elements ---
 const stationSelectorTrigger = document.getElementById('station-selector-trigger');
@@ -185,6 +185,7 @@ const actionBusBtn = document.getElementById('action-bus');
 const actionWalkBtn = document.getElementById('action-walk');
 const walkingBadgeEl = document.getElementById('walking-time');
 const locateBtn = document.getElementById('locate-btn');
+const enableCompassBtn = document.getElementById('enable-compass-btn');
 
 // Calculate total distance for a route path
 function calculateRouteDistance(waypoints) {
@@ -697,26 +698,45 @@ function startGeoWatch() {
 
 // Initialize device orientation sensors (requires gesture on iOS 13+)
 function initHeadingSensors() {
-    // iOS 13+: request permission upon first gesture (locate button or first tap)
-    const tryRequestPermission = () => {
-        if (orientationPermissionRequested) return;
-        orientationPermissionRequested = true;
-        if (window.DeviceOrientationEvent && typeof DeviceOrientationEvent.requestPermission === 'function') {
-            DeviceOrientationEvent.requestPermission().then(state => {
-                if (state === 'granted') attachOrientationListener();
-                else console.warn('DeviceOrientation permission not granted:', state);
-            }).catch((e) => { console.warn('DeviceOrientation permission error', e); });
+    // iOS 13+: request permission on user gesture; allow multiple attempts
+    const tryRequestPermission = async () => {
+        let granted = false;
+        try {
+            if (window.DeviceOrientationEvent && typeof DeviceOrientationEvent.requestPermission === 'function') {
+                const s = await DeviceOrientationEvent.requestPermission();
+                if (s === 'granted') granted = true; else console.warn('DeviceOrientation permission:', s);
+            } else {
+                // Non-iOS or older Safari: assume allowed
+                granted = true;
+            }
+        } catch (e) {
+            console.warn('DeviceOrientation permission error', e);
         }
-        if (window.DeviceMotionEvent && typeof DeviceMotionEvent.requestPermission === 'function') {
-            DeviceMotionEvent.requestPermission().then(state => {
-                if (state !== 'granted') console.warn('DeviceMotion permission not granted:', state);
-            }).catch((e) => { console.warn('DeviceMotion permission error', e); });
+        try {
+            if (window.DeviceMotionEvent && typeof DeviceMotionEvent.requestPermission === 'function') {
+                const s2 = await DeviceMotionEvent.requestPermission();
+                if (s2 === 'granted') granted = true; // either grants is fine
+                else console.warn('DeviceMotion permission:', s2);
+            }
+        } catch (e) {
+            console.warn('DeviceMotion permission error', e);
+        }
+        if (granted) {
+            orientationPermissionGranted = true;
+            attachOrientationListener();
+        } else {
+            // Keep the UI button visible for another try
+            if (enableCompassBtn) enableCompassBtn.classList.remove('hidden');
         }
     };
 
-    if (locateBtn) locateBtn.addEventListener('click', tryRequestPermission, { once: true });
-    window.addEventListener('touchstart', tryRequestPermission, { once: true });
-    window.addEventListener('click', tryRequestPermission, { once: true });
+    if (locateBtn) locateBtn.addEventListener('click', tryRequestPermission);
+    if (enableCompassBtn) enableCompassBtn.addEventListener('click', () => {
+        tryRequestPermission();
+    });
+    // Do not use once: true so user can retry if they toggled Safari settings
+    window.addEventListener('touchstart', tryRequestPermission, { passive: true });
+    window.addEventListener('click', tryRequestPermission);
 
     // For browsers that don't require permission
     if (window.DeviceOrientationEvent && typeof DeviceOrientationEvent.requestPermission !== 'function') {
@@ -727,9 +747,12 @@ function initHeadingSensors() {
 function attachOrientationListener() {
     if (deviceOrientationActive) return;
     deviceOrientationActive = true;
+    console.log('Attaching deviceorientation listeners');
     window.addEventListener('deviceorientation', handleDeviceOrientation, true);
     // Some Safari builds dispatch deviceorientationabsolute instead
     window.addEventListener('deviceorientationabsolute', handleDeviceOrientation, true);
+    // Hide enable button once active
+    if (enableCompassBtn) enableCompassBtn.classList.add('hidden');
 }
 
 function handleDeviceOrientation(e) {
@@ -791,13 +814,51 @@ function computeHeadingFromEvent(e) {
         } else if (typeof e.alpha === 'number' && isFinite(e.alpha)) {
             // If absolute flag present and true, alpha is true-north referenced in some browsers.
             // Use 360 - alpha to convert to compass bearing (clockwise from North)
-            heading = 360 - e.alpha;
+            if (e.absolute === true) {
+                heading = 360 - e.alpha;
+            } else if (typeof e.beta === 'number' && typeof e.gamma === 'number') {
+                // Fallback: derive heading from Euler angles (alpha/beta/gamma)
+                heading = compassHeadingFromEuler(e.alpha, e.beta, e.gamma);
+            } else {
+                heading = 360 - e.alpha; // best-effort fallback
+            }
         }
 
         if (heading == null) return null;
         heading = normalizeBearing(heading + screenOrientationOffset());
+        // Debug log a few early samples
+        if (!computeHeadingFromEvent._logged) {
+            console.log('Heading sample', { heading, eAlpha: e.alpha, wkh: e.webkitCompassHeading, acc: e.webkitCompassAccuracy });
+            computeHeadingFromEvent._logged = true;
+            setTimeout(() => { computeHeadingFromEvent._logged = false; }, 2000);
+        }
         return heading;
     } catch { return null; }
+}
+
+// Compute compass heading from Euler angles (alpha, beta, gamma)
+// Adapted from community/MDN formula
+function compassHeadingFromEuler(alpha, beta, gamma) {
+    const degtorad = Math.PI / 180;
+    const x = beta  * degtorad; // beta: rotation around X axis
+    const y = gamma * degtorad; // gamma: rotation around Y axis
+    const z = alpha * degtorad; // alpha: rotation around Z axis
+
+    const cX = Math.cos(x);
+    const cY = Math.cos(y);
+    const cZ = Math.cos(z);
+    const sX = Math.sin(x);
+    const sY = Math.sin(y);
+    const sZ = Math.sin(z);
+
+    // Calculate Vx and Vy components
+    const Vx = - cZ * sY - sZ * sX * cY;
+    const Vy = - sZ * sY + cZ * sX * cY;
+
+    // Calculate compass heading
+    let heading = Math.atan2(Vx, Vy);
+    if (heading < 0) heading += 2 * Math.PI;
+    return heading * (180 / Math.PI);
 }
 
 // --- Station Selector Modal ---
@@ -918,20 +979,20 @@ function updateMap() {
         // Add or update user marker with heading cone + dot
         const markerHtml = `
             <div class="user-orientation">
-                <div class="user-heading-rotor" style="position:absolute; left:50%; top:50%; transform: translate(-50%, -50%) rotate(${currentHeading ?? 0}deg); opacity:${currentHeading==null?0:1};">
-                    <svg width="120" height="120" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg" style="overflow: visible;">
+                <div class="user-heading-rotor" style="position:absolute; left:50%; top:50%; transform: translate(-50%, -50%) rotate(${currentHeading ?? 0}deg); opacity:${currentHeading==null?0.5:1};">
+                    <svg width="140" height="140" viewBox="0 0 140 140" xmlns="http://www.w3.org/2000/svg" style="overflow: visible;">
                         <defs>
-                            <linearGradient id="coneGrad" x1="0" y1="1" x2="0" y2="0">
-                                <stop offset="0%" stop-color="rgba(0,106,204,0.00)"/>
-                                <stop offset="55%" stop-color="rgba(0,106,204,0.20)"/>
-                                <stop offset="100%" stop-color="rgba(0,106,204,0.35)"/>
-                            </linearGradient>
+                            <radialGradient id="coneGrad" cx="0.5" cy="0.6" r="0.8">
+                                <stop offset="0%" stop-color="rgba(0,106,204,0.35)"/>
+                                <stop offset="65%" stop-color="rgba(0,106,204,0.18)"/>
+                                <stop offset="100%" stop-color="rgba(0,106,204,0.00)"/>
+                            </radialGradient>
                         </defs>
-                        <!-- Filled wedge (no base stroke) -->
-                        <path d="M60 60 L36 8 L84 8 Z" fill="url(#coneGrad)" stroke="none"/>
+                        <!-- Filled wedge (no base stroke), longer and slightly narrower -->
+                        <path d="M70 70 L52 4 L88 4 Z" fill="url(#coneGrad)" stroke="none"/>
                         <!-- Edge strokes only (no closed base) -->
-                        <line x1="60" y1="60" x2="36" y2="8" stroke="rgba(0,106,204,0.55)" stroke-width="2.2" stroke-linecap="round"/>
-                        <line x1="60" y1="60" x2="84" y2="8" stroke="rgba(0,106,204,0.55)" stroke-width="2.2" stroke-linecap="round"/>
+                        <line x1="70" y1="70" x2="52" y2="4" stroke="rgba(0,106,204,0.50)" stroke-width="2.2" stroke-linecap="round"/>
+                        <line x1="70" y1="70" x2="88" y2="4" stroke="rgba(0,106,204,0.50)" stroke-width="2.2" stroke-linecap="round"/>
                     </svg>
                 </div>
                 <div class="user-dot" style="position:absolute; left:50%; top:50%; width: 18px; height: 18px; background: #0066CC; border-radius: 50%; border: 3px solid white; box-shadow: 0 2px 8px rgba(0,0,0,0.3); transform: translate(-50%, -50%);"></div>
@@ -945,8 +1006,8 @@ function updateMap() {
                 icon: L.divIcon({
                     className: 'custom-marker user-orientation-icon',
                     html: markerHtml,
-                    iconSize: [120, 120],
-                    iconAnchor: [60, 60]
+                    iconSize: [140, 140],
+                    iconAnchor: [70, 70]
                 })
             }).addTo(map);
         }
@@ -960,7 +1021,7 @@ function updateMap() {
             const rotor = el.querySelector('.user-heading-rotor');
             if (rotor) {
                 rotor.style.transform = `translate(-50%, -50%) rotate(${smoothedHeading ?? currentHeading ?? 0}deg)`;
-                rotor.style.opacity = (currentHeading == null && smoothedHeading == null) ? '0' : '1';
+                rotor.style.opacity = (currentHeading == null && smoothedHeading == null) ? '0.5' : '1';
             }
         }
 
@@ -1228,6 +1289,14 @@ initGeolocation();
 if (typeof setUIMode === 'function') {
     setUIMode('idle');
 }
+
+// Show Enable Compass button on iOS Safari where permission is often required
+try {
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+    if (isIOS && enableCompassBtn) {
+        enableCompassBtn.classList.remove('hidden');
+    }
+} catch {}
 
 // Initialize weather module (handles its own display updates)
 if (window.WeatherModule) {
