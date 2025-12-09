@@ -1008,10 +1008,11 @@ function updateMap() {
                 <div class="user-heading-rotor" style="position:absolute; left:50%; top:50%; transform: translate(-50%, -50%) rotate(${currentHeading ?? 0}deg); opacity:${showCone?1:0};">
                     <svg width="140" height="140" viewBox="0 0 140 140" xmlns="http://www.w3.org/2000/svg" style="overflow: visible;">
                         <defs>
-                            <!-- Green fog only on lower half (near center). Absolute units for precise fade. -->
+                            <!-- Green fog (stronger at base, fades by mid-cone) -->
                             <linearGradient id="coneGrad" x1="70" y1="70" x2="70" y2="34" gradientUnits="userSpaceOnUse">
-                                <stop offset="0%"  stop-color="rgba(53,199,89,0.28)"/>
-                                <stop offset="55%" stop-color="rgba(53,199,89,0.14)"/>
+                                <stop offset="0%"  stop-color="rgba(53,199,89,0.50)"/>
+                                <stop offset="20%" stop-color="rgba(53,199,89,0.38)"/>
+                                <stop offset="60%" stop-color="rgba(53,199,89,0.10)"/>
                                 <stop offset="100%" stop-color="rgba(53,199,89,0.00)"/>
                             </linearGradient>
                         </defs>
