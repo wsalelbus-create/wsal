@@ -473,6 +473,23 @@ body {
     border-radius: 10px;
 }
 
+/* Bus header (icon + label) left-aligned like Citymapper */
+.routes-header .bus-head {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--text-main);
+}
+.routes-header .bus-head-icon {
+    width: 20px;
+    height: 20px;
+    color: var(--text-main);
+}
+.routes-header .bus-head-text {
+    font-weight: 800;
+    font-size: 1.05rem;
+}
+
 .routes-list {
     display: flex;
     flex-direction: column;
