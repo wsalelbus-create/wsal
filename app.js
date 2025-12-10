@@ -1229,30 +1229,18 @@ function setUIMode(mode) {
 
     // Toggle arrivals panel visibility
     if (routesHeaderEl) {
-        if (mode === 'bus') {
-            routesHeaderEl.classList.remove('hidden');
-            // Render Bus header (icon + text) aligned left, Live on right
-            routesHeaderEl.innerHTML = `
-                <div class="bus-head">
-                    <svg class="bus-head-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <rect x="4" y="5" width="16" height="12" rx="2" fill="currentColor"/>
-                        <rect x="7" y="8" width="10" height="4" fill="white"/>
-                        <circle cx="8" cy="15" r="1.4" fill="white"/>
-                        <circle cx="16" cy="15" r="1.4" fill="white"/>
-                    </svg>
-                    <span class="bus-head-text">Bus</span>
-                </div>
-                <span class="live-indicator">● Live</span>
-            `;
-        } else {
-            routesHeaderEl.classList.add('hidden');
-            // Restore default content when hidden (optional)
-            routesHeaderEl.innerHTML = `<h3>Next Arrivals</h3><span class="live-indicator">● Live</span>`;
-        }
+        if (mode === 'bus') routesHeaderEl.classList.remove('hidden');
+        else routesHeaderEl.classList.add('hidden');
     }
     if (routesListEl) {
         if (mode === 'bus') routesListEl.classList.remove('hidden');
         else routesListEl.classList.add('hidden');
+    }
+
+    // Quick actions: visible only on home (idle)
+    if (quickActionsEl) {
+        if (mode === 'idle') quickActionsEl.classList.remove('hidden');
+        else quickActionsEl.classList.add('hidden');
     }
 
     // Panel background: always green in all modes
@@ -1287,11 +1275,6 @@ function setUIMode(mode) {
     if (arabicTitleEl) {
         if (mode === 'idle') arabicTitleEl.classList.remove('hidden');
         else arabicTitleEl.classList.add('hidden');
-    }
-    // Quick actions visible only on idle (hide in bus/walk)
-    if (quickActionsEl) {
-        if (mode === 'idle') quickActionsEl.classList.remove('hidden');
-        else quickActionsEl.classList.add('hidden');
     }
 }
 
