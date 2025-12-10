@@ -124,6 +124,7 @@ body {
     padding: 6px 12px;
     border-radius: 20px;
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    margin-top: -3px; /* Nudge Arabic badge up by 3px */
 }
 
 /* Settings badge (gear) placed below the Arabic title */
@@ -145,8 +146,8 @@ body {
 
 /* Gear icon size inside the settings badge */
 .settings-badge svg {
-    width: 20px;
-    height: 20px;
+    width: 24px;
+    height: 24px;
 }
 
 .live-badge {
