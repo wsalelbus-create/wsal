@@ -543,6 +543,20 @@ body {
     text-transform: uppercase;
 }
 
+/* Stack for live signal icon above minutes */
+.route-time .time-stack {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    color: var(--primary-color); /* syncs svg stroke via currentColor with minutes color */
+}
+.route-time .time-stack .live-signal {
+    display: block;
+    margin-bottom: 4px;
+    color: var(--primary-color);
+    opacity: 0.95;
+}
+
 
 /* =========================================
    4. MODALS & UTILS

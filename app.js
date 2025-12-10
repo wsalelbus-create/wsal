@@ -562,8 +562,15 @@ function renderRoutes(station) {
         let timeDisplayHtml = '';
         if (arrival.status === 'Active') {
             timeDisplayHtml = `
-                <div class="time-big">${arrival.minutes}</div>
-                <div class="time-unit">min</div>
+                <div class="time-stack">
+                    <svg class="live-signal" width="22" height="14" viewBox="0 0 24 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M2 6C6 2 18 2 22 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                        <path d="M5 8C8.5 5.5 15.5 5.5 19 8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                        <path d="M9 10C10.5 9 13.5 9 15 10" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                    </svg>
+                    <div class="time-big">${arrival.minutes}</div>
+                    <div class="time-unit">min</div>
+                </div>
             `;
         } else {
             timeDisplayHtml = `
