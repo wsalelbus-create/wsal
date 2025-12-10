@@ -976,9 +976,10 @@ function initMap() {
 function updateMap() {
     if (!map) return;
 
-    // Clear existing layers
+    // Clear existing layers except the persistent user marker
     map.eachLayer(layer => {
-        if (layer instanceof L.Marker || layer instanceof L.Polyline) {
+        if ((layer instanceof L.Marker || layer instanceof L.Polyline)) {
+            if (userMarker && layer === userMarker) return; // keep user marker persistent
             map.removeLayer(layer);
         }
     });
@@ -1004,8 +1005,8 @@ function updateMap() {
         const showCone = shouldShowCone();
         // Add or update user marker with heading cone + halo + dot
         const markerHtml = `
-            <div class="user-orientation" style="position: relative; pointer-events: none;">
-                <div class="user-heading-rotor" style="position:absolute; left:50%; top:50%; transform: translate(-50%, -50%) rotate(${currentHeading ?? 0}deg); opacity:${showCone?1:0};">
+            <div class="user-orientation" style="position: relative; pointer-events: none; width: 100%; height: 100%;">
+                <div class="user-heading-rotor" style="position:absolute; left:50%; top:50%; transform: translate(-50%, -50%) rotate(${currentHeading ?? 0}deg); transform-origin: 50% 50%; opacity:${showCone?1:0};">
                     <svg width="140" height="140" viewBox="0 0 140 140" xmlns="http://www.w3.org/2000/svg" style="overflow: visible;">
                         <defs>
                             <!-- Green fog (bold until mid-cone, then fades) -->

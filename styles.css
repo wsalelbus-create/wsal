@@ -86,8 +86,11 @@ body {
     /* Leaflet needs explicit height */
     background: #f2f2f7;
     /* Solid background - no transparency */
-    /* Do NOT apply CSS transforms to the map container — it breaks Leaflet's
-       internal positioning and causes markers to drift during pan/zoom. */
+    /* Performance optimizations */
+    transform: translate3d(0, 0, 0);
+    /* Force GPU acceleration */
+    will-change: transform;
+    /* Hint browser for optimization */
 }
 
 /* Header Floating on Map */
