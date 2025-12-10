@@ -55,6 +55,9 @@ body {
     margin-top: 0;
 }
 
+/* Utility */
+.hidden { display: none !important; }
+
 /* =========================================
    1. TOP MAP SECTION (60%)
    ========================================= */
@@ -223,6 +226,26 @@ body {
 .walking-time-badge #walk-time-text {
     color: #333;
     font-weight: 700;
+}
+
+/* Calorie Badge (appears under walking badge) */
+.calorie-badge {
+    background: white;
+    color: #333;
+    padding: 6px 10px;
+    border-radius: 16px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-weight: 700;
+    font-size: 0.9rem;
+    align-self: flex-end; /* right-align within the controls stack */
+}
+.calorie-badge .cal-icon {
+    color: var(--primary-color);
+    width: 18px;
+    height: 18px;
 }
 
 /* Map Controls Stack (Location & Compass) */

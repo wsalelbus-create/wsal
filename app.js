@@ -182,6 +182,8 @@ let geoWatchId = null;            // Geolocation watch ID
 let deviceOrientationActive = false;
 let orientationPermissionGranted = false;
 let hasHeadingFix = false;        // True after first heading value observed
+// Simple calorie model: ~55 kcal per km (average adult brisk walk)
+const KCAL_PER_KM = 55;
 
 // --- DOM Elements ---
 const stationSelectorTrigger = document.getElementById('station-selector-trigger');
@@ -194,6 +196,8 @@ const quickActionsEl = document.getElementById('quick-actions');
 const actionBusBtn = document.getElementById('action-bus');
 const actionWalkBtn = document.getElementById('action-walk');
 const walkingBadgeEl = document.getElementById('walking-time');
+const calorieBadgeEl = document.getElementById('calorie-badge');
+const calorieTextEl = document.getElementById('calorie-text');
 const locateBtn = document.getElementById('locate-btn');
 const enableCompassBtn = document.getElementById('enable-compass-btn');
 
@@ -1160,6 +1164,7 @@ async function renderOsrmRoute(fromLat, fromLon, toLat, toLon) {
             color: '#00d2ff', weight: 4, opacity: 0.7, dashArray: '10, 10', lineCap: 'round'
         }).addTo(map);
         if (walkTimeText) walkTimeText.textContent = '—';
+        if (calorieTextEl) calorieTextEl.textContent = '— kcal';
         return;
     }
 
@@ -1186,19 +1191,26 @@ async function renderOsrmRoute(fromLat, fromLon, toLat, toLon) {
         const mins = Math.max(1, Math.ceil(route.duration / 60));
         walkTimeText.textContent = `${mins}'`;
     }
+    // Update calorie estimate based on distance
+    if (typeof route.distance === 'number' && calorieTextEl) {
+        const km = Math.max(0, route.distance / 1000);
+        const kcal = Math.max(1, Math.round(km * KCAL_PER_KM));
+        calorieTextEl.textContent = `${kcal} kcal`;
+    }
 }
 
 // --- UI Mode switching (idle | walk | bus) ---
 function setUIMode(mode) {
     uiMode = mode;
 
-    // Toggle map walking badge visibility
+    // Toggle map walking badge and calorie badge visibility
     if (walkingBadgeEl) {
-        if (mode === 'walk') {
-            walkingBadgeEl.classList.remove('hidden');
-        } else {
-            walkingBadgeEl.classList.add('hidden');
-        }
+        if (mode === 'walk') walkingBadgeEl.classList.remove('hidden');
+        else walkingBadgeEl.classList.add('hidden');
+    }
+    if (calorieBadgeEl) {
+        if (mode === 'walk') calorieBadgeEl.classList.remove('hidden');
+        else calorieBadgeEl.classList.add('hidden');
     }
 
     // Toggle arrivals panel visibility
