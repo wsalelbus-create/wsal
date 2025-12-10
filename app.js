@@ -200,6 +200,7 @@ const calorieBadgeEl = document.getElementById('calorie-badge');
 const calorieTextEl = document.getElementById('calorie-text');
 const settingsBtn = document.getElementById('settings-btn');
 const backBtn = document.getElementById('back-btn');
+const arabicTitleEl = document.querySelector('.arabic-title');
 const locateBtn = document.getElementById('locate-btn');
 const enableCompassBtn = document.getElementById('enable-compass-btn');
 
@@ -1252,6 +1253,11 @@ function setUIMode(mode) {
     if (backBtn) {
         if (mode === 'idle') backBtn.classList.add('hidden');
         else backBtn.classList.remove('hidden');
+    }
+    // Arabic logo badge only on home (idle)
+    if (arabicTitleEl) {
+        if (mode === 'idle') arabicTitleEl.classList.remove('hidden');
+        else arabicTitleEl.classList.add('hidden');
     }
 }
 

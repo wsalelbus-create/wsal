@@ -169,6 +169,10 @@ body {
     display: inline-flex;
     align-items: center;
     justify-content: center;
+    position: absolute;
+    top: 0;    /* header is already positioned at safe-area offset */
+    left: 0;   /* header has left: 16px; keep 16px from viewport */
+    z-index: 200; /* same overlay layer as walking badge */
 }
 .back-badge svg { width: 20px; height: 20px; }
 .back-badge:active { transform: scale(0.98); }
