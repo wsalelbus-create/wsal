@@ -456,7 +456,8 @@ body {
     display: flex;
     justify-content: flex-start; /* left align */
     align-items: center;
-    margin-bottom: 4px;             /* reduce gap under badges */
+    margin-top: 10px;               /* space from station selector area */
+    margin-bottom: 10px;            /* space above first card */
     padding: 0 16px;                /* align with cards content */
 }
 
@@ -479,9 +480,9 @@ body {
     display: inline-flex;
     align-items: center;
     gap: 8px;
-    color: var(--text-main);
+    color: #fff; /* white like Citymapper header */
     font-weight: 800;
-    font-size: 1.05rem;
+    font-size: 1.1rem; /* match home scale */
 }
 .mode-bus-icon {
     color: var(--text-main);
@@ -490,13 +491,14 @@ body {
 }
 .mode-bus-text {
     font-weight: 800;
-    font-size: 1.05rem;
+    font-size: 1.1rem;
+    color: #fff;
 }
 
 .routes-list {
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: 14px; /* slightly more space between cards */
     padding-bottom: 20px;
 }
 
