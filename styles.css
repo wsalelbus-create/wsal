@@ -482,7 +482,7 @@ body {
     gap: 8px;
     color: #fff; /* white like Citymapper header */
     font-weight: 800;
-    font-size: 0.8rem; /* match home quick action label */
+    font-size: 1.1rem; /* revert to larger size */
 }
 .mode-bus-icon {
     color: var(--text-main);
@@ -491,7 +491,7 @@ body {
 }
 .mode-bus-text {
     font-weight: 800;
-    font-size: 0.8rem; /* same as home Bus label */
+    font-size: 1.1rem; /* revert to larger size */
     color: #fff;
 }
 
