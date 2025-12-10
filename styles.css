@@ -819,7 +819,7 @@ body {
     flex-direction: column;         /* icon above label */
     align-items: center;
     justify-content: center;
-    gap: 6px;
+    gap: 4px;                       /* bring label closer to icon */
     font-weight: 800;
     letter-spacing: 0.2px;
     box-shadow: none;               /* fully flat */
@@ -830,8 +830,9 @@ body {
 .qa-icon { display: flex; align-items: center; justify-content: center; }
 .qa-icon svg { width: 32px; height: 32px; }
 .qa-icon-walk { color: var(--primary-color); }
-.qa-icon-walk svg { width: 30px; height: 30px; }
-.qa-label { font-size: 0.8rem; font-weight: 700; }
+.qa-icon-walk svg { width: 29px; height: 29px; transform: translateY(1px); }
+.qa-icon-bus svg { transform: translateY(1px); }
+.qa-label { font-size: 0.8rem; font-weight: 700; line-height: 1; transform: translateY(-1px); }
 
 /* =============================
    CITY SKYLINE BACKDROP (Algiers-inspired)
