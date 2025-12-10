@@ -1,7 +1,7 @@
 :root {
     --primary-color: #35C759;
     /* Citymapper Green */
-    --etusa-blue: #0066CC;
+    --etusa-blue: #00d2ff;
     /* ETUSA Blue for Buses */
     --accent-color: #35C759;
     /* Green accent */
@@ -528,7 +528,7 @@ body {
 }
 
 .route-number {
-    background: #00d2ff; /* original cyan for arrivals badge */
+    background: var(--etusa-blue);
     color: white;
     font-weight: 800;
     padding: 6px 10px;
@@ -829,6 +829,7 @@ body {
 .qa-btn:active { transform: scale(0.98); }
 .qa-icon { display: flex; align-items: center; justify-content: center; }
 .qa-icon svg { width: 32px; height: 32px; }
+.qa-icon-walk { color: var(--primary-color); }
 .qa-label { font-size: 0.8rem; font-weight: 700; }
 
 /* =============================
