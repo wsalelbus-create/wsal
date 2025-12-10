@@ -22,7 +22,7 @@
     /* Arrivals panel blue (for back badge) */
     --arrivals-blue: rgb(64, 115, 148);
     /* Live radar orange (Citymapper-style) */
-    --live-orange: #FFA500;
+    --live-orange: #FFC400;
 }
 
 * {

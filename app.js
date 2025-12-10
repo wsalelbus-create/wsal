@@ -566,9 +566,9 @@ function renderRoutes(station) {
                     <svg class="live-radar" width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                         <!-- Two arcs (bigger top, smaller bottom) with spacing; rotated ~-50deg via CSS -->
                         <!-- Bigger arc (top) -->
-                        <path d="M3 9 C 9 3 15 3 21 9" stroke="var(--live-orange)" stroke-width="2" stroke-linecap="round"/>
-                        <!-- Smaller arc (bottom), tighter span to be visibly smaller -->
-                        <path d="M11 12 C 12 11.4 12 11.4 13 12" stroke="var(--live-orange)" stroke-width="2" stroke-linecap="round"/>
+                        <path d="M3 9 C 9 3 15 3 21 9" stroke="var(--live-orange)" stroke-width="3" stroke-linecap="round"/>
+                        <!-- Smaller arc (bottom), slightly larger so it doesn't look like a dot -->
+                        <path d="M9.5 12 C 12 10.2 12 10.2 14.5 12" stroke="var(--live-orange)" stroke-width="3" stroke-linecap="round"/>
                     </svg>
                     <div class="time-stack">
                         <div class="time-big">${arrival.minutes}</div>
