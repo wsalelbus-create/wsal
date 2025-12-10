@@ -1164,7 +1164,7 @@ async function renderOsrmRoute(fromLat, fromLon, toLat, toLon) {
             color: '#00d2ff', weight: 4, opacity: 0.7, dashArray: '10, 10', lineCap: 'round'
         }).addTo(map);
         if (walkTimeText) walkTimeText.textContent = '—';
-        if (calorieTextEl) calorieTextEl.textContent = '— kcal';
+        if (calorieTextEl) calorieTextEl.textContent = '— / Kcal';
         return;
     }
 
@@ -1195,7 +1195,7 @@ async function renderOsrmRoute(fromLat, fromLon, toLat, toLon) {
     if (typeof route.distance === 'number' && calorieTextEl) {
         const km = Math.max(0, route.distance / 1000);
         const kcal = Math.max(1, Math.round(km * KCAL_PER_KM));
-        calorieTextEl.textContent = `${kcal} kcal`;
+        calorieTextEl.textContent = `${kcal} / Kcal`;
     }
 }
 
