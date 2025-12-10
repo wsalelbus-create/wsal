@@ -563,10 +563,12 @@ function renderRoutes(station) {
         if (arrival.status === 'Active') {
             timeDisplayHtml = `
                 <div class="time-inline">
-                    <svg class="live-radar" width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <!-- Two arcs (bigger on top, spaced), rotated ~-50deg via CSS -->
-                        <path d="M4 9 C 9 4 15 4 20 9" stroke="var(--live-orange)" stroke-width="2" stroke-linecap="round"/>
-                        <path d="M6 13 C 10.5 9.5 13.5 9.5 18 13" stroke="var(--live-orange)" stroke-width="2" stroke-linecap="round"/>
+                    <svg class="live-radar" width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <!-- Two arcs (bigger top, smaller bottom) with spacing; rotated ~-50deg via CSS -->
+                        <!-- Bigger arc (top) -->
+                        <path d="M3 9 C 9 3 15 3 21 9" stroke="var(--live-orange)" stroke-width="2" stroke-linecap="round"/>
+                        <!-- Smaller arc (bottom), tighter span to be visibly smaller -->
+                        <path d="M11 12 C 12 11.4 12 11.4 13 12" stroke="var(--live-orange)" stroke-width="2" stroke-linecap="round"/>
                     </svg>
                     <div class="time-stack">
                         <div class="time-big">${arrival.minutes}</div>

@@ -533,12 +533,14 @@ body {
 .route-time .time-inline {
     display: inline-flex;
     align-items: flex-start; /* align icon with top of number */
-    gap: 2px; /* almost touching the number */
+    gap: 0; /* touch the number */
 }
 .route-time .live-radar {
     transform: rotate(-50deg);
     transform-origin: center;
     margin-top: 0; /* sit on the same top line as the number */
+    width: 14px;
+    height: 14px;
 }
 
 .time-big {
