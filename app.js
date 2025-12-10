@@ -198,6 +198,8 @@ const actionWalkBtn = document.getElementById('action-walk');
 const walkingBadgeEl = document.getElementById('walking-time');
 const calorieBadgeEl = document.getElementById('calorie-badge');
 const calorieTextEl = document.getElementById('calorie-text');
+const settingsBtn = document.getElementById('settings-btn');
+const backBtn = document.getElementById('back-btn');
 const locateBtn = document.getElementById('locate-btn');
 const enableCompassBtn = document.getElementById('enable-compass-btn');
 
@@ -1241,6 +1243,16 @@ function setUIMode(mode) {
 
     // Update the map for the selected mode
     if (mapInitialized) updateMap();
+
+    // Toggle header badges: settings only on idle; back on walk/bus
+    if (settingsBtn) {
+        if (mode === 'idle') settingsBtn.classList.remove('hidden');
+        else settingsBtn.classList.add('hidden');
+    }
+    if (backBtn) {
+        if (mode === 'idle') backBtn.classList.add('hidden');
+        else backBtn.classList.remove('hidden');
+    }
 }
 
 // --- Event Listeners ---
@@ -1286,6 +1298,11 @@ if (actionBusBtn) {
     actionBusBtn.addEventListener('click', () => {
         setUIMode('bus');
     });
+}
+
+// Back button returns to home (idle)
+if (backBtn) {
+    backBtn.addEventListener('click', () => setUIMode('idle'));
 }
 
 // Compass Button - Simple visual feedback (Leaflet has no bearing by default)
