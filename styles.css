@@ -528,7 +528,7 @@ body {
 }
 
 .route-number {
-    background: var(--etusa-blue);
+    background: #00d2ff; /* original cyan for arrivals badge */
     color: white;
     font-weight: 800;
     padding: 6px 10px;
