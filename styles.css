@@ -485,6 +485,12 @@ body {
 }
 .mode-bus-icon {
     color: var(--text-main);
+    width: 28px;
+    height: 28px;
+}
+.mode-bus-text {
+    font-weight: 800;
+    font-size: 1.05rem;
 }
 
 .routes-list {
