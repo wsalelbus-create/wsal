@@ -117,7 +117,7 @@ function renderBusStations(withDelay = false) {
             arrivalsDiv.innerHTML = `
                 <div class="loading-row">
                     <span class="loading-text">Loading next departures</span>
-                    <span class="spinner-ios" aria-hidden="true"></span>
+                    <div class="loader loader-sm" aria-hidden="true"></div>
                 </div>
             `;
             setTimeout(() => {
