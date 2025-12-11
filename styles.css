@@ -245,8 +245,8 @@ body {
 
 .walking-time-badge .walk-icon {
     color: var(--primary-color);
-    width: 28px;
-    height: 28px;
+    width: 20px;
+    height: 20px;
 }
 
 .walking-time-badge #walk-time-text {
@@ -550,6 +550,18 @@ body {
     display: flex;
     align-items: center;
     justify-content: space-between;
+}
+
+/* Left side of arrival row: chip + destination */
+.route-left {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+}
+.chip-dest {
+    font-weight: 800;
+    color: var(--text-main);
+    font-size: 0.95rem;
 }
 
 .route-chip {

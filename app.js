@@ -89,14 +89,17 @@ function renderBusStations() {
 
             return `
                 <div class="station-arrival-row">
-                    <div class="route-chip">
-                        <svg class="mini-bus" width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <rect x="4" y="5" width="16" height="12" rx="2" fill="#00B2FF"/>
-                            <rect x="7" y="7" width="10" height="5" fill="#E6F2FF"/>
-                            <circle cx="9" cy="16" r="1.3" fill="#00B2FF"/>
-                            <circle cx="15" cy="16" r="1.3" fill="#00B2FF"/>
-                        </svg>
-                        <span class="chip-number">${arrival.number}</span>
+                    <div class="route-left">
+                        <div class="route-chip">
+                            <svg class="mini-bus" width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <rect x="4" y="5" width="16" height="12" rx="2" fill="#00B2FF"/>
+                                <rect x="7" y="7" width="10" height="5" fill="#E6F2FF"/>
+                                <circle cx="9" cy="16" r="1.3" fill="#00B2FF"/>
+                                <circle cx="15" cy="16" r="1.3" fill="#00B2FF"/>
+                            </svg>
+                            <span class="chip-number">${arrival.number}</span>
+                        </div>
+                        <div class="chip-dest">to ${arrival.dest}</div>
                     </div>
                     <div class="route-time">${timeDisplayHtml}</div>
                 </div>
