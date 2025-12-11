@@ -4,72 +4,6 @@ function shouldShowCone() {
         // On iOS 13+, show only when explicit permission granted and we have a heading fix
         return orientationPermissionGranted && hasHeadingFix;
     }
-
-// --- Walk Mode: Pole Stop Marker (zoom-dependent) ---
-function buildPoleMarkerHtml(badge, variant = 'full') {
-    if (variant === 'badge') {
-        const html = `
-            <svg width="24" height="24" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                <!-- Cast shadow for badge (subtle, to bottom-right) -->
-                <polygon points="16,8 21,10 20,12 15,10" fill="rgba(0,0,0,0.16)"/>
-                <g filter="url(#a)" opacity="0.97">
-                    <rect x="3" y="3" width="18" height="18" rx="6" fill="${badge.color}" stroke="#ffffff" stroke-width="2"/>
-                    <text x="12" y="16" text-anchor="middle" font-size="9.5" font-weight="900" fill="#ffffff" font-family="Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial">${badge.abbr}</text>
-                </g>
-                <defs>
-                    <filter id="a" x="-50%" y="-50%" width="200%" height="200%">
-                        <feGaussianBlur in="SourceAlpha" stdDeviation="0.7" result="b"/>
-                        <feOffset dy="0.5" result="o"/>
-                        <feMerge><feMergeNode in="o"/><feMergeNode in="SourceGraphic"/></feMerge>
-                    </filter>
-                </defs>
-            </svg>`;
-        return { html, size: [24, 24], anchor: [12, 24] };
-    }
-    // Full pole variant (higher zoom)
-    const html = `
-        <svg width="34" height="52" viewBox="0 0 34 52" xmlns="http://www.w3.org/2000/svg">
-            <defs>
-                <filter id="ds" x="-50%" y="-50%" width="200%" height="200%">
-                    <feGaussianBlur in="SourceAlpha" stdDeviation="1.2" result="b"/>
-                    <feOffset dy="0.8" result="o"/>
-                    <feMerge><feMergeNode in="o"/><feMergeNode in="SourceGraphic"/></feMerge>
-                </filter>
-            </defs>
-            <!-- Cast shadow (badge + pole) to the back-right -->
-            <polygon points="18,12 28,15 27,17 17,14" fill="rgba(0,0,0,0.16)"/>
-            <!-- Narrow pole cast shadow -->
-            <polygon points="17,20 24,22 23,23 16,21" fill="rgba(0,0,0,0.16)"/>
-            <!-- Ground soft halo -->
-            <ellipse cx="17" cy="49" rx="6.6" ry="2.6" fill="rgba(0,0,0,0.16)"/>
-            <!-- Pole -->
-            <rect x="16.8" y="18" width="2.1" height="30" rx="1.05" fill="#AEB8C2"/>
-            <!-- Holder bar -->
-            <rect x="11.2" y="21" width="11.6" height="2.5" rx="1.2" fill="#AEB8C2"/>
-            <!-- Badge with white outline (square, slightly smaller vs pole) -->
-            <g filter="url(#ds)">
-                <rect x="9" y="6" width="17" height="17" rx="6" fill="${badge.color}" stroke="#ffffff" stroke-width="2"/>
-                <text x="17.5" y="18.2" text-anchor="middle" font-size="9" font-weight="900" fill="#ffffff" font-family="Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial">${badge.abbr}</text>
-            </g>
-        </svg>`;
-    return { html, size: [34, 52], anchor: [17, 48] };
-}
-
-function updateWalkPoleMarkerLOD() {
-    if (!map || uiMode !== 'walk' || !currentStation) return;
-    const badge = stationBadgeFor(currentStation.name);
-    const zoom = map.getZoom ? map.getZoom() : 16;
-    const variant = zoom >= 18 ? 'full' : 'badge';
-    const { html, size, anchor } = buildPoleMarkerHtml(badge, variant);
-    if (targetStationMarker) {
-        try { targetStationMarker.setIcon(L.divIcon({ className: 'custom-marker', html, iconSize: size, iconAnchor: anchor })); } catch {}
-        try { targetStationMarker.setLatLng([currentStation.lat, currentStation.lon]); } catch {}
-    } else {
-        targetStationMarker = L.marker([currentStation.lat, currentStation.lon], {
-            icon: L.divIcon({ className: 'custom-marker', html, iconSize: size, iconAnchor: anchor })
-        }).addTo(map);
-    }
-}
     // On other platforms, show after we have any heading fix
     return hasHeadingFix;
 }
@@ -362,8 +296,6 @@ let userLon = null;
 let routeLayer = null;
 let busStationsLayer = null; // LayerGroup for all bus stop markers (bus mode)
 let uiMode = 'idle'; // 'idle' | 'walk' | 'bus'
-let targetStationMarker = null; // walk-mode target marker (pole)
-let walkPoleZoomListenerAttached = false; // attach once
 
 // User marker and heading state
 let userMarker = null;            // Leaflet marker with dot + heading cone
@@ -376,6 +308,23 @@ let orientationPermissionGranted = false;
 let hasHeadingFix = false;        // True after first heading value observed
 // Simple calorie model: ~55 kcal per km (average adult brisk walk)
 const KCAL_PER_KM = 55;
+
+// Adaptive dashed styling for walking route (finer at low zoom, longer at high zoom)
+function computeWalkDash(zoom) {
+    const z = typeof zoom === 'number' ? zoom : 15;
+    if (z <= 13) return { dash: '6,6', weight: 3 };
+    if (z <= 15) return { dash: '10,8', weight: 3.5 };
+    if (z <= 17) return { dash: '14,10', weight: 4 };
+    return { dash: '18,12', weight: 4.5 };
+}
+
+function applyWalkRouteStyle() {
+    try {
+        if (!map || !routeLayer) return;
+        const s = computeWalkDash(map.getZoom());
+        routeLayer.setStyle({ dashArray: s.dash, weight: s.weight, opacity: 0.45 });
+    } catch {}
+}
 
 // --- DOM Elements ---
 const stationSelectorTrigger = document.getElementById('station-selector-trigger');
@@ -1268,12 +1217,33 @@ function updateMap() {
         }
 
         if (uiMode === 'walk' && station) {
-            // Build or update the zoom-dependent pole marker (badge-only at low zoom)
-            updateWalkPoleMarkerLOD();
-            if (!walkPoleZoomListenerAttached) {
-                try { map.on('zoomend', updateWalkPoleMarkerLOD); } catch {}
-                walkPoleZoomListenerAttached = true;
-            }
+            // Add target station marker as a pole stop with badge (Citymapper style)
+            const badge = stationBadgeFor(station.name);
+            const poleHtml = `
+                <svg width="50" height="64" viewBox="0 0 50 64" xmlns="http://www.w3.org/2000/svg">
+                    <!-- Realistic cast shadow (sign + pole), angled down-right -->
+                    <g opacity="0.18">
+                        <!-- Square badge shadow -->
+                        <polygon points="30,12 39,18 35,28 27,22" fill="#000"/>
+                        <!-- Pole shadow -->
+                        <polygon points="25,24 29,26 29,56 25,54" fill="#000"/>
+                    </g>
+                    <!-- Pole -->
+                    <rect x="23" y="18" width="4" height="38" rx="2" fill="#AEB0B7"/>
+                    <!-- Holder bar -->
+                    <rect x="17" y="22" width="16" height="3" rx="1.5" fill="#AEB0B7"/>
+                    <!-- Flat square badge with white outline (no inner shadow) -->
+                    <rect x="14" y="10" width="22" height="22" rx="6" fill="${badge.color}" stroke="#ffffff" stroke-width="2"/>
+                    <text x="25" y="21" text-anchor="middle" dominant-baseline="middle" font-size="11" font-weight="900" fill="#ffffff" font-family="Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial">${badge.abbr}</text>
+                </svg>`;
+            L.marker([station.lat, station.lon], {
+                icon: L.divIcon({
+                    className: 'custom-marker',
+                    html: poleHtml,
+                    iconSize: [50, 64],
+                    iconAnchor: [25, 60]
+                })
+            }).addTo(map);
             // Fetch and draw a realistic street route using OSRM (walking profile)
             renderOsrmRoute(userLat, userLon, station.lat, station.lon);
         } else if (uiMode === 'bus') {
@@ -1291,12 +1261,6 @@ function updateMap() {
                 })
             }));
             busStationsLayer = L.layerGroup(markers).addTo(map);
-        } else {
-            // Not in walk mode: clear the pole marker reference
-            if (targetStationMarker) {
-                try { map.removeLayer(targetStationMarker); } catch {}
-                targetStationMarker = null;
-            }
         }
 
         if (uiMode === 'walk' && station) {
@@ -1363,9 +1327,12 @@ async function renderOsrmRoute(fromLat, fromLon, toLat, toLon) {
     if (!route) {
         // No valid walking route from OSRM sources — draw fallback dashed path and show em dash
         const latlngs = [ [fromLat, fromLon], [toLat, toLon] ];
+        const s = computeWalkDash(map ? map.getZoom() : 15);
         routeLayer = L.polyline(latlngs, {
-            color: '#2D5872', weight: 5, opacity: 0.9, dashArray: '12, 9', lineCap: 'round'
+            color: '#2D5872', weight: s.weight, opacity: 0.55, dashArray: s.dash, lineCap: 'round'
         }).addTo(map);
+        try { map.off('zoomend', applyWalkRouteStyle); } catch {}
+        map.on('zoomend', applyWalkRouteStyle);
         if (walkTimeText) walkTimeText.textContent = '—';
         if (calorieTextEl) calorieTextEl.textContent = '— / Kcal';
         return;
@@ -1385,7 +1352,10 @@ async function renderOsrmRoute(fromLat, fromLon, toLat, toLon) {
             steps_count: (route.legs && route.legs[0] && route.legs[0].steps) ? route.legs[0].steps.length : 0
         });
     } catch {}
-    routeLayer = L.polyline(coords, { color: '#2D5872', weight: 5, opacity: 0.9, dashArray: '12, 9', lineCap: 'round' }).addTo(map);
+    const s = computeWalkDash(map ? map.getZoom() : 15);
+    routeLayer = L.polyline(coords, { color: '#2D5872', weight: s.weight, opacity: 0.55, dashArray: s.dash, lineCap: 'round' }).addTo(map);
+    try { map.off('zoomend', applyWalkRouteStyle); } catch {}
+    map.on('zoomend', applyWalkRouteStyle);
     try {
         const bounds = routeLayer.getBounds();
         map.fitBounds(bounds, { padding: [50, 50] });
