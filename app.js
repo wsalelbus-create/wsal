@@ -1227,21 +1227,21 @@ function updateMap() {
                             <feGaussianBlur in="SourceGraphic" stdDeviation="1.2" />
                         </filter>
                         <linearGradient id="signShadowGrad" x1="0" y1="0" x2="1" y2="1">
-                            <stop offset="0%" stop-color="#000" stop-opacity="0.22"/>
-                            <stop offset="100%" stop-color="#000" stop-opacity="0"/>
+                            <stop offset="0%" stop-color="#000000" stop-opacity="0.18"/>
+                            <stop offset="100%" stop-color="#000000" stop-opacity="0.00"/>
                         </linearGradient>
                     </defs>
                     <!-- Floor-cast shadow (parallelogram for badge + thin trapezoid for pole) -->
-                    <g style="mix-blend-mode:multiply;" opacity="0.24" filter="url(#softBlur)">
+                    <g opacity="0.26" filter="url(#softBlur)">
                         <!-- Badge shadow: shallow rotated rectangle projected down-right from badge bottom -->
                         <rect x="16" y="36" width="22" height="8" fill="url(#signShadowGrad)" transform="rotate(18 16 36) translate(6 6)"/>
                         <!-- Pole shadow: thin rotated rectangle extending from pole base -->
-                        <rect x="26.5" y="62" width="2.2" height="10" fill="rgba(0,0,0,0.23)" transform="rotate(18 26.5 62) translate(12 4)"/>
+                        <rect x="26.8" y="62" width="1.6" height="10" fill="rgba(0,0,0,0.22)" transform="rotate(18 26.8 62) translate(12 4)"/>
                     </g>
                     <!-- Pole -->
-                    <rect x="25" y="22" width="4" height="42" rx="2" fill="#AEB0B7"/>
+                    <rect x="26.2" y="22" width="2.6" height="42" rx="1.3" fill="#9CA3AF"/>
                     <!-- Holder bar -->
-                    <rect x="19" y="26" width="16" height="3" rx="1.5" fill="#AEB0B7"/>
+                    <rect x="19" y="26" width="16" height="2" rx="1" fill="#9CA3AF"/>
                     <!-- Flat square badge with white outline (no inner shadow) -->
                     <rect x="16" y="12" width="22" height="22" rx="6" fill="${badge.color}" stroke="#ffffff" stroke-width="2"/>
                     <text x="27" y="23" text-anchor="middle" dominant-baseline="middle" font-size="11" font-weight="900" fill="#ffffff" font-family="Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial">${badge.abbr}</text>
