@@ -28,7 +28,7 @@ function nearestStations(fromLat, fromLon, count = 5) {
     return withDist.slice(0, count);
 }
 
-function renderBusStations() {
+function renderBusStations(withDelay = false) {
     if (!routesListEl) return;
     routesListEl.innerHTML = '';
 
@@ -62,9 +62,10 @@ function renderBusStations() {
             <div class="station-divider"></div>
         `;
 
-        // Arrivals for this station
-        const arrivals = calculateArrivals(station);
-        const arrivalsHtml = arrivals.map(arrival => {
+        // Helper to build arrivals HTML for this station
+        const buildArrivalsHtml = () => {
+            const arrivals = calculateArrivals(station);
+            return arrivals.map(arrival => {
             let timeDisplayHtml = '';
             if (arrival.status === 'Active') {
                 timeDisplayHtml = `
@@ -104,9 +105,29 @@ function renderBusStations() {
                     <div class="route-time">${timeDisplayHtml}</div>
                 </div>
             `;
-        }).join('');
+            }).join('');
+        };
 
-        card.innerHTML = headerHtml + `<div class="station-arrivals">${arrivalsHtml}</div>`;
+        // Build card and optionally show a brief loading state for arrivals
+        card.innerHTML = headerHtml;
+        const arrivalsDiv = document.createElement('div');
+        arrivalsDiv.className = 'station-arrivals';
+        if (withDelay) {
+            arrivalsDiv.classList.add('loading');
+            arrivalsDiv.innerHTML = `
+                <div class="loading-row">
+                    <span class="loading-text">Loading next departures</span>
+                    <span class="spinner-ios" aria-hidden="true"></span>
+                </div>
+            `;
+            setTimeout(() => {
+                arrivalsDiv.classList.remove('loading');
+                arrivalsDiv.innerHTML = buildArrivalsHtml();
+            }, 850);
+        } else {
+            arrivalsDiv.innerHTML = buildArrivalsHtml();
+        }
+        card.appendChild(arrivalsDiv);
         routesListEl.appendChild(card);
     });
 }
@@ -1353,15 +1374,15 @@ function setUIMode(mode) {
     // Choose nearest station when switching modes if we have a location
     if (userLat && userLon) {
         const nearest = findNearestStation(userLat, userLon);
-        if (nearest) {
-            currentStation = nearest;
-            if (mode === 'bus') {
-                // Populate nearest stations list (5 cards)
-                renderBusStations();
-            } else {
-                renderStation(currentStation);
-            }
-        }
+        if (nearest) currentStation = nearest;
+    }
+
+    // Render based on mode
+    if (mode === 'bus') {
+        // Initial entry shows brief loading state for arrivals
+        renderBusStations(true);
+    } else {
+        if (currentStation) renderRoutes(currentStation);
     }
 
     // Update the map for the selected mode
