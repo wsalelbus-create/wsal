@@ -1273,10 +1273,12 @@ function updateMap() {
                 <svg width="56" height="72" viewBox="0 0 56 72" xmlns="http://www.w3.org/2000/svg" style="pointer-events:none; overflow:visible;">
                     <!-- Floor-cast shadow (crisp, no blur) -->
                     <g class="cast-shadow" opacity="0.5">
-                        <!-- Badge shadow: exact 22x22 size, offset down-right to touch pole base at y=64 -->
-                        <polygon points="26.2,42 48.2,42 48.2,64 26.2,64" fill="rgba(0,0,0,0.45)"/>
-                        <!-- Stick floor shadow: same width as pole (2.6px), starts exactly at pole base (y=64) -->
-                        <polygon points="26.2,64 28.8,64 47.4,72 44.8,72" fill="rgba(0,0,0,0.40)"/>
+                        <!-- Badge shadow: exact-size slanted parallelogram of the 22x22 badge, offset slightly down-right -->
+                        <!-- Top edge offset (~+7,+4), bottom edge offset (~+11,+12) to create a gentle skew -->
+                        <polygon points="23,16 45,16 49,46 27,46" fill="rgba(0,0,0,0.45)"/>
+                        <!-- Stick floor shadow: constant width (2.6px), starting exactly at pole base (y=64) -->
+                        <!-- Modest down-right offset so it looks straight and not wider at the base -->
+                        <polygon points="26.2,64 28.8,64 36.8,69 34.2,69" fill="rgba(0,0,0,0.40)"/>
                     </g>
                     <!-- Pole -->
                     <rect x="26.2" y="22" width="2.6" height="42" rx="1.3" fill="#9CA3AF"/>
