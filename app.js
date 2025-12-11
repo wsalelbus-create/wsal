@@ -1135,15 +1135,15 @@ function initMap() {
         subdomains: 'abc'
     });
 
-    // Simplified, no-labels basemap for Walk mode (Carto Positron No Labels)
-    walkTileLayer = L.tileLayer.cached('https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}{r}.png', {
+    // Clean basemap with clearer landcover (Carto Voyager No Labels)
+    walkTileLayer = L.tileLayer.cached('https://{s}.basemaps.cartocdn.com/voyager_nolabels/{z}/{x}/{y}{r}.png', {
         attribution: '&copy; OpenStreetMap contributors &copy; CARTO',
         maxZoom: 19,
         subdomains: 'abcd'
     });
 
-    // Labels-only overlay for Walk mode (Carto Positron Only Labels)
-    walkLabelsLayer = L.tileLayer.cached('https://{s}.basemaps.cartocdn.com/light_only_labels/{z}/{x}/{y}{r}.png', {
+    // Labels-only overlay (Carto Voyager Only Labels)
+    walkLabelsLayer = L.tileLayer.cached('https://{s}.basemaps.cartocdn.com/voyager_only_labels/{z}/{x}/{y}{r}.png', {
         attribution: '&copy; OpenStreetMap contributors &copy; CARTO',
         maxZoom: 19,
         subdomains: 'abcd',
