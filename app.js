@@ -1200,19 +1200,38 @@ function updateMap() {
         }
 
         if (uiMode === 'walk' && station) {
-            // Add target station marker
+            // Add target station marker as a pole stop with badge (Citymapper style)
+            const badge = stationBadgeFor(station.name);
+            const poleHtml = `
+                <svg width="50" height="64" viewBox="0 0 50 64" xmlns="http://www.w3.org/2000/svg">
+                    <defs>
+                        <filter id="dropShadow" x="-50%" y="-50%" width="200%" height="200%">
+                            <feGaussianBlur in="SourceAlpha" stdDeviation="2" result="blur"/>
+                            <feOffset dy="1" result="offset"/>
+                            <feMerge>
+                                <feMergeNode in="offset"/>
+                                <feMergeNode in="SourceGraphic"/>
+                            </feMerge>
+                        </filter>
+                    </defs>
+                    <!-- Cast shadow on ground -->
+                    <ellipse cx="25" cy="60" rx="10" ry="4" fill="rgba(0,0,0,0.18)"/>
+                    <!-- Pole -->
+                    <rect x="23" y="18" width="4" height="38" rx="2" fill="#AEB8C2"/>
+                    <!-- Holder bar -->
+                    <rect x="15" y="22" width="20" height="3.5" rx="1.5" fill="#AEB8C2"/>
+                    <!-- Badge -->
+                    <g filter="url(#dropShadow)">
+                        <rect x="9" y="6" width="32" height="26" rx="8" fill="${badge.color}"/>
+                        <text x="25" y="24" text-anchor="middle" font-size="14" font-weight="900" fill="#ffffff" font-family="Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial">${badge.abbr}</text>
+                    </g>
+                </svg>`;
             L.marker([station.lat, station.lon], {
                 icon: L.divIcon({
                     className: 'custom-marker',
-                    html: `<svg width="32" height="32" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                        <rect x="4" y="4" width="16" height="14" rx="2" fill="#0066CC" stroke="white" stroke-width="1.5"/>
-                        <rect x="6" y="6" width="12" height="6" fill="#E6F2FF"/>
-                        <circle cx="8" cy="16" r="1.5" fill="white"/>
-                        <circle cx="16" cy="16" r="1.5" fill="white"/>
-                        <line x1="12" y1="6" x2="12" y2="12" stroke="#0066CC" stroke-width="1"/>
-                    </svg>`,
-                    iconSize: [32, 32],
-                    iconAnchor: [16, 16]
+                    html: poleHtml,
+                    iconSize: [50, 64],
+                    iconAnchor: [25, 60]
                 })
             }).addTo(map);
             // Fetch and draw a realistic street route using OSRM (walking profile)
@@ -1296,10 +1315,10 @@ async function renderOsrmRoute(fromLat, fromLon, toLat, toLon) {
     }
 
     if (!route) {
-        // No valid walking route from OSRM sources — draw fallback and show em dash
+        // No valid walking route from OSRM sources — draw fallback dashed path and show em dash
         const latlngs = [ [fromLat, fromLon], [toLat, toLon] ];
         routeLayer = L.polyline(latlngs, {
-            color: '#00d2ff', weight: 4, opacity: 0.7, dashArray: '10, 10', lineCap: 'round'
+            color: '#2D5872', weight: 5, opacity: 0.9, dashArray: '12, 9', lineCap: 'round'
         }).addTo(map);
         if (walkTimeText) walkTimeText.textContent = '—';
         if (calorieTextEl) calorieTextEl.textContent = '— / Kcal';
@@ -1320,7 +1339,7 @@ async function renderOsrmRoute(fromLat, fromLon, toLat, toLon) {
             steps_count: (route.legs && route.legs[0] && route.legs[0].steps) ? route.legs[0].steps.length : 0
         });
     } catch {}
-    routeLayer = L.polyline(coords, { color: '#00d2ff', weight: 5, opacity: 0.85 }).addTo(map);
+    routeLayer = L.polyline(coords, { color: '#2D5872', weight: 5, opacity: 0.9, dashArray: '12, 9', lineCap: 'round' }).addTo(map);
     try {
         const bounds = routeLayer.getBounds();
         map.fitBounds(bounds, { padding: [50, 50] });
