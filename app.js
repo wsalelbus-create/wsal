@@ -1123,7 +1123,8 @@ function initMap() {
         map.createPane('labels');
         const labelsPane = map.getPane('labels');
         if (labelsPane) {
-            labelsPane.style.zIndex = 650;
+            // Render labels above tiles but BELOW markers (markerPane ~600)
+            labelsPane.style.zIndex = 350;
             labelsPane.style.pointerEvents = 'none';
         }
     } catch {}
@@ -1309,7 +1310,8 @@ function updateMap() {
                     </svg>`,
                     iconSize: [26, 26],
                     iconAnchor: [13, 13]
-                })
+                }),
+                zIndexOffset: 900
             }));
             busStationsLayer = L.layerGroup(markers).addTo(map);
         }
