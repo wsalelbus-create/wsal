@@ -1275,8 +1275,8 @@ function updateMap() {
                     <g class="cast-shadow" opacity="0.5">
                         <!-- Badge shadow: short, down-right from badge bottom-right corner -->
                         <polygon points="38,34 56,42 48,48 31,40" fill="rgba(0,0,0,0.45)"/>
-                        <!-- Stick floor shadow: single bar equal to pole width, starting at pole base (y=64) -->
-                        <polygon points="26.2,64 28.8,64 48.8,74 46.2,74" fill="rgba(0,0,0,0.40)"/>
+                        <!-- Stick floor shadow: single trapezoid from pole base to badge shadow (same width as pole) -->
+                        <polygon points="26.2,64 28.8,64 33.6,40 31,40" fill="rgba(0,0,0,0.40)"/>
                     </g>
                     <!-- Pole -->
                     <rect x="26.2" y="22" width="2.6" height="42" rx="1.3" fill="#9CA3AF"/>
