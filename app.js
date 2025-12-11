@@ -1136,14 +1136,28 @@ function initMap() {
     });
 
     // Clean basemap with clearer landcover (Carto Voyager No Labels)
-    walkTileLayer = L.tileLayer.cached('https://{s}.basemaps.cartocdn.com/voyager_nolabels/{z}/{x}/{y}{r}.png', {
+    walkTileLayer = L.tileLayer.cached('https://{s}.basemaps.cartocdn.com/rastertiles/voyager_nolabels/{z}/{x}/{y}{r}.png', {
         attribution: '&copy; OpenStreetMap contributors &copy; CARTO',
         maxZoom: 19,
         subdomains: 'abcd'
     });
+    // Fallback to OSM base if Carto tiles fail to load
+    try {
+        walkTileLayer.on('tileerror', () => {
+            if (map && baseTileLayer && !map.hasLayer(baseTileLayer)) {
+                baseTileLayer.addTo(map);
+            }
+        });
+        walkTileLayer.on('tileload', () => {
+            if (map && baseTileLayer && map.hasLayer(baseTileLayer)) {
+                // If Carto recovered, prefer Carto-only look
+                try { map.removeLayer(baseTileLayer); } catch {}
+            }
+        });
+    } catch {}
 
     // Labels-only overlay (Carto Voyager Only Labels)
-    walkLabelsLayer = L.tileLayer.cached('https://{s}.basemaps.cartocdn.com/voyager_only_labels/{z}/{x}/{y}{r}.png', {
+    walkLabelsLayer = L.tileLayer.cached('https://{s}.basemaps.cartocdn.com/rastertiles/voyager_only_labels/{z}/{x}/{y}{r}.png', {
         attribution: '&copy; OpenStreetMap contributors &copy; CARTO',
         maxZoom: 19,
         subdomains: 'abcd',
