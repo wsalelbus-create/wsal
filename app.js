@@ -1224,21 +1224,19 @@ function updateMap() {
                     <defs>
                         <!-- Soft blur used only for the cast shadow on the ground -->
                         <filter id="softBlur" x="-50%" y="-50%" width="200%" height="200%">
-                            <feGaussianBlur in="SourceGraphic" stdDeviation="1.6" />
+                            <feGaussianBlur in="SourceGraphic" stdDeviation="1.2" />
                         </filter>
-                        <radialGradient id="shadowGrad" cx="50%" cy="50%" r="50%">
-                            <stop offset="0%" stop-color="#000" stop-opacity="0.34"/>
+                        <linearGradient id="signShadowGrad" x1="0" y1="0" x2="1" y2="1">
+                            <stop offset="0%" stop-color="#000" stop-opacity="0.22"/>
                             <stop offset="100%" stop-color="#000" stop-opacity="0"/>
-                        </radialGradient>
+                        </linearGradient>
                     </defs>
-                    <!-- Realistic cast shadow (sign + pole), angled down-right -->
-                    <!-- Diffuse ground shadow ellipse near the base -->
-                    <ellipse cx="38" cy="66" rx="13" ry="6" fill="url(#shadowGrad)" filter="url(#softBlur)" transform="skewX(12)"/>
-                    <g class="cast-shadow" opacity="0.46" filter="url(#softBlur)" style="mix-blend-mode:multiply;">
-                        <!-- Square badge shadow (slightly larger than the badge), further down-right and skewed -->
-                        <polygon points="30,18 48,30 38,44 22,33" fill="#000" transform="skewX(12)"/>
-                        <!-- Pole shadow (thin, extended) -->
-                        <polygon points="26,32 38,36 38,66 26,62" fill="#000"/>
+                    <!-- Floor-cast shadow (parallelogram for badge + thin trapezoid for pole) -->
+                    <g style="mix-blend-mode:multiply;" opacity="0.24" filter="url(#softBlur)">
+                        <!-- Badge shadow: shallow rotated rectangle projected down-right from badge bottom -->
+                        <rect x="16" y="36" width="22" height="8" fill="url(#signShadowGrad)" transform="rotate(18 16 36) translate(6 6)"/>
+                        <!-- Pole shadow: thin rotated rectangle extending from pole base -->
+                        <rect x="26.5" y="62" width="2.2" height="10" fill="rgba(0,0,0,0.23)" transform="rotate(18 26.5 62) translate(12 4)"/>
                     </g>
                     <!-- Pole -->
                     <rect x="25" y="22" width="4" height="42" rx="2" fill="#AEB0B7"/>
