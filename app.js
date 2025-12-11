@@ -296,6 +296,9 @@ let userLon = null;
 let routeLayer = null;
 let busStationsLayer = null; // LayerGroup for all bus stop markers (bus mode)
 let uiMode = 'idle'; // 'idle' | 'walk' | 'bus'
+// Base/walk tile layers
+let baseTileLayer = null;      // Standard OSM
+let walkTileLayer = null;      // Simplified, no labels (Citymapper-like)
 
 // User marker and heading state
 let userMarker = null;            // Leaflet marker with dot + heading cone
@@ -1114,11 +1117,19 @@ function initMap() {
         attributionControl: false
     }).setView([36.7700, 3.0553], 14); // Slightly closer zoom
 
-    // Add OpenStreetMap tiles with IndexedDB caching
-    L.tileLayer.cached('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    // Add OpenStreetMap tiles with IndexedDB caching (default)
+    baseTileLayer = L.tileLayer.cached('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
-        maxZoom: 19
+        maxZoom: 19,
+        subdomains: 'abc'
     }).addTo(map);
+
+    // Simplified, no-labels basemap for Walk mode (Carto Positron No Labels)
+    walkTileLayer = L.tileLayer.cached('https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}{r}.png', {
+        attribution: '&copy; OpenStreetMap contributors &copy; CARTO',
+        maxZoom: 19,
+        subdomains: 'abcd'
+    });
 
     mapInitialized = true;
     updateMap();
@@ -1221,18 +1232,12 @@ function updateMap() {
             const badge = stationBadgeFor(station.name);
             const poleHtml = `
                 <svg width="56" height="72" viewBox="0 0 56 72" xmlns="http://www.w3.org/2000/svg" style="pointer-events:none; overflow:visible;">
-                    <defs>
-                        <!-- Soft blur used only for the cast shadow on the ground -->
-                        <filter id="softBlur" x="-50%" y="-50%" width="200%" height="200%">
-                            <feGaussianBlur in="SourceGraphic" stdDeviation="1.8" />
-                        </filter>
-                    </defs>
-                    <!-- Floor-cast shadow (parallelogram for badge + thin trapezoid for pole) -->
-                    <g opacity="0.36" filter="url(#softBlur)">
-                        <!-- Badge shadow: stronger down-right offset for visibility -->
-                        <polygon points="15,34 39,34 55,46 31,46" fill="rgba(0,0,0,0.24)"/>
-                        <!-- Pole shadow: thin trapezoid starting at pole base -->
-                        <polygon points="26.2,64 27.6,64 43.6,73 42.2,73" fill="rgba(0,0,0,0.22)"/>
+                    <!-- Floor-cast shadow (crisp, no blur) -->
+                    <g class="cast-shadow" opacity="0.5">
+                        <!-- Badge shadow: down-right parallelogram, moved further right -->
+                        <polygon points="14,34 38,34 66,50 42,50" fill="rgba(0,0,0,0.45)"/>
+                        <!-- Stick shadow: connected from badge bottom to ground, thin quad -->
+                        <polygon points="26.0,34 27.6,34 48.6,72 46.8,72" fill="rgba(0,0,0,0.40)"/>
                     </g>
                     <!-- Pole -->
                     <rect x="26.2" y="22" width="2.6" height="42" rx="1.3" fill="#9CA3AF"/>
@@ -1398,6 +1403,19 @@ function setUIMode(mode) {
     if (routesHeaderEl) {
         if (mode === 'bus') routesHeaderEl.classList.remove('hidden');
         else routesHeaderEl.classList.add('hidden');
+    }
+
+    // Switch basemap: simplified no-labels in Walk mode, default otherwise
+    if (map && baseTileLayer && walkTileLayer) {
+        try {
+            if (mode === 'walk') {
+                if (map.hasLayer(baseTileLayer)) map.removeLayer(baseTileLayer);
+                if (!map.hasLayer(walkTileLayer)) walkTileLayer.addTo(map);
+            } else {
+                if (map.hasLayer(walkTileLayer)) map.removeLayer(walkTileLayer);
+                if (!map.hasLayer(baseTileLayer)) baseTileLayer.addTo(map);
+            }
+        } catch (e) { /* no-op */ }
     }
     if (routesListEl) {
         if (mode === 'bus') routesListEl.classList.remove('hidden');
