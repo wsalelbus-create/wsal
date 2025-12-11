@@ -171,9 +171,9 @@ body {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    position: absolute;
-    top: 0;    /* header is already positioned at safe-area offset */
-    left: 0;   /* header has left: 16px; keep 16px from viewport */
+    position: fixed; /* keep visible during scroll */
+    top: calc(11px + env(safe-area-inset-top));
+    left: 16px;
     z-index: 200; /* same overlay layer as walking badge */
 }
 .back-badge svg { width: 20px; height: 20px; }
@@ -245,8 +245,8 @@ body {
 
 .walking-time-badge .walk-icon {
     color: var(--primary-color);
-    width: 20px;
-    height: 20px;
+    width: 28px;
+    height: 28px;
 }
 
 .walking-time-badge #walk-time-text {
