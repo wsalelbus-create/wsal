@@ -107,7 +107,7 @@ body {
     /* Below status bar */
     left: 16px;
     right: 16px;
-    z-index: 100;
+    z-index: 1002; /* above arrivals panel (100) */
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -174,7 +174,7 @@ body {
     position: fixed; /* keep visible during scroll */
     top: calc(11px + env(safe-area-inset-top));
     left: 16px;
-    z-index: 200; /* same overlay layer as walking badge */
+    z-index: 10050; /* ensure above all UI, including arrivals panel */
 }
 .back-badge svg { width: 20px; height: 20px; }
 .back-badge:active { transform: scale(0.98); }
