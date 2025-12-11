@@ -1221,12 +1221,18 @@ function updateMap() {
             const badge = stationBadgeFor(station.name);
             const poleHtml = `
                 <svg width="50" height="64" viewBox="0 0 50 64" xmlns="http://www.w3.org/2000/svg">
+                    <defs>
+                        <!-- Soft blur used only for the cast shadow on the ground -->
+                        <filter id="softBlur" x="-50%" y="-50%" width="200%" height="200%">
+                            <feGaussianBlur in="SourceGraphic" stdDeviation="1.6" />
+                        </filter>
+                    </defs>
                     <!-- Realistic cast shadow (sign + pole), angled down-right -->
-                    <g opacity="0.18">
-                        <!-- Square badge shadow -->
-                        <polygon points="30,12 39,18 35,28 27,22" fill="#000"/>
+                    <g class="cast-shadow" opacity="0.28" filter="url(#softBlur)">
+                        <!-- Square badge shadow (slightly larger than the badge) -->
+                        <polygon points="30,12 42,21 35,34 23,25" fill="#000"/>
                         <!-- Pole shadow -->
-                        <polygon points="25,24 29,26 29,56 25,54" fill="#000"/>
+                        <polygon points="24,24 31,27 31,58 24,55" fill="#000"/>
                     </g>
                     <!-- Pole -->
                     <rect x="23" y="18" width="4" height="38" rx="2" fill="#AEB0B7"/>
