@@ -7,6 +7,106 @@ function shouldShowCone() {
     // On other platforms, show after we have any heading fix
     return hasHeadingFix;
 }
+
+// --- Bus Screen: Nearest Stations (cards) ---
+function stationBadgeFor(name) {
+    const lower = (name || '').toLowerCase();
+    if (lower.includes('el mouradia')) return { abbr: 'EM', color: '#3399ff' };
+    if (lower.includes('hydra')) return { abbr: 'H', color: '#3399ff' };
+    if (lower.includes('audin')) return { abbr: 'PA', color: '#3399ff' };
+    if (lower.includes('1er mai')) return { abbr: '1M', color: '#66cc33' };
+    if (lower.includes('martyr')) return { abbr: 'PM', color: '#ffcc33' };
+    return { abbr: (name || 'ST').slice(0, 2).toUpperCase(), color: '#3399ff' };
+}
+
+function nearestStations(fromLat, fromLon, count = 5) {
+    const withDist = STATIONS.map(s => ({
+        station: s,
+        distKm: getDistanceFromLatLonInKm(fromLat, fromLon, s.lat, s.lon)
+    }));
+    withDist.sort((a, b) => a.distKm - b.distKm);
+    return withDist.slice(0, count);
+}
+
+function renderBusStations() {
+    if (!routesListEl) return;
+    routesListEl.innerHTML = '';
+
+    // Anchor position: prefer user location
+    let anchorLat = userLat, anchorLon = userLon;
+    if (!anchorLat || !anchorLon) {
+        const fallback = currentStation || STATIONS[0];
+        anchorLat = fallback.lat; anchorLon = fallback.lon;
+    }
+
+    const nearby = nearestStations(anchorLat, anchorLon, 5);
+
+    nearby.forEach(({ station, distKm }) => {
+        const card = document.createElement('div');
+        card.className = 'station-card';
+
+        const badge = stationBadgeFor(station.name);
+        const served = station.routes.map(r => r.number).join(', ');
+        const distanceText = `${distKm.toFixed(1)} km`;
+
+        // Top header
+        const headerHtml = `
+            <div class="station-header">
+                <div class="station-badge" style="background:${badge.color}"><span>${badge.abbr}</span></div>
+                <div class="station-title">
+                    <div class="station-name">${station.name}</div>
+                    <div class="station-serves">${served}</div>
+                </div>
+                <div class="station-distance">${distanceText}</div>
+            </div>
+            <div class="station-divider"></div>
+        `;
+
+        // Arrivals for this station
+        const arrivals = calculateArrivals(station);
+        const arrivalsHtml = arrivals.map(arrival => {
+            let timeDisplayHtml = '';
+            if (arrival.status === 'Active') {
+                timeDisplayHtml = `
+                    <div class="time-inline">
+                        <svg class="live-radar" width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M3 9 C 9 3 15 3 21 9" stroke="var(--live-orange)" stroke-width="3" stroke-linecap="round"/>
+                            <path d="M9.5 12 C 12 10.2 12 10.2 14.5 12" stroke="var(--live-orange)" stroke-width="3" stroke-linecap="round"/>
+                        </svg>
+                        <div class="time-stack">
+                            <div class="time-big">${arrival.minutes}</div>
+                            <div class="time-unit">min</div>
+                        </div>
+                    </div>
+                `;
+            } else {
+                timeDisplayHtml = `
+                    <div class="route-status" style="color: var(--accent-color); font-weight: 600; font-size: 0.8rem;">
+                        ${arrival.message}
+                    </div>
+                `;
+            }
+
+            return `
+                <div class="station-arrival-row">
+                    <div class="route-chip">
+                        <svg class="mini-bus" width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <rect x="4" y="5" width="16" height="12" rx="2" fill="#00B2FF"/>
+                            <rect x="7" y="7" width="10" height="5" fill="#E6F2FF"/>
+                            <circle cx="9" cy="16" r="1.3" fill="#00B2FF"/>
+                            <circle cx="15" cy="16" r="1.3" fill="#00B2FF"/>
+                        </svg>
+                        <span class="chip-number">${arrival.number}</span>
+                    </div>
+                    <div class="route-time">${timeDisplayHtml}</div>
+                </div>
+            `;
+        }).join('');
+
+        card.innerHTML = headerHtml + `<div class="station-arrivals">${arrivalsHtml}</div>`;
+        routesListEl.appendChild(card);
+    });
+}
 // Route Paths - GPS waypoints for all routes
 // Each route has waypoints representing major stops along the path
 const ROUTE_PATHS = {
@@ -1253,7 +1353,9 @@ function setUIMode(mode) {
         if (nearest) {
             currentStation = nearest;
             if (mode === 'bus') {
-                // Populate arrivals for nearest stop
+                // Populate nearest stations list (5 cards)
+                renderBusStations();
+            } else {
                 renderStation(currentStation);
             }
         }
@@ -1387,5 +1489,13 @@ if (window.WeatherModule) {
     WeatherModule.init();
 }
 
-// Refresh arrivals every minute
-setInterval(() => renderRoutes(currentStation), 60000);
+// Refresh every minute depending on UI mode
+setInterval(() => {
+    try {
+        if (typeof uiMode !== 'undefined' && uiMode === 'bus') {
+            renderBusStations();
+        } else {
+            if (currentStation) renderRoutes(currentStation);
+        }
+    } catch (e) { console.warn('refresh error', e); }
+}, 60000);

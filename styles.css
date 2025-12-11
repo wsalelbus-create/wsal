@@ -502,6 +502,68 @@ body {
     padding-bottom: 20px;
 }
 
+/* =============================
+   BUS SCREEN: Station Cards
+   ============================= */
+.station-card {
+    background: #fff;
+    border: 1px solid #f0f0f0;
+    border-radius: 16px;
+    padding: 14px 16px 10px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+}
+
+.station-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.station-badge {
+    width: 44px; /* square with rounded corners */
+    height: 44px;
+    border-radius: 10px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-weight: 900;
+    font-size: 0.95rem;
+    flex: 0 0 44px;
+}
+.station-badge span { line-height: 1; }
+
+.station-title { flex: 1; min-width: 0; }
+.station-name { font-weight: 800; font-size: 1.05rem; color: var(--text-main); }
+.station-serves { font-size: 0.85rem; color: var(--text-muted); margin-top: 2px; font-weight: 700; }
+
+.station-distance { font-weight: 800; font-size: 0.9rem; color: var(--text-main); }
+
+.station-divider {
+    border-top: 1px solid #eaeaea;
+    margin: 10px 0 6px;
+}
+
+.station-arrivals { display: flex; flex-direction: column; gap: 8px; }
+
+.station-arrival-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.route-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 8px;
+    border: 1px solid #e6e6e6; /* border-only rounded square */
+    border-radius: 10px;
+    background: transparent;
+}
+.route-chip .mini-bus { width: 16px; height: 16px; display: block; }
+.route-chip .chip-number { font-weight: 800; font-size: 0.95rem; color: var(--text-main); }
+
 /* Route Item Card */
 .route-item {
     background: white;
