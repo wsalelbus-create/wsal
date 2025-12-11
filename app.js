@@ -1273,10 +1273,12 @@ function updateMap() {
                 <svg width="56" height="72" viewBox="0 0 56 72" xmlns="http://www.w3.org/2000/svg" style="pointer-events:none; overflow:visible;">
                     <!-- Floor-cast shadow (crisp, no blur) -->
                     <g class="cast-shadow" opacity="0.5">
-                        <!-- Badge shadow: down-right parallelogram, moved further right -->
-                        <polygon points="14,34 38,34 66,50 42,50" fill="rgba(0,0,0,0.45)"/>
-                        <!-- Stick shadow: connected from badge bottom to ground, thin quad -->
-                        <polygon points="26.0,34 27.6,34 48.6,72 46.8,72" fill="rgba(0,0,0,0.40)"/>
+                        <!-- Badge shadow: short, down-right from badge bottom-right corner -->
+                        <polygon points="38,34 56,42 48,48 31,40" fill="rgba(0,0,0,0.45)"/>
+                        <!-- Connector wedge: links badge shadow to stick shadow on floor -->
+                        <polygon points="39,47 42,49 28.2,62 26.8,61.5" fill="rgba(0,0,0,0.42)"/>
+                        <!-- Stick floor shadow: thin trapezoid starting at pole base -->
+                        <polygon points="26.2,62 27.8,62 45.8,72 44.2,72" fill="rgba(0,0,0,0.40)"/>
                     </g>
                     <!-- Pole -->
                     <rect x="26.2" y="22" width="2.6" height="42" rx="1.3" fill="#9CA3AF"/>
