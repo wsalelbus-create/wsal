@@ -1128,12 +1128,12 @@ function initMap() {
         }
     } catch {}
 
-    // Add OpenStreetMap tiles with IndexedDB caching (default)
+    // Add OpenStreetMap tiles with IndexedDB caching (kept as fallback, not shown by default)
     baseTileLayer = L.tileLayer.cached('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
         maxZoom: 19,
         subdomains: 'abc'
-    }).addTo(map);
+    });
 
     // Simplified, no-labels basemap for Walk mode (Carto Positron No Labels)
     walkTileLayer = L.tileLayer.cached('https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}{r}.png', {
@@ -1150,6 +1150,10 @@ function initMap() {
         pane: 'labels',
         opacity: 0.95
     });
+
+    // Use clean basemap by default in all modes
+    if (walkTileLayer && !map.hasLayer(walkTileLayer)) walkTileLayer.addTo(map);
+    if (walkLabelsLayer && !map.hasLayer(walkLabelsLayer)) walkLabelsLayer.addTo(map);
 
     mapInitialized = true;
     updateMap();
@@ -1425,18 +1429,12 @@ function setUIMode(mode) {
         else routesHeaderEl.classList.add('hidden');
     }
 
-    // Switch basemap: simplified no-labels + label overlay in Walk mode, default otherwise
-    if (map && baseTileLayer && walkTileLayer) {
+    // Basemap policy: always use clean no-labels + labels overlay in ALL modes
+    if (map && walkTileLayer) {
         try {
-            if (mode === 'walk') {
-                if (map.hasLayer(baseTileLayer)) map.removeLayer(baseTileLayer);
-                if (!map.hasLayer(walkTileLayer)) walkTileLayer.addTo(map);
-                if (walkLabelsLayer && !map.hasLayer(walkLabelsLayer)) walkLabelsLayer.addTo(map);
-            } else {
-                if (map.hasLayer(walkTileLayer)) map.removeLayer(walkTileLayer);
-                if (walkLabelsLayer && map.hasLayer(walkLabelsLayer)) map.removeLayer(walkLabelsLayer);
-                if (!map.hasLayer(baseTileLayer)) baseTileLayer.addTo(map);
-            }
+            if (map.hasLayer(baseTileLayer)) map.removeLayer(baseTileLayer);
+            if (!map.hasLayer(walkTileLayer)) walkTileLayer.addTo(map);
+            if (walkLabelsLayer && !map.hasLayer(walkLabelsLayer)) walkLabelsLayer.addTo(map);
         } catch (e) { /* no-op */ }
     }
     if (routesListEl) {
