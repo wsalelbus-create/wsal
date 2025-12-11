@@ -1220,23 +1220,19 @@ function updateMap() {
             // Add target station marker as a pole stop with badge (Citymapper style)
             const badge = stationBadgeFor(station.name);
             const poleHtml = `
-                <svg width="56" height="72" viewBox="0 0 56 72" xmlns="http://www.w3.org/2000/svg" style="pointer-events:none;">
+                <svg width="56" height="72" viewBox="0 0 56 72" xmlns="http://www.w3.org/2000/svg" style="pointer-events:none; overflow:visible;">
                     <defs>
                         <!-- Soft blur used only for the cast shadow on the ground -->
                         <filter id="softBlur" x="-50%" y="-50%" width="200%" height="200%">
-                            <feGaussianBlur in="SourceGraphic" stdDeviation="1.2" />
+                            <feGaussianBlur in="SourceGraphic" stdDeviation="1.8" />
                         </filter>
-                        <linearGradient id="signShadowGrad" x1="0" y1="0" x2="1" y2="1">
-                            <stop offset="0%" stop-color="#000000" stop-opacity="0.18"/>
-                            <stop offset="100%" stop-color="#000000" stop-opacity="0.00"/>
-                        </linearGradient>
                     </defs>
                     <!-- Floor-cast shadow (parallelogram for badge + thin trapezoid for pole) -->
-                    <g opacity="0.26" filter="url(#softBlur)">
-                        <!-- Badge shadow: shallow rotated rectangle projected down-right from badge bottom -->
-                        <rect x="16" y="36" width="22" height="8" fill="url(#signShadowGrad)" transform="rotate(18 16 36) translate(6 6)"/>
-                        <!-- Pole shadow: thin rotated rectangle extending from pole base -->
-                        <rect x="26.8" y="62" width="1.6" height="10" fill="rgba(0,0,0,0.22)" transform="rotate(18 26.8 62) translate(12 4)"/>
+                    <g opacity="0.36" filter="url(#softBlur)">
+                        <!-- Badge shadow: stronger down-right offset for visibility -->
+                        <polygon points="15,34 39,34 55,46 31,46" fill="rgba(0,0,0,0.24)"/>
+                        <!-- Pole shadow: thin trapezoid starting at pole base -->
+                        <polygon points="26.2,64 27.6,64 43.6,73 42.2,73" fill="rgba(0,0,0,0.22)"/>
                     </g>
                     <!-- Pole -->
                     <rect x="26.2" y="22" width="2.6" height="42" rx="1.3" fill="#9CA3AF"/>
@@ -1253,7 +1249,8 @@ function updateMap() {
                     html: poleHtml,
                     iconSize: [56, 72],
                     iconAnchor: [28, 68]
-                })
+                }),
+                zIndexOffset: 1000
             }).addTo(map);
             // Fetch and draw a realistic street route using OSRM (walking profile)
             renderOsrmRoute(userLat, userLon, station.lat, station.lon);
