@@ -312,17 +312,17 @@ const KCAL_PER_KM = 55;
 // Adaptive dashed styling for walking route (finer at low zoom, longer at high zoom)
 function computeWalkDash(zoom) {
     const z = typeof zoom === 'number' ? zoom : 15;
-    if (z <= 13) return { dash: '6,6', weight: 3 };
-    if (z <= 15) return { dash: '10,8', weight: 3.5 };
-    if (z <= 17) return { dash: '14,10', weight: 4 };
-    return { dash: '18,12', weight: 4.5 };
+    if (z <= 13) return { dash: '6,6', weight: 2.5 };
+    if (z <= 15) return { dash: '10,8', weight: 3 };
+    if (z <= 17) return { dash: '14,10', weight: 3.5 };
+    return { dash: '18,12', weight: 4 };
 }
 
 function applyWalkRouteStyle() {
     try {
         if (!map || !routeLayer) return;
         const s = computeWalkDash(map.getZoom());
-        routeLayer.setStyle({ dashArray: s.dash, weight: s.weight, opacity: 0.45 });
+        routeLayer.setStyle({ dashArray: s.dash, weight: s.weight, opacity: 0.42 });
     } catch {}
 }
 
@@ -1220,34 +1220,41 @@ function updateMap() {
             // Add target station marker as a pole stop with badge (Citymapper style)
             const badge = stationBadgeFor(station.name);
             const poleHtml = `
-                <svg width="50" height="64" viewBox="0 0 50 64" xmlns="http://www.w3.org/2000/svg">
+                <svg width="56" height="72" viewBox="0 0 56 72" xmlns="http://www.w3.org/2000/svg" style="pointer-events:none;">
                     <defs>
                         <!-- Soft blur used only for the cast shadow on the ground -->
                         <filter id="softBlur" x="-50%" y="-50%" width="200%" height="200%">
                             <feGaussianBlur in="SourceGraphic" stdDeviation="1.6" />
                         </filter>
+                        <radialGradient id="shadowGrad" cx="50%" cy="50%" r="50%">
+                            <stop offset="0%" stop-color="#000" stop-opacity="0.34"/>
+                            <stop offset="100%" stop-color="#000" stop-opacity="0"/>
+                        </radialGradient>
                     </defs>
                     <!-- Realistic cast shadow (sign + pole), angled down-right -->
-                    <g class="cast-shadow" opacity="0.28" filter="url(#softBlur)">
-                        <!-- Square badge shadow (slightly larger than the badge) -->
-                        <polygon points="30,12 42,21 35,34 23,25" fill="#000"/>
-                        <!-- Pole shadow -->
-                        <polygon points="24,24 31,27 31,58 24,55" fill="#000"/>
+                    <!-- Diffuse ground shadow ellipse near the base -->
+                    <ellipse cx="38" cy="66" rx="13" ry="6" fill="url(#shadowGrad)" filter="url(#softBlur)" transform="skewX(12)"/>
+                    <g class="cast-shadow" opacity="0.46" filter="url(#softBlur)" style="mix-blend-mode:multiply;">
+                        <!-- Square badge shadow (slightly larger than the badge), further down-right and skewed -->
+                        <polygon points="30,18 48,30 38,44 22,33" fill="#000" transform="skewX(12)"/>
+                        <!-- Pole shadow (thin, extended) -->
+                        <polygon points="26,32 38,36 38,66 26,62" fill="#000"/>
                     </g>
                     <!-- Pole -->
-                    <rect x="23" y="18" width="4" height="38" rx="2" fill="#AEB0B7"/>
+                    <rect x="25" y="22" width="4" height="42" rx="2" fill="#AEB0B7"/>
                     <!-- Holder bar -->
-                    <rect x="17" y="22" width="16" height="3" rx="1.5" fill="#AEB0B7"/>
+                    <rect x="19" y="26" width="16" height="3" rx="1.5" fill="#AEB0B7"/>
                     <!-- Flat square badge with white outline (no inner shadow) -->
-                    <rect x="14" y="10" width="22" height="22" rx="6" fill="${badge.color}" stroke="#ffffff" stroke-width="2"/>
-                    <text x="25" y="21" text-anchor="middle" dominant-baseline="middle" font-size="11" font-weight="900" fill="#ffffff" font-family="Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial">${badge.abbr}</text>
+                    <rect x="16" y="12" width="22" height="22" rx="6" fill="${badge.color}" stroke="#ffffff" stroke-width="2"/>
+                    <text x="27" y="23" text-anchor="middle" dominant-baseline="middle" font-size="11" font-weight="900" fill="#ffffff" font-family="Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial">${badge.abbr}</text>
                 </svg>`;
             L.marker([station.lat, station.lon], {
+                interactive: false,
                 icon: L.divIcon({
                     className: 'custom-marker',
                     html: poleHtml,
-                    iconSize: [50, 64],
-                    iconAnchor: [25, 60]
+                    iconSize: [56, 72],
+                    iconAnchor: [28, 68]
                 })
             }).addTo(map);
             // Fetch and draw a realistic street route using OSRM (walking profile)
@@ -1335,7 +1342,7 @@ async function renderOsrmRoute(fromLat, fromLon, toLat, toLon) {
         const latlngs = [ [fromLat, fromLon], [toLat, toLon] ];
         const s = computeWalkDash(map ? map.getZoom() : 15);
         routeLayer = L.polyline(latlngs, {
-            color: '#2D5872', weight: s.weight, opacity: 0.55, dashArray: s.dash, lineCap: 'round'
+            color: '#2D5872', weight: s.weight, opacity: 0.42, dashArray: s.dash, lineCap: 'round'
         }).addTo(map);
         try { map.off('zoomend', applyWalkRouteStyle); } catch {}
         map.on('zoomend', applyWalkRouteStyle);
@@ -1359,7 +1366,7 @@ async function renderOsrmRoute(fromLat, fromLon, toLat, toLon) {
         });
     } catch {}
     const s = computeWalkDash(map ? map.getZoom() : 15);
-    routeLayer = L.polyline(coords, { color: '#2D5872', weight: s.weight, opacity: 0.55, dashArray: s.dash, lineCap: 'round' }).addTo(map);
+    routeLayer = L.polyline(coords, { color: '#2D5872', weight: s.weight, opacity: 0.42, dashArray: s.dash, lineCap: 'round' }).addTo(map);
     try { map.off('zoomend', applyWalkRouteStyle); } catch {}
     map.on('zoomend', applyWalkRouteStyle);
     try {
