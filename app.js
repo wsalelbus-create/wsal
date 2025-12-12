@@ -1277,7 +1277,7 @@ function updateMap() {
                     <rect x="19" y="26" width="16" height="2" rx="1" fill="#9CA3AF"/>
                     <rect x="16" y="12" width="22" height="22" fill="${badge.color}" stroke="#ffffff" stroke-width="2" rx="6"/>
                     <text x="27" y="23" text-anchor="middle" dominant-baseline="middle" font-size="11" font-weight="900" fill="#ffffff" font-family="Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial" style="white-space: pre;">${badge.abbr}</text>
-                    <rect x="29.623" y="25.656" width="20.21" height="17.019" fill="#000000" opacity="0.20" stroke="none" transform="matrix(0.933681, 0.358105, -0.682581, 0.809231, 5.869135, 10.102437)" rx="6"/>
+                    <polygon points="16.015269,41.472212 34.884962,48.709514 23.268116,62.481816 4.398423,55.244514" fill="#000000" opacity="0.20"/>
                   </g>
                 </svg>`;
             L.marker([station.lat, station.lon], {
