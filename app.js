@@ -1280,7 +1280,7 @@ function updateMap() {
             const shadowTune = {
                 opacity: 0.20,
                 badge: {
-                    offsetX: 4,   // left/right
+                    offsetX: 1,   // left/right
                     offsetY: 10,   // up/down
                     castDX: 18,   // length along cast (x)
                     castDY: 8,    // length along cast (y)
