@@ -1275,9 +1275,10 @@ function updateMap() {
                     <g class="cast-shadow" opacity="0.20">
                         <!-- Stick floor shadow first: deeper inset to avoid any seam (top y≈41.8) -->
                         <polygon points="26.2,64 28.8,64 44.2,41.8 41.6,41.8" fill="#000000"/>
-                        <!-- Badge shadow last: match badge bottom width (including stroke), project down-right by ~(+10,+6) -->
-                        <!-- Badge rect: x=16 w=22 rx=6 with 2px white stroke => visible bottom spans x≈15..39, y≈35 -->
-                        <polygon points="15,35 39,35 49,41 25,41" fill="#000000"/>
+                        <!-- Badge shadow uses the exact badge shape (rounded square), flattened and offset down-right -->
+                        <!-- Original badge: x=16 y=12 w=22 h=22 rx=6 -->
+                        <rect x="16" y="12" width="22" height="22" rx="6" fill="#000000"
+                              transform="translate(20 26) skewX(20) scale(1,0.38)"/>
                     </g>
                     <!-- Pole -->
                     <rect x="26.2" y="22" width="2.6" height="42" rx="1.3" fill="#9CA3AF"/>
