@@ -1271,12 +1271,14 @@ function updateMap() {
             const badge = stationBadgeFor(station.name);
             const poleHtml = `
                 <svg width="56" height="72" viewBox="0 0 56 72" xmlns="http://www.w3.org/2000/svg" style="pointer-events:none; overflow:visible;">
-                  <polygon points="17.167 62.875 18.745 64 37.008 45.34 34.408 45.34" fill="#000000" opacity="0.20"/>
+                  <g opacity="0.20">
+                    <polygon points="17.167 62.875 18.745 64 37.008 45.34 34.408 45.34" fill="#000000"/>
+                    <rect x="29.623" y="25.656" width="20.21" height="17.019" fill="#000000" stroke="none" transform="matrix(0.933681, 0.358105, -0.682581, 0.809231, 22.0098793875, 2.8023018294999957)" rx="6"/>
+                  </g>
                   <rect x="16.385" y="22.409" width="2.6" height="42" rx="1.3" fill="#9CA3AF"/>
                   <rect x="9.185" y="26.409" width="16" height="2" rx="1" fill="#9CA3AF"/>
                   <rect x="6.185" y="12.409" width="22" height="22" rx="6" fill="${badge.color}" stroke="#ffffff" stroke-width="2"/>
                   <text x="17.185" y="23.409" text-anchor="middle" font-size="11" font-weight="900" fill="#ffffff" font-family="Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial" dy="0.32em">${badge.abbr}</text>
-                  <rect x="29.623" y="25.656" width="20.21" height="17.019" fill="#000000" opacity="0.20" stroke="none" transform="matrix(0.933681, 0.358105, -0.682581, 0.809231, 22.0098793875, 2.8023018294999957)" rx="6"/>
                 </svg>`;
             L.marker([station.lat, station.lon], {
                 interactive: false,
