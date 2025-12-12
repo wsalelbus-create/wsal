@@ -1275,11 +1275,8 @@ function updateMap() {
                     <g class="cast-shadow" opacity="0.20">
                         <!-- Stick floor shadow first: deeper inset to avoid any seam (top y≈41.8) -->
                         <polygon points="26.2,64 28.8,64 44.2,41.8 41.6,41.8" fill="#000000"/>
-                        <!-- Badge shadow: clone of the badge shape, moved 30px right and 6px down, then skewed and flattened to look flat -->
-                        <!-- Original badge: x=16 y=12 w=22 h=22 rx=6 -->
-                        <g transform="translate(32 31) rotate(15 11 11) skewX(10) scale(1,0.90)">
-                            <rect x="0" y="0" width="22" height="22" rx="6" fill="#000000"/>
-                        </g>
+                        <!-- Badge shadow last to cover the join; same solid fill, opacity handled by group -->
+                        <polygon points="38,34 56,42 48,48 31,40" fill="#000000"/>
                     </g>
                     <!-- Pole -->
                     <rect x="26.2" y="22" width="2.6" height="42" rx="1.3" fill="#9CA3AF"/>
