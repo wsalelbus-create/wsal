@@ -1285,7 +1285,7 @@ function updateMap() {
                     castDX: 18,   // length along cast (x)
                     castDY: 8,    // length along cast (y)
                     depth: 9,     // height/depth
-                    skew: -7      // skew far edge
+                    skew: -10      // skew far edge
                 },
                 stick: {
                     attachT: 0.52,      // 0..1 along inner edge of badge shadow (p4->p3)
