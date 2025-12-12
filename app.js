@@ -1284,7 +1284,7 @@ function updateMap() {
                     offsetY: 0,   // up/down
                     castDX: 18,   // length along cast (x)
                     castDY: 8,    // length along cast (y)
-                    depth: 9,     // height/depth
+                    depth: 6,     // height/depth
                     skew: -10      // skew far edge
                 },
                 stick: {
