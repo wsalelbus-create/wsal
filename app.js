@@ -1276,7 +1276,8 @@ function updateMap() {
                   <rect x="9.185" y="26.409" width="16" height="2" rx="1" fill="#9CA3AF" style="stroke-width: 1;"/>
                   <rect x="6.185" y="12.409" width="22" height="22" fill="${badge.color}" stroke="#ffffff" stroke-width="2" rx="6" style="stroke-width: 2;"/>
                   <text x="17.185" y="23.409" text-anchor="middle" dominant-baseline="middle" font-size="11" font-weight="900" fill="#ffffff" font-family="Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial" style="white-space: pre; stroke-width: 1; font-size: 11px;">${badge.abbr}</text>
-                  <rect x="29.623" y="25.656" width="20.21" height="17.019" fill="#000000" opacity="0.20" stroke="none" transform="matrix(0.933681, 0.358105, -0.682581, 0.809231, -3.945563, 10.511379)" rx="6"/>
+                  <!-- Baked badge shadow polygon (matrix-applied corners of the rotated rect) -->
+                  <polygon points="6.200571,41.881154 25.070264,49.118456 13.453418,62.890758 -5.416275,55.653456" fill="#000000" opacity="0.20"/>
                 </svg>`;
             L.marker([station.lat, station.lon], {
                 interactive: false,
