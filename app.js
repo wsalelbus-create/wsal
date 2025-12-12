@@ -1278,7 +1278,7 @@ function updateMap() {
                         <!-- Badge shadow uses the exact badge shape (rounded square), flattened and offset down-right -->
                         <!-- Original badge: x=16 y=12 w=22 h=22 rx=6 -->
                         <rect x="16" y="12" width="22" height="22" rx="6" fill="#000000"
-                              transform="translate(20 26) skewX(20) scale(1,0.38)"/>
+                              transform="scale(1,0.38) skewX(20) translate(20 36)"/>
                     </g>
                     <!-- Pole -->
                     <rect x="26.2" y="22" width="2.6" height="42" rx="1.3" fill="#9CA3AF"/>
