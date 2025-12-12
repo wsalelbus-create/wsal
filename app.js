@@ -1271,13 +1271,12 @@ function updateMap() {
             const badge = stationBadgeFor(station.name);
             const poleHtml = `
                 <svg width="56" height="72" viewBox="0 0 56 72" xmlns="http://www.w3.org/2000/svg" style="pointer-events:none; overflow:visible;">
-                  <polygon points="17.167 62.875 18.745 64 37.008 45.34 34.408 45.34" fill="#000000" opacity="0.20"/>
+                  <polygon points="17.167 62.875 18.745 64 37.008 45.34 34.408 45.34" fill="#000000" opacity="0.20" style="transform-origin: 27.114px 54.159px; stroke-width: 1;"/>
                   <rect x="16.385" y="22.409" width="2.6" height="42" rx="1.3" fill="#9CA3AF" style="stroke-width: 1;"/>
                   <rect x="9.185" y="26.409" width="16" height="2" rx="1" fill="#9CA3AF" style="stroke-width: 1;"/>
                   <rect x="6.185" y="12.409" width="22" height="22" fill="${badge.color}" stroke="#ffffff" stroke-width="2" rx="6" style="stroke-width: 2;"/>
                   <text x="17.185" y="23.409" text-anchor="middle" dominant-baseline="middle" font-size="11" font-weight="900" fill="#ffffff" font-family="Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial" style="white-space: pre; stroke-width: 1; font-size: 11px;">${badge.abbr}</text>
-                  <!-- Baked badge shadow polygon (matrix-applied corners of the rotated rect) -->
-                  <polygon points="6.200571,41.881154 25.070264,49.118456 13.453418,62.890758 -5.416275,55.653456" fill="#000000" opacity="0.20"/>
+                  <rect x="29.623" y="25.656" width="20.21" height="17.019" fill="#000000" opacity="0.20" stroke="none" style="stroke-width: 2; transform-box: fill-box; transform-origin: 50% 50%;" transform="matrix(0.933681, 0.358105, -0.682581, 0.809231, -3.945563, 10.511379)" rx="6"/>
                 </svg>`;
             L.marker([station.lat, station.lon], {
                 interactive: false,
@@ -1285,7 +1284,7 @@ function updateMap() {
                     className: 'custom-marker',
                     html: poleHtml,
                     iconSize: [56, 72],
-                    iconAnchor: [17.685, 64.409]
+                    iconAnchor: [16.385, 64.409]
                 }),
                 zIndexOffset: 1000
             }).addTo(map);
