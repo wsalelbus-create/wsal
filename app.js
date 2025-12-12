@@ -1272,11 +1272,11 @@ function updateMap() {
             const poleHtml = `
                 <svg width="56" height="72" viewBox="0 0 56 72" xmlns="http://www.w3.org/2000/svg" style="pointer-events:none; overflow:visible;">
                     <!-- Floor-cast shadow (crisp, no blur) -->
-                    <g class="cast-shadow" opacity="0.5">
-                        <!-- Stick floor shadow first: slight inset to avoid seam (top y=41.1) -->
-                        <polygon points="26.2,64 28.8,64 44.6,41.1 42.0,41.1" fill="rgba(0,0,0,0.45)"/>
-                        <!-- Badge shadow last to cover the join, same color/opacity -->
-                        <polygon points="38,34 56,42 48,48 31,40" fill="rgba(0,0,0,0.45)"/>
+                    <g class="cast-shadow" opacity="0.45">
+                        <!-- Stick floor shadow first: deeper inset to avoid any seam (top y≈41.8) -->
+                        <polygon points="26.2,64 28.8,64 44.2,41.8 41.6,41.8" fill="#000000"/>
+                        <!-- Badge shadow last to cover the join; same solid fill, opacity handled by group -->
+                        <polygon points="38,34 56,42 48,48 31,40" fill="#000000"/>
                     </g>
                     <!-- Pole -->
                     <rect x="26.2" y="22" width="2.6" height="42" rx="1.3" fill="#9CA3AF"/>
