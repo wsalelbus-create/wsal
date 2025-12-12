@@ -1280,10 +1280,10 @@ function updateMap() {
             const shadowTune = {
                 opacity: 0.20,
                 badge: {
-                    offsetX: 50,   // left/right
+                    offsetX: 0,   // left/right
                     offsetY: 0,   // up/down
-                    castDX: 18,   // length along cast (x)
-                    castDY: 8,    // length along cast (y)
+                    castDX: 22,   // length along cast (x)
+                    castDY: 10,    // length along cast (y)
                     depth: 6,     // height/depth
                     skew: -7      // skew far edge
                 },
