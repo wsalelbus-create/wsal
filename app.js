@@ -1269,14 +1269,66 @@ function updateMap() {
         if (uiMode === 'walk' && station) {
             // Add target station marker as a pole stop with badge (Citymapper style)
             const badge = stationBadgeFor(station.name);
+            // Shadow tuning knobs (edit these values to adjust manually)
+            // - Move badge shadow: badge.offsetX / badge.offsetY (px)
+            // - Change badge shadow length/angle: badge.castDX / badge.castDY (px)
+            // - Change badge shadow height: badge.depth (px)
+            // - Skew badge shadow: badge.skew (px; negative leans left)
+            // - Where stick joins the badge shadow: stick.attachT (0=start edge, 1=end edge), attachNudgeX/attachNudgeY (px)
+            // - Stick width: stick.width (defaults to pole width 2.6)
+            // - Nudge base of stick at the pole: stick.baseNudgeX / baseNudgeY (px)
+            const shadowTune = {
+                opacity: 0.20,
+                badge: {
+                    offsetX: 4,   // left/right
+                    offsetY: 0,   // up/down
+                    castDX: 18,   // length along cast (x)
+                    castDY: 8,    // length along cast (y)
+                    depth: 6,     // height/depth
+                    skew: -7      // skew far edge
+                },
+                stick: {
+                    attachT: 0.52,      // 0..1 along inner edge of badge shadow (p4->p3)
+                    attachNudgeX: 0,    // fine nudge X at the join point
+                    attachNudgeY: 0,    // fine nudge Y at the join point
+                    width: 2.6,         // shadow bar width (px). Use pole width for 1:1
+                    baseNudgeX: 0,      // nudge where it meets the pole base
+                    baseNudgeY: 0
+                }
+            };
+
+            // Geometry helpers (keep in sync with SVG below)
+            const signRect = { x: 16, y: 12, w: 22, h: 22 };
+            const poleRect = { x: 26.2, y: 22, w: 2.6, h: 42 };
+
+            // Badge shadow as a parallelogram relative to badge bottom-right corner
+            const ax = signRect.x + signRect.w + shadowTune.badge.offsetX;
+            const ay = signRect.y + signRect.h + shadowTune.badge.offsetY;
+            const p1 = { x: ax, y: ay };
+            const p2 = { x: ax + shadowTune.badge.castDX, y: ay + shadowTune.badge.castDY };
+            const p3 = { x: p2.x + shadowTune.badge.skew, y: p2.y + shadowTune.badge.depth };
+            const p4 = { x: p1.x + shadowTune.badge.skew, y: p1.y + shadowTune.badge.depth };
+            const badgeShadowPts = `${p1.x},${p1.y} ${p2.x},${p2.y} ${p3.x},${p3.y} ${p4.x},${p4.y}`;
+
+            // Stick shadow joins the middle of the inner badge edge p4->p3
+            const t = Math.max(0, Math.min(1, shadowTune.stick.attachT));
+            const attachX = p4.x + (p3.x - p4.x) * t + shadowTune.stick.attachNudgeX;
+            const attachY = p4.y + (p3.y - p4.y) * t + shadowTune.stick.attachNudgeY;
+            const stickW = (typeof shadowTune.stick.width === 'number' ? shadowTune.stick.width : poleRect.w);
+            const topLeft = { x: attachX - stickW / 2, y: attachY + 0.18 }; // tiny inset to hide seam
+            const topRight = { x: attachX + stickW / 2, y: attachY + 0.18 };
+            const baseLeft = { x: poleRect.x + shadowTune.stick.baseNudgeX, y: poleRect.y + poleRect.h + shadowTune.stick.baseNudgeY };
+            const baseRight = { x: poleRect.x + poleRect.w + shadowTune.stick.baseNudgeX, y: poleRect.y + poleRect.h + shadowTune.stick.baseNudgeY };
+            const stickShadowPts = `${baseLeft.x},${baseLeft.y} ${baseRight.x},${baseRight.y} ${topRight.x},${topRight.y} ${topLeft.x},${topLeft.y}`;
+
             const poleHtml = `
                 <svg width="56" height="72" viewBox="0 0 56 72" xmlns="http://www.w3.org/2000/svg" style="pointer-events:none; overflow:visible;">
                     <!-- Floor-cast shadow (crisp, no blur) -->
-                    <g class="cast-shadow" opacity="0.20">
-                        <!-- Stick floor shadow first: deeper inset to avoid any seam (top y≈41.8) -->
-                        <polygon points="26.2,64 28.8,64 44.2,41.8 41.6,41.8" fill="#000000"/>
-                        <!-- Badge shadow last to cover the join; same solid fill, opacity handled by group -->
-                        <polygon points="38,34 56,42 48,48 31,40" fill="#000000"/>
+                    <g class="cast-shadow" opacity="${shadowTune.opacity}">
+                        <!-- Stick floor shadow first; edit via shadowTune.stick.* above -->
+                        <polygon points="${stickShadowPts}" fill="#000000"/>
+                        <!-- Badge shadow last; edit via shadowTune.badge.* above -->
+                        <polygon points="${badgeShadowPts}" fill="#000000"/>
                     </g>
                     <!-- Pole -->
                     <rect x="26.2" y="22" width="2.6" height="42" rx="1.3" fill="#9CA3AF"/>
