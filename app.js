@@ -1286,7 +1286,7 @@ function updateMap() {
                     className: 'custom-marker',
                     html: poleHtml,
                     iconSize: [56, 72],
-                    iconAnchor: [17.685, 64.409]
+                    iconAnchor: [16.385, 64.409]
                 }),
                 zIndexOffset: 1000
             }).addTo(map);
