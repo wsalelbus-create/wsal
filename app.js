@@ -1267,96 +1267,22 @@ function updateMap() {
         }
 
         if (uiMode === 'walk' && station) {
-            // Add target station marker as a pole stop using Canvas-rendered PNG
-            // This avoids Safari 15 SVG transform inconsistencies while preserving exact geometry.
+            // Add target station marker as a pole stop with simplified SVG (user-provided geometry)
             const badge = stationBadgeFor(station.name);
-
-            const markerUrl = (() => {
-                const canvas = document.createElement('canvas');
-                canvas.width = 56; canvas.height = 72;
-                const ctx = canvas.getContext('2d');
-                if (!ctx) return '';
-
-                // Helper: rounded rectangle path
-                function roundRectPath(c, x, y, w, h, r) {
-                    const rr = Math.max(0, Math.min(r, Math.min(w, h) / 2));
-                    c.beginPath();
-                    c.moveTo(x + rr, y);
-                    c.lineTo(x + w - rr, y);
-                    c.arcTo(x + w, y, x + w, y + rr, rr);
-                    c.lineTo(x + w, y + h - rr);
-                    c.arcTo(x + w, y + h, x + w - rr, y + h, rr);
-                    c.lineTo(x + rr, y + h);
-                    c.arcTo(x, y + h, x, y + h - rr, rr);
-                    c.lineTo(x, y + rr);
-                    c.arcTo(x, y, x + rr, y, rr);
-                    c.closePath();
-                }
-
-                // 1) Shadows group (avoid double-darkening by compositing once)
-                const shadowCanvas = document.createElement('canvas');
-                shadowCanvas.width = 56; shadowCanvas.height = 72;
-                const sx = shadowCanvas.getContext('2d');
-                if (sx) {
-                    // Stick shadow polygon (exact points)
-                    sx.fillStyle = '#000000';
-                    sx.beginPath();
-                    sx.moveTo(17.167, 62.875);
-                    sx.lineTo(18.745, 64.000);
-                    sx.lineTo(37.008, 45.340);
-                    sx.lineTo(34.408, 45.340);
-                    sx.closePath();
-                    sx.fill();
-
-                    // Badge shadow (rotated rounded-rect) using the exact transform matrix
-                    sx.save();
-                    sx.setTransform(0.933681, 0.358105, -0.682581, 0.809231, -3.945563, 10.511379);
-                    roundRectPath(sx, 29.623, 25.656, 20.21, 17.019, 6);
-                    sx.fill();
-                    sx.restore();
-
-                    // Composite the whole shadow group with a single opacity
-                    ctx.save();
-                    ctx.globalAlpha = 0.20;
-                    ctx.drawImage(shadowCanvas, 0, 0);
-                    ctx.restore();
-                }
-
-                // 2) Pole and holder
-                ctx.fillStyle = '#9CA3AF';
-                // Pole
-                roundRectPath(ctx, 16.385, 22.409, 2.6, 42, 1.3);
-                ctx.fill();
-                // Holder bar
-                roundRectPath(ctx, 9.185, 26.409, 16, 2, 1);
-                ctx.fill();
-
-                // 3) Badge square (dynamic color) with white stroke
-                ctx.save();
-                roundRectPath(ctx, 6.185, 12.409, 22, 22, 6);
-                ctx.fillStyle = badge.color;
-                ctx.fill();
-                ctx.lineWidth = 2;
-                ctx.strokeStyle = '#ffffff';
-                ctx.stroke();
-                ctx.restore();
-
-                // 4) Badge text (dynamic)
-                ctx.save();
-                ctx.fillStyle = '#ffffff';
-                ctx.font = '900 11px Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial';
-                ctx.textAlign = 'center';
-                ctx.textBaseline = 'middle';
-                ctx.fillText(badge.abbr, 17.185, 23.409);
-                ctx.restore();
-
-                return canvas.toDataURL('image/png');
-            })();
-
+            const poleHtml = `
+                <svg width="56" height="72" viewBox="0 0 56 72" xmlns="http://www.w3.org/2000/svg" style="pointer-events:none; overflow:visible;">
+                  <polygon points="17.167 62.875 18.745 64 37.008 45.34 34.408 45.34" fill="#000000" opacity="0.20"/>
+                  <rect x="16.385" y="22.409" width="2.6" height="42" rx="1.3" fill="#9CA3AF"/>
+                  <rect x="9.185" y="26.409" width="16" height="2" rx="1" fill="#9CA3AF"/>
+                  <rect x="6.185" y="12.409" width="22" height="22" rx="6" fill="${badge.color}" stroke="#ffffff" stroke-width="2"/>
+                  <text x="17.185" y="23.409" text-anchor="middle" font-size="11" font-weight="900" fill="#ffffff" font-family="Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial" dy="0.32em">${badge.abbr}</text>
+                  <rect x="29.623" y="25.656" width="20.21" height="17.019" fill="#000000" opacity="0.20" stroke="none" transform="matrix(0.933681, 0.358105, -0.682581, 0.809231, 22.0098793875, 2.8023018294999957)" rx="6"/>
+                </svg>`;
             L.marker([station.lat, station.lon], {
                 interactive: false,
-                icon: L.icon({
-                    iconUrl: markerUrl,
+                icon: L.divIcon({
+                    className: 'custom-marker',
+                    html: poleHtml,
                     iconSize: [56, 72],
                     iconAnchor: [16.385, 64.409]
                 }),
