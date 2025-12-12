@@ -1272,7 +1272,7 @@ function updateMap() {
             const poleHtml = `
                 <svg width="56" height="72" viewBox="0 0 56 72" xmlns="http://www.w3.org/2000/svg" style="pointer-events:none; overflow:visible;">
                     <!-- Floor-cast shadow (crisp, no blur) -->
-                    <g class="cast-shadow" opacity="0.32">
+                    <g class="cast-shadow" opacity="0.26">
                         <!-- Stick floor shadow first: deeper inset to avoid any seam (top y≈41.8) -->
                         <polygon points="26.2,64 28.8,64 44.2,41.8 41.6,41.8" fill="#000000"/>
                         <!-- Badge shadow last to cover the join; same solid fill, opacity handled by group -->
