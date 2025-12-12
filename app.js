@@ -1272,12 +1272,12 @@ function updateMap() {
             const poleHtml = `
                 <svg width="56" height="72" viewBox="0 0 56 72" xmlns="http://www.w3.org/2000/svg" style="pointer-events:none; overflow:visible;">
                   <g transform="matrix(1, 0, 0, 1, -9.814698, 0.408939)">
-                    <polygon points="26.982 62.466 28.56 63.591 46.823 44.931 44.223 44.931" fill="#000000" opacity="0.20" style="transform-origin: 36.929px 53.75px;"/>
+                    <polygon points="26.982 62.466 28.56 63.591 46.823 44.931 44.223 44.931" fill="#000000" opacity="0.20"/>
                     <rect x="26.2" y="22" width="2.6" height="42" rx="1.3" fill="#9CA3AF"/>
                     <rect x="19" y="26" width="16" height="2" rx="1" fill="#9CA3AF"/>
                     <rect x="16" y="12" width="22" height="22" fill="${badge.color}" stroke="#ffffff" stroke-width="2" rx="6"/>
                     <text x="27" y="23" text-anchor="middle" dominant-baseline="middle" font-size="11" font-weight="900" fill="#ffffff" font-family="Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial" style="white-space: pre;">${badge.abbr}</text>
-                    <rect x="29.623" y="25.656" width="20.21" height="17.019" fill="#000000" opacity="0.20" stroke="none" style="stroke-width: 2; transform-box: fill-box; transform-origin: 50% 50%;" transform="matrix(0.933681, 0.358105, -0.682581, 0.809231, 5.869135, 10.102437)" rx="6"/>
+                    <rect x="29.623" y="25.656" width="20.21" height="17.019" fill="#000000" opacity="0.20" stroke="none" transform="matrix(0.933681, 0.358105, -0.682581, 0.809231, 5.869135, 10.102437)" rx="6"/>
                   </g>
                 </svg>`;
             L.marker([station.lat, station.lon], {
