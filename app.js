@@ -1269,74 +1269,25 @@ function updateMap() {
         if (uiMode === 'walk' && station) {
             // Add target station marker as a pole stop with simplified SVG (user-provided geometry)
             const badge = stationBadgeFor(station.name);
-            // Build a Safari-safe shadow path by baking the rotated rounded-rect into a path (no transforms at render time)
-            const shadowPathD = (() => {
-                // Original rect with rounded corners
-                const x = 29.623, y = 25.656, w = 20.21, h = 17.019, r = 6;
-                const k = 0.5522847498307936 * r; // cubic bezier approximation for a quarter circle
-                // Transform matrix (same as the one used in the SVG)
-                const a = 0.933681, c = 0.358105, b = -0.682581, d = 0.809231, e = -3.945563, f = 10.511379;
-                const T = (px, py) => ({ x: a * px + c * py + e, y: b * px + d * py + f });
-                const F = (n) => (Math.round(n * 1000) / 1000); // trim precision to 3 decimals
-
-                // Axis-aligned rounded-rect as cubic beziers, then transform all points
-                const p = {
-                    // Edges
-                    m: T(x + r, y),
-                    l1: T(x + w - r, y),
-                    l2: T(x + w, y + h - r),
-                    l3: T(x + r, y + h),
-                    l4: T(x, y + r),
-                    // Corners (cubic control points and ends)
-                    tr_c1: T(x + w - r + k, y),
-                    tr_c2: T(x + w, y + r - k),
-                    tr_end: T(x + w, y + r),
-
-                    br_c1: T(x + w, y + h - r + k),
-                    br_c2: T(x + w - r + k, y + h),
-                    br_end: T(x + w - r, y + h),
-
-                    bl_c1: T(x + r - k, y + h),
-                    bl_c2: T(x, y + h - r + k),
-                    bl_end: T(x, y + h - r),
-
-                    tl_c1: T(x, y + r - k),
-                    tl_c2: T(x + r - k, y),
-                    tl_end: T(x + r, y)
-                };
-
-                const seg = (pt) => `${F(pt.x)},${F(pt.y)}`;
-                const dstr = [
-                    `M ${seg(p.m)}`,
-                    `L ${seg(p.l1)}`,
-                    `C ${seg(p.tr_c1)} ${seg(p.tr_c2)} ${seg(p.tr_end)}`,
-                    `L ${seg(p.l2)}`,
-                    `C ${seg(p.br_c1)} ${seg(p.br_c2)} ${seg(p.br_end)}`,
-                    `L ${seg(p.l3)}`,
-                    `C ${seg(p.bl_c1)} ${seg(p.bl_c2)} ${seg(p.bl_end)}`,
-                    `L ${seg(p.l4)}`,
-                    `C ${seg(p.tl_c1)} ${seg(p.tl_c2)} ${seg(p.tl_end)}`,
-                    'Z'
-                ].join(' ');
-                return dstr;
-            })();
-            const poleHtml = `
-                <svg width="56" height="72" viewBox="0 0 56 72" xmlns="http://www.w3.org/2000/svg" style="pointer-events:none; overflow:visible;">
-                  <polygon points="17.167 62.875 18.745 64 37.008 45.34 34.408 45.34" fill="#000000" opacity="0.20"/>
+            const poleSvg = `
+                <svg width="56" height="72" viewBox="0 0 56 72" xmlns="http://www.w3.org/2000/svg">
+                  <polygon points="17.167 62.875 18.745 64 37.008 45.34 34.408 45.34" fill="#000000" opacity="0.20" style="stroke-width: 1;"/>
                   <rect x="16.385" y="22.409" width="2.6" height="42" rx="1.3" fill="#9CA3AF" style="stroke-width: 1;"/>
                   <rect x="9.185" y="26.409" width="16" height="2" rx="1" fill="#9CA3AF" style="stroke-width: 1;"/>
                   <rect x="6.185" y="12.409" width="22" height="22" fill="${badge.color}" stroke="#ffffff" stroke-width="2" rx="6" style="stroke-width: 2;"/>
                   <text x="17.185" y="23.409" text-anchor="middle" dominant-baseline="middle" font-size="11" font-weight="900" fill="#ffffff" font-family="Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial" style="white-space: pre; stroke-width: 1; font-size: 11px;">${badge.abbr}</text>
-                  <path d="${shadowPathD}" fill="#000000" opacity="0.20" stroke="none"/>
+                  <g transform="matrix(0.933681 0.358105 -0.682581 0.809231 -3.945563 10.511379)">
+                    <rect x="29.623" y="25.656" width="20.21" height="17.019" fill="#000000" opacity="0.20" stroke="none" rx="6"/>
+                  </g>
                 </svg>`;
+            const poleIcon = L.icon({
+                iconUrl: `data:image/svg+xml;utf8,${encodeURIComponent(poleSvg)}`,
+                iconSize: [56, 72],
+                iconAnchor: [16.385, 64.409]
+            });
             L.marker([station.lat, station.lon], {
                 interactive: false,
-                icon: L.divIcon({
-                    className: 'custom-marker',
-                    html: poleHtml,
-                    iconSize: [56, 72],
-                    iconAnchor: [16.385, 64.409]
-                }),
+                icon: poleIcon,
                 zIndexOffset: 1000
             }).addTo(map);
             // Fetch and draw a realistic street route using OSRM (walking profile)
