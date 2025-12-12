@@ -1271,15 +1271,12 @@ function updateMap() {
             const badge = stationBadgeFor(station.name);
             const poleHtml = `
                 <svg width="56" height="72" viewBox="0 0 56 72" xmlns="http://www.w3.org/2000/svg" style="pointer-events:none; overflow:visible;">
-                  <!-- Shadows (group opacity for even blending) -->
-                  <g class="cast-shadow" opacity="0.20">
-                    <!-- Stick shadow (single trapezoid) -->
-                    <polygon points="17.167,62.875 18.745,64 37.008,45.34 34.408,45.34" fill="#000000"/>
-                    <!-- Badge shadow (rotated rounded-rect) using same transform as provided, but as a shadow -->
-                    <rect x="29.623" y="25.656" width="20.21" height="17.019" fill="#000000" stroke="none" rx="6"
-                          style="transform-box: fill-box; transform-origin: 50% 50%;"
-                          transform="matrix(0.933681, 0.358105, -0.682581, 0.809231, -3.945563, 10.511379)" />
-                  </g>
+                  <!-- Stick shadow (single trapezoid) - exact position/attributes from original -->
+                  <polygon points="17.167 62.875 18.745 64 37.008 45.34 34.408 45.34" fill="#000000" opacity="0.20" style="transform-origin: 27.114px 54.159px; stroke-width: 1;"/>
+                  <!-- Badge shadow (rotated rounded-rect) - exact transform from original, rendered as shadow -->
+                  <rect x="29.623" y="25.656" width="20.21" height="17.019" fill="#000000" opacity="0.20" stroke="none" rx="6"
+                        style="stroke-width: 2; transform-box: fill-box; transform-origin: 50% 50%;"
+                        transform="matrix(0.933681, 0.358105, -0.682581, 0.809231, -3.945563, 10.511379)" />
                   <!-- Pole -->
                   <rect x="16.385" y="22.409" width="2.6" height="42" rx="1.3" fill="#9CA3AF"/>
                   <!-- Holder bar -->
