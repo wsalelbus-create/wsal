@@ -1294,7 +1294,14 @@ function updateMap() {
                     width: 2.6,         // shadow bar width (px). Use pole width for 1:1
                     baseNudgeX: 0,      // nudge where it meets the pole base
                     baseNudgeY: 0
-                }
+                },
+                // Optional: paste raw polygon points from an external SVG editor to override computed ones.
+                // Example: "38,34 56,42 46,49 28,41"
+                overrideBadgePoints: '',
+                // Using user's refined stick shadow (translated to our pole x)
+                // Source (user SVG): 17.167,62.875 18.745,64 37.008,45.34 34.408,45.34
+                // Translation applied (+9.815 on x) -> 26.982,62.875 28.56,64 46.823,45.34 44.223,45.34
+                overrideStickPoints: '26.982,62.875 28.56,64 46.823,45.34 44.223,45.34'
             };
 
             // Geometry helpers (keep in sync with SVG below)
@@ -1321,14 +1328,24 @@ function updateMap() {
             const baseRight = { x: poleRect.x + poleRect.w + shadowTune.stick.baseNudgeX, y: poleRect.y + poleRect.h + shadowTune.stick.baseNudgeY };
             const stickShadowPts = `${baseLeft.x},${baseLeft.y} ${baseRight.x},${baseRight.y} ${topRight.x},${topRight.y} ${topLeft.x},${topLeft.y}`;
 
+            // Final points strings, allowing manual override from shadowTune.* if provided
+            const finalBadgePts = (shadowTune.overrideBadgePoints && shadowTune.overrideBadgePoints.trim().length)
+                ? shadowTune.overrideBadgePoints.trim()
+                : badgeShadowPts;
+            const finalStickPts = (shadowTune.overrideStickPoints && shadowTune.overrideStickPoints.trim().length)
+                ? shadowTune.overrideStickPoints.trim()
+                : stickShadowPts;
+
             const poleHtml = `
                 <svg width="56" height="72" viewBox="0 0 56 72" xmlns="http://www.w3.org/2000/svg" style="pointer-events:none; overflow:visible;">
                     <!-- Floor-cast shadow (crisp, no blur) -->
                     <g class="cast-shadow" opacity="${shadowTune.opacity}">
-                        <!-- Stick floor shadow first; edit via shadowTune.stick.* above -->
-                        <polygon points="${stickShadowPts}" fill="#000000"/>
-                        <!-- Badge shadow last; edit via shadowTune.badge.* above -->
-                        <polygon points="${badgeShadowPts}" fill="#000000"/>
+                        <!-- Stick floor shadow first; edit via shadowTune.stick.* above
+                             or paste points into shadowTune.overrideStickPoints -->
+                        <polygon points="${finalStickPts}" fill="#000000"/>
+                        <!-- Badge shadow last; edit via shadowTune.badge.* above
+                             or paste points into shadowTune.overrideBadgePoints -->
+                        <polygon points="${finalBadgePts}" fill="#000000"/>
                     </g>
                     <!-- Pole -->
                     <rect x="26.2" y="22" width="2.6" height="42" rx="1.3" fill="#9CA3AF"/>
