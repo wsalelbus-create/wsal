@@ -1275,9 +1275,9 @@ function updateMap() {
                     <g class="cast-shadow" opacity="0.20">
                         <!-- Stick floor shadow first: deeper inset to avoid any seam (top y≈41.8) -->
                         <polygon points="26.2,64 28.8,64 44.2,41.8 41.6,41.8" fill="#000000"/>
-                        <!-- Badge shadow: clone of the badge shape, moved 30px right and 6px down, same size as badge -->
+                        <!-- Badge shadow: clone of the badge shape, moved 30px right and 11px down, same size as badge -->
                         <!-- Original badge: x=16 y=12 w=22 h=22 rx=6 -->
-                        <rect x="41" y="18" width="22" height="22" rx="6" fill="#000000"/>
+                        <rect x="41" y="23" width="22" height="22" rx="6" fill="#000000"/>
                     </g>
                     <!-- Pole -->
                     <rect x="26.2" y="22" width="2.6" height="42" rx="1.3" fill="#9CA3AF"/>
