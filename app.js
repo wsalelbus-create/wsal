@@ -1272,11 +1272,9 @@ function updateMap() {
             const poleHtml = `
                 <svg width="56" height="72" viewBox="0 0 56 72" xmlns="http://www.w3.org/2000/svg" style="pointer-events:none; overflow:visible;">
                     <!-- Floor-cast shadow (crisp, no blur) -->
-                    <g class="cast-shadow" opacity="0.5">
-                        <!-- Badge shadow: short, down-right from badge bottom-right corner -->
-                        <polygon points="38,34 56,42 48,48 31,40" fill="rgba(0,0,0,0.45)"/>
-                        <!-- Stick floor shadow: single trapezoid from pole base to the MIDDLE of badge shadow (same width as pole) -->
-                        <polygon points="26.2,64 28.8,64 44.6,41 42.0,41" fill="rgba(0,0,0,0.45)"/>
+                    <g class="cast-shadow">
+                        <!-- Unified shadow polygon (badge wedge + stick bar) to avoid anti-alias seams -->
+                        <polygon points="26.2,64 28.8,64 44.6,41 56,42 48,48 31,40 42.0,41" fill="rgba(0,0,0,0.45)"/>
                     </g>
                     <!-- Pole -->
                     <rect x="26.2" y="22" width="2.6" height="42" rx="1.3" fill="#9CA3AF"/>
