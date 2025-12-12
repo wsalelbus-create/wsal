@@ -1277,7 +1277,7 @@ function updateMap() {
                         <polygon points="26.2,64 28.8,64 44.2,41.8 41.6,41.8" fill="#000000"/>
                         <!-- Badge shadow: clone of the badge shape, moved 30px right and 6px down, then skewed and flattened to look flat -->
                         <!-- Original badge: x=16 y=12 w=22 h=22 rx=6 -->
-                        <g transform="translate(41 18) skewX(18) scale(1,0.70)">
+                        <g transform="translate(41 18) skewX(18) scale(1,0.80)">
                             <rect x="0" y="0" width="22" height="22" rx="6" fill="#000000"/>
                         </g>
                     </g>
