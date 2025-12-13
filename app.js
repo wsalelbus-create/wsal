@@ -32,7 +32,7 @@ function applyDetailOverlay() {
         overlay.setAttribute('role', 'presentation');
         overlay.innerHTML = `
             <div class="detail-bus-overlay-row">
-                <svg width="40" height="40" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                <svg width="44" height="44" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
                     <rect x="1.5" y="1.5" width="25" height="25" rx="6" fill="${badge.color}" stroke="#FFFFFF" stroke-width="3"/>
                     <text x="14" y="14" dominant-baseline="middle" text-anchor="middle" font-family="Outfit, sans-serif" font-size="12" font-weight="900" fill="#FFFFFF">${badge.abbr}</text>
                 </svg>
@@ -168,8 +168,8 @@ function renderBusStations(withDelay = false) {
                 overlay.setAttribute('role', 'presentation');
                 overlay.innerHTML = `
                     <div class="detail-bus-overlay-row">
-                        <svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-                            <rect x="1.5" y="1.5" width="25" height="25" rx="10" fill="${badge.color}" stroke="#FFFFFF" stroke-width="3"/>
+                        <svg width="44" height="44" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                            <rect x="1.5" y="1.5" width="25" height="25" rx="6" fill="${badge.color}" stroke="#FFFFFF" stroke-width="3"/>
                             <text x="14" y="14" dominant-baseline="middle" text-anchor="middle" font-family="Outfit, sans-serif" font-size="12" font-weight="900" fill="#FFFFFF">${badge.abbr}</text>
                         </svg>
                         <div class="detail-bus-overlay-name">${station.name}</div>

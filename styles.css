@@ -422,12 +422,13 @@ body {
     position: relative;
     transition: min-height 0.3s ease;
     /* Smooth resize */
+    margin-top: -40px;              /* overlap map to eliminate grey gap */
 }
 
 /* When selector bar is hidden (detailed screen), reduce top padding */
 .arrivals-panel.no-selector {
     /* Provide room for the stop badge overlay + station name */
-    padding-top: 56px;
+    padding-top: 64px;
 }
 
 /* Collapsed arrivals when map expanded */
@@ -540,7 +541,7 @@ body {
     pointer-events: none;
     filter: drop-shadow(0 1px 2px rgba(0,0,0,0.15));
 }
-.detail-bus-overlay-panel svg { width: 32px; height: 32px; display: block; }
+.detail-bus-overlay-panel svg { width: 44px; height: 44px; display: block; }
 .detail-bus-overlay-row { display: flex; align-items: center; gap: 10px; color: #fff; }
 .detail-bus-overlay-name { font-weight: 800; font-size: 1.1rem; line-height: 1; }
 
