@@ -121,22 +121,18 @@ function renderBusStations(withDelay = false) {
 
         // Build card and optionally show a brief loading state for arrivals
         card.innerHTML = headerHtml;
-    // Add overlay bus icon above the badge ONLY on detailed (walk) screen
-    try {
-        if (typeof uiMode !== 'undefined' && uiMode === 'walk') {
-            const overlay = document.createElement('div');
-            overlay.className = 'detail-bus-overlay';
-            overlay.innerHTML = `
-                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-                    <rect x="4" y="4" width="16" height="14" rx="2" fill="#00B2FF" stroke="#FFFFFF" stroke-width="1.5"/>
-                    <rect x="6" y="6" width="12" height="6" fill="#E6F2FF"/>
-                    <circle cx="8" cy="16" r="1.5" fill="#FFFFFF"/>
-                    <circle cx="16" cy="16" r="1.5" fill="#FFFFFF"/>
-                    <line x1="12" y1="6" x2="12" y2="12" stroke="#00B2FF" stroke-width="1"/>
-                </svg>`;
-            card.appendChild(overlay);
-        }
-    } catch {}
+        // Add overlay station badge (abbr with white stroke) ONLY on detailed (walk) screen
+        try {
+            const isDetailedScreen = (typeof uiMode !== 'undefined' && uiMode === 'walk') ||
+                (typeof floatingControlsEl !== 'undefined' && floatingControlsEl && floatingControlsEl.classList.contains('hidden'));
+            if (isDetailedScreen) {
+                const stationOverlay = document.createElement('div');
+                stationOverlay.className = 'detail-station-overlay';
+                stationOverlay.textContent = badge.abbr || '';
+                stationOverlay.style.background = badge.color || '#00B2FF';
+                card.appendChild(stationOverlay);
+            }
+        } catch {}
         const arrivalsDiv = document.createElement('div');
         arrivalsDiv.className = 'station-arrivals';
         if (withDelay) {
