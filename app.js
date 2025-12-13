@@ -121,18 +121,23 @@ function renderBusStations(withDelay = false) {
 
         // Build card and optionally show a brief loading state for arrivals
         card.innerHTML = headerHtml;
-        // Add overlay station badge (abbr with white stroke) ONLY on detailed (walk) screen
-        try {
-            const isDetailedScreen = (typeof uiMode !== 'undefined' && uiMode === 'walk') ||
-                (typeof floatingControlsEl !== 'undefined' && floatingControlsEl && floatingControlsEl.classList.contains('hidden'));
-            if (isDetailedScreen) {
-                const stationOverlay = document.createElement('div');
-                stationOverlay.className = 'detail-station-overlay';
-                stationOverlay.textContent = badge.abbr || '';
-                stationOverlay.style.background = badge.color || '#00B2FF';
-                card.appendChild(stationOverlay);
-            }
-        } catch {}
+    // Add overlay station badge icon above the badge ONLY on detailed (walk) screen
+    try {
+        if ((typeof uiMode !== 'undefined' && uiMode === 'walk') || (typeof busDetailActive !== 'undefined' && busDetailActive)) {
+            // Ensure only one overlay per card
+            const prev = card.querySelector('.detail-bus-overlay');
+            if (prev) prev.remove();
+            const overlay = document.createElement('div');
+            overlay.className = 'detail-bus-overlay';
+            overlay.innerHTML = `
+                <svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                    <circle cx="14" cy="14" r="11" fill="${badge.color}" stroke="#FFFFFF" stroke-width="3"/>
+                    <text x="14" y="14" dominant-baseline="middle" text-anchor="middle" font-family="Outfit, sans-serif" font-size="12" font-weight="900" fill="#FFFFFF">${badge.abbr}</text>
+                </svg>`;
+            // Attach to card so absolute positioning can place it outside the card edge
+            card.appendChild(overlay);
+        }
+    } catch {}
         const arrivalsDiv = document.createElement('div');
         arrivalsDiv.className = 'station-arrivals';
         if (withDelay) {
