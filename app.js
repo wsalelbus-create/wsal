@@ -31,6 +31,8 @@ function nearestStations(fromLat, fromLon, count = 5) {
 function renderBusStations(withDelay = false) {
     if (!routesListEl) return;
     routesListEl.innerHTML = '';
+    // Reset detail state when showing the Bus list
+    busDetailActive = false;
     // Entering Bus mode list resets any detail drill-down state
     busDetailActive = false;
 
@@ -137,22 +139,24 @@ function renderBusStations(withDelay = false) {
                 e.stopPropagation();
             } catch {}
             try {
-                // Switch to Walk mode (prefer function if present, else set flag)
-                if (typeof setUIMode === 'function') {
-                    setUIMode('walk');
-                } else {
-                    uiMode = 'walk';
-                }
                 // Lock focus on this station for walking map (OSRM route + pole/shadow)
                 currentStation = station;
                 // Persist Bus-style arrivals while in Walk mode
                 busDetailActive = true;
+                // Switch to Walk mode (prefer function if present, else set flag)
+                if (typeof setUIMode === 'function') {
+                    setUIMode('walk');
+                } else {
+                    previousMode = uiMode;
+                    uiMode = 'walk';
+                }
                 // Re-render map for this station
                 if (typeof updateMap === 'function') updateMap();
                 // Show only this station using the exact Bus screen card design (no other cards)
                 if (routesListEl) {
                     routesListEl.classList.remove('hidden');
-                    renderBusStationDetail(currentStation);
+                    // Show brief loading animation like Bus screen, then arrivals
+                    renderBusStationDetail(currentStation, true);
                 }
             } catch (err) {
                 console.warn('station card drill-down error', err);
@@ -423,7 +427,9 @@ let userLon = null;
 let routeLayer = null;
 let busStationsLayer = null; // LayerGroup for all bus stop markers (bus mode)
 let uiMode = 'idle'; // 'idle' | 'walk' | 'bus'
-let busDetailActive = false; // When true, keep Bus-style single-station card visible in Walk mode
+let previousMode = 'idle'; // track previous mode for Back button
+let busDetailActive = false; // true when showing Bus card design in Walk mode (drill-down)
+let osrmSeq = 0; // sequence guard for OSRM requests
 // Base/walk tile layers
 let baseTileLayer = null;      // Standard OSM
 let walkTileLayer = null;      // Simplified, no labels (Citymapper-like)
@@ -1469,6 +1475,8 @@ function updateMap() {
 
 // Fetch a street route from user -> station using OSRM and draw it on the map
 async function renderOsrmRoute(fromLat, fromLon, toLat, toLon) {
+    // Sequence guard to avoid stale routes drawing over the current one
+    const seq = ++osrmSeq;
     // Use the foot-only server to avoid accidentally getting car profiles from the demo
     const candidates = [
         `https://routing.openstreetmap.de/routed-foot/route/v1/foot/${fromLon},${fromLat};${toLon},${toLat}?overview=full&geometries=geojson&steps=true&annotations=duration,distance`
@@ -1508,15 +1516,22 @@ async function renderOsrmRoute(fromLat, fromLon, toLat, toLon) {
 
     if (!route) {
         // No valid walking route from OSRM sources — draw fallback dashed path and show em dash
-        const latlngs = [ [fromLat, fromLon], [toLat, toLon] ];
-        const s = computeWalkDash(map ? map.getZoom() : 15);
-        routeLayer = L.polyline(latlngs, {
-            color: '#2D5872', weight: s.weight, opacity: 0.42, dashArray: s.dash, lineCap: 'round'
-        }).addTo(map);
-        try { map.off('zoomend', applyWalkRouteStyle); } catch {}
-        map.on('zoomend', applyWalkRouteStyle);
-        if (walkTimeText) walkTimeText.textContent = '—';
-        if (calorieTextEl) calorieTextEl.textContent = '— / Kcal';
+        if (seq === osrmSeq && map) {
+            // Remove any existing route layer before drawing fallback
+            if (routeLayer) {
+                try { map.removeLayer(routeLayer); } catch {}
+                routeLayer = null;
+            }
+            const latlngs = [ [fromLat, fromLon], [toLat, toLon] ];
+            const s = computeWalkDash(map ? map.getZoom() : 15);
+            routeLayer = L.polyline(latlngs, {
+                color: '#2D5872', weight: s.weight, opacity: 0.42, dashArray: s.dash, lineCap: 'round'
+            }).addTo(map);
+            try { map.off('zoomend', applyWalkRouteStyle); } catch {}
+            map.on('zoomend', applyWalkRouteStyle);
+            if (walkTimeText) walkTimeText.textContent = '—';
+            if (calorieTextEl) calorieTextEl.textContent = '— / Kcal';
+        }
         return;
     }
 
@@ -1534,14 +1549,21 @@ async function renderOsrmRoute(fromLat, fromLon, toLat, toLon) {
             steps_count: (route.legs && route.legs[0] && route.legs[0].steps) ? route.legs[0].steps.length : 0
         });
     } catch {}
-    const s = computeWalkDash(map ? map.getZoom() : 15);
-    routeLayer = L.polyline(coords, { color: '#2D5872', weight: s.weight, opacity: 0.42, dashArray: s.dash, lineCap: 'round' }).addTo(map);
-    try { map.off('zoomend', applyWalkRouteStyle); } catch {}
-    map.on('zoomend', applyWalkRouteStyle);
-    try {
-        const bounds = routeLayer.getBounds();
-        map.fitBounds(bounds, { padding: [50, 50] });
-    } catch {}
+    if (seq === osrmSeq && map) {
+        // Remove any existing route layer before drawing latest route
+        if (routeLayer) {
+            try { map.removeLayer(routeLayer); } catch {}
+            routeLayer = null;
+        }
+        const s = computeWalkDash(map ? map.getZoom() : 15);
+        routeLayer = L.polyline(coords, { color: '#2D5872', weight: s.weight, opacity: 0.42, dashArray: s.dash, lineCap: 'round' }).addTo(map);
+        try { map.off('zoomend', applyWalkRouteStyle); } catch {}
+        map.on('zoomend', applyWalkRouteStyle);
+        try {
+            const bounds = routeLayer.getBounds();
+            map.fitBounds(bounds, { padding: [50, 50] });
+        } catch {}
+    }
     if (typeof route.duration === 'number' && walkTimeText) {
         const mins = Math.max(1, Math.ceil(route.duration / 60));
         walkTimeText.textContent = `${mins}'`;
@@ -1556,6 +1578,8 @@ async function renderOsrmRoute(fromLat, fromLon, toLat, toLon) {
 
 // --- UI Mode switching (idle | walk | bus) ---
 function setUIMode(mode) {
+    // Track prior mode for Back navigation
+    previousMode = uiMode;
     uiMode = mode;
 
     // Toggle map walking badge and calorie badge visibility
@@ -1583,7 +1607,7 @@ function setUIMode(mode) {
         } catch (e) { /* no-op */ }
     }
     if (routesListEl) {
-        if (mode === 'bus') routesListEl.classList.remove('hidden');
+        if (mode === 'bus' || busDetailActive) routesListEl.classList.remove('hidden');
         else routesListEl.classList.add('hidden');
     }
 
@@ -1598,7 +1622,8 @@ function setUIMode(mode) {
     if (panelEl) { panelEl.classList.add('panel-green'); }
 
     // Choose nearest station when switching modes if we have a location
-    if (userLat && userLon) {
+    // Do NOT override when in bus-detail drilldown
+    if (!busDetailActive && userLat && userLon) {
         const nearest = findNearestStation(userLat, userLon);
         if (nearest) currentStation = nearest;
     }
@@ -1608,7 +1633,13 @@ function setUIMode(mode) {
         // Initial entry shows brief loading state for arrivals
         renderBusStations(true);
     } else {
-        if (currentStation) renderRoutes(currentStation);
+        if (currentStation) {
+            if (busDetailActive) {
+                renderBusStationDetail(currentStation);
+            } else {
+                renderRoutes(currentStation);
+            }
+        }
     }
 
     // Update the map for the selected mode
@@ -1675,9 +1706,16 @@ if (actionBusBtn) {
     });
 }
 
-// Back button returns to home (idle)
+// Back button returns to previous screen (Bus list if we drilled down from Bus)
 if (backBtn) {
-    backBtn.addEventListener('click', () => setUIMode('idle'));
+    backBtn.addEventListener('click', () => {
+        if (uiMode === 'walk' && busDetailActive && previousMode === 'bus') {
+            busDetailActive = false;
+            setUIMode('bus');
+        } else {
+            setUIMode(previousMode || 'idle');
+        }
+    });
 }
 
 // Compass Button - Simple visual feedback (Leaflet has no bearing by default)
