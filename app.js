@@ -1293,20 +1293,22 @@ function updateMap() {
             // Fetch and draw a realistic street route using OSRM (walking profile)
             renderOsrmRoute(userLat, userLon, station.lat, station.lon);
         } else if (uiMode === 'bus') {
-            // Show all stations
-            const markers = STATIONS.map(s => L.marker([s.lat, s.lon], {
-                icon: L.divIcon({
-                    className: 'custom-marker',
-                    html: `<svg width="26" height="26" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                        <rect x="4" y="5" width="16" height="11" rx="2" fill="#00d2ff" stroke="white" stroke-width="1.5"/>
-                        <circle cx="8" cy="17" r="1.3" fill="white"/>
-                        <circle cx="16" cy="17" r="1.3" fill="white"/>
-                    </svg>`,
-                    iconSize: [26, 26],
-                    iconAnchor: [13, 13]
-                }),
-                zIndexOffset: 900
-            }));
+            // Show all stations as badge-only markers (no stick, no shadows)
+            const markers = STATIONS.map(s => {
+                const badge = stationBadgeFor(s.name);
+                return L.marker([s.lat, s.lon], {
+                    icon: L.divIcon({
+                        className: 'custom-marker',
+                        html: `<svg width="24" height="24" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <rect x="1" y="1" width="22" height="22" rx="6" fill="${badge.color}" stroke="#ffffff" stroke-width="2"/>
+                            <text x="12" y="12" text-anchor="middle" font-size="11" font-weight="900" fill="#ffffff" font-family="Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial" dy="0.32em">${badge.abbr}</text>
+                        </svg>`,
+                        iconSize: [24, 24],
+                        iconAnchor: [12, 12]
+                    }),
+                    zIndexOffset: 900
+                });
+            });
             busStationsLayer = L.layerGroup(markers).addTo(map);
         }
 
