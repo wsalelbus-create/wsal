@@ -68,26 +68,34 @@ function renderBusStations(withDelay = false) {
 
         // Helper to build arrivals HTML for this station
         const buildArrivalsHtml = () => {
-            const arrivals = calculateArrivals(station);
-            return arrivals.map(arrival => {
+            const arrivals = calculateArrivals(station) || [];
+            // Show only the soonest (first Active; otherwise first item)
+            const nextArrival = arrivals.find(a => a.status === 'Active') || arrivals[0];
+            if (!nextArrival) return '';
             let timeDisplayHtml = '';
-            if (arrival.status === 'Active') {
+            if (nextArrival.status === 'Active') {
                 timeDisplayHtml = `
-                    <div class="time-inline">
+                    <div class="time-inline" style="display:flex; align-items:center; color: var(--accent-color)">
                         <svg class="live-radar" width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                             <path d="M3 9 C 9 3 15 3 21 9" stroke="var(--live-orange)" stroke-width="3" stroke-linecap="round"/>
                             <path d="M9.5 12 C 12 10.2 12 10.2 14.5 12" stroke="var(--live-orange)" stroke-width="3" stroke-linecap="round"/>
                         </svg>
                         <div class="time-stack">
-                            <div class="time-big">${arrival.minutes}</div>
+                            <div class="time-big">${nextArrival.minutes}</div>
                             <div class="time-unit">min</div>
                         </div>
+                        <svg class="chevron" width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" style="margin-left: 8px;">
+                            <path d="M9 6 L15 12 L9 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
                     </div>
                 `;
             } else {
                 timeDisplayHtml = `
-                    <div class="route-status" style="color: var(--accent-color); font-weight: 600; font-size: 0.8rem;">
-                        ${arrival.message}
+                    <div class="route-status" style="color: var(--accent-color); font-weight: 600; font-size: 0.8rem; display:flex; align-items:center;">
+                        ${nextArrival.message}
+                        <svg class="chevron" width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" style="margin-left: 8px;">
+                            <path d="M9 6 L15 12 L9 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
                     </div>
                 `;
             }
@@ -102,14 +110,13 @@ function renderBusStations(withDelay = false) {
                                 <circle cx="9" cy="16" r="1.3" fill="#00B2FF"/>
                                 <circle cx="15" cy="16" r="1.3" fill="#00B2FF"/>
                             </svg>
-                            <span class="chip-number">${arrival.number}</span>
+                            <span class="chip-number">${nextArrival.number}</span>
                         </div>
-                        <div class="chip-dest">to ${arrival.dest}</div>
+                        <div class="chip-dest">to ${nextArrival.dest}</div>
                     </div>
                     <div class="route-time">${timeDisplayHtml}</div>
                 </div>
             `;
-            }).join('');
         };
 
         // Build card and optionally show a brief loading state for arrivals
