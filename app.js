@@ -128,6 +128,32 @@ function renderBusStations(withDelay = false) {
             arrivalsDiv.innerHTML = buildArrivalsHtml();
         }
         card.appendChild(arrivalsDiv);
+        // Drill-down: tapping a station card switches to Walk mode focused on this station
+        card.addEventListener('click', (e) => {
+            try {
+                e.preventDefault();
+                e.stopPropagation();
+            } catch {}
+            try {
+                // Switch to Walk mode (prefer function if present, else set flag)
+                if (typeof setUIMode === 'function') {
+                    setUIMode('walk');
+                } else {
+                    uiMode = 'walk';
+                }
+                // Lock focus on this station for walking map (OSRM route + pole/shadow)
+                currentStation = station;
+                // Re-render map for this station
+                if (typeof updateMap === 'function') updateMap();
+                // Show only this station's arrivals in the panel
+                if (routesListEl) {
+                    routesListEl.classList.remove('hidden');
+                    renderRoutes(currentStation);
+                }
+            } catch (err) {
+                console.warn('station card drill-down error', err);
+            }
+        });
         routesListEl.appendChild(card);
     });
 }
