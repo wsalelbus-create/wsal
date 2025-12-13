@@ -801,13 +801,8 @@ function renderStation(station) {
     // Update walking time (OSRM-only; legacy model disabled)
     // updateWalkingTime(station);
 
-    // Render Routes
-    if (busDetailActive) {
-        // Keep the Bus screen card style when in drill-down
-        renderBusStationDetail(station);
-    } else {
-        renderRoutes(station);
-    }
+    // Render arrivals using the Bus screen card design (old design removed)
+    renderBusStationDetail(station);
 
     // Update map
     if (mapInitialized) {
@@ -835,51 +830,7 @@ function updateWalkingTime(station) {
 }
 */
 
-function renderRoutes(station) {
-    const arrivals = calculateArrivals(station);
-    routesListEl.innerHTML = '';
-
-    arrivals.forEach(arrival => {
-        const item = document.createElement('div');
-        item.className = 'route-item';
-
-        let timeDisplayHtml = '';
-        if (arrival.status === 'Active') {
-            timeDisplayHtml = `
-                <div class="time-inline">
-                    <svg class="live-radar" width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <!-- Two arcs (bigger top, smaller bottom) with spacing; rotated ~-50deg via CSS -->
-                        <!-- Bigger arc (top) -->
-                        <path d="M3 9 C 9 3 15 3 21 9" stroke="var(--live-orange)" stroke-width="3" stroke-linecap="round"/>
-                        <!-- Smaller arc (bottom), slightly larger so it doesn't look like a dot -->
-                        <path d="M9.5 12 C 12 10.2 12 10.2 14.5 12" stroke="var(--live-orange)" stroke-width="3" stroke-linecap="round"/>
-                    </svg>
-                    <div class="time-stack">
-                        <div class="time-big">${arrival.minutes}</div>
-                        <div class="time-unit">min</div>
-                    </div>
-                </div>
-            `;
-        } else {
-            timeDisplayHtml = `
-                <div class="route-status" style="color: var(--accent-color); font-weight: 600; font-size: 0.8rem;">
-                    ${arrival.message}
-                </div>
-            `;
-        }
-
-        item.innerHTML = `
-            <div class="route-info">
-                <div class="route-number">${arrival.number}</div>
-                <div class="route-dest">To ${arrival.dest}</div>
-            </div>
-            <div class="route-time">
-                ${timeDisplayHtml}
-            </div>
-        `;
-        routesListEl.appendChild(item);
-    });
-}
+// Old design (renderRoutes) removed – unified on renderBusStationDetail()
 
 // --- Geolocation ---
 function initGeolocation() {
@@ -1223,6 +1174,8 @@ function renderStationList(stations) {
 
 function selectStation(station) {
     currentStation = station;
+    // Ensure the Bus-style card design is used after selecting a station
+    busDetailActive = true;
     renderStation(currentStation);
     hideStationSelector();
     btnNearest.classList.remove('active');
@@ -1634,11 +1587,8 @@ function setUIMode(mode) {
         renderBusStations(true);
     } else {
         if (currentStation) {
-            if (busDetailActive) {
-                renderBusStationDetail(currentStation);
-            } else {
-                renderRoutes(currentStation);
-            }
+            // Unified arrivals design: always render Bus screen card
+            renderBusStationDetail(currentStation);
         }
     }
 
