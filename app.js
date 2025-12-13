@@ -12,7 +12,8 @@ function shouldShowCone() {
 function applyDetailOverlay() {
     try {
         if (!currentStation) return;
-        if (!((typeof uiMode !== 'undefined' && uiMode === 'walk') || (typeof busDetailActive !== 'undefined' && busDetailActive))) {
+        // Only show on 3rd screen: walk mode AND busDetailActive
+        if (!(typeof uiMode !== 'undefined' && uiMode === 'walk' && typeof busDetailActive !== 'undefined' && busDetailActive)) {
             const panel = document.querySelector('.arrivals-panel');
             if (panel) {
                 const old = panel.querySelector('.detail-bus-overlay-panel');
@@ -30,10 +31,13 @@ function applyDetailOverlay() {
         overlay.className = 'detail-bus-overlay-panel';
         overlay.setAttribute('role', 'presentation');
         overlay.innerHTML = `
-            <svg width="24" height="24" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-                <rect x="2" y="2" width="24" height="24" rx="8" fill="${badge.color}" stroke="#FFFFFF" stroke-width="3"/>
-                <text x="14" y="14" dominant-baseline="middle" text-anchor="middle" font-family="Outfit, sans-serif" font-size="12" font-weight="900" fill="#FFFFFF">${badge.abbr}</text>
-            </svg>`;
+            <div class="detail-bus-overlay-row">
+                <svg width="32" height="32" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                    <rect x="1.5" y="1.5" width="25" height="25" rx="10" fill="${badge.color}" stroke="#FFFFFF" stroke-width="3"/>
+                    <text x="14" y="14" dominant-baseline="middle" text-anchor="middle" font-family="Outfit, sans-serif" font-size="12" font-weight="900" fill="#FFFFFF">${badge.abbr}</text>
+                </svg>
+                <div class="detail-bus-overlay-name">${currentStation.name}</div>
+            </div>`;
         panel.appendChild(overlay);
     } catch {}
 }
@@ -151,9 +155,9 @@ function renderBusStations(withDelay = false) {
 
         // Build card and optionally show a brief loading state for arrivals
         card.innerHTML = headerHtml;
-    // Add overlay station badge icon ABOVE THE CARDS in the panel ONLY on detailed (walk/drilldown) screen
+    // Add overlay station badge icon + name ABOVE THE CARDS in the panel ONLY on detailed (3rd) screen
     try {
-        if ((typeof uiMode !== 'undefined' && uiMode === 'walk') || (typeof busDetailActive !== 'undefined' && busDetailActive)) {
+        if ((typeof uiMode !== 'undefined' && uiMode === 'walk') && (typeof busDetailActive !== 'undefined' && busDetailActive)) {
             const panel = document.querySelector('.arrivals-panel');
             if (panel) {
                 // Ensure only one overlay in the panel
@@ -163,10 +167,13 @@ function renderBusStations(withDelay = false) {
                 overlay.className = 'detail-bus-overlay-panel';
                 overlay.setAttribute('role', 'presentation');
                 overlay.innerHTML = `
-                    <svg width="24" height="24" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-                        <rect x="2" y="2" width="24" height="24" rx="10" fill="${badge.color}" stroke="#FFFFFF" stroke-width="3"/>
-                        <text x="14" y="14" dominant-baseline="middle" text-anchor="middle" font-family="Outfit, sans-serif" font-size="12" font-weight="900" fill="#FFFFFF">${badge.abbr}</text>
-                    </svg>`;
+                    <div class="detail-bus-overlay-row">
+                        <svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                            <rect x="1.5" y="1.5" width="25" height="25" rx="10" fill="${badge.color}" stroke="#FFFFFF" stroke-width="3"/>
+                            <text x="14" y="14" dominant-baseline="middle" text-anchor="middle" font-family="Outfit, sans-serif" font-size="12" font-weight="900" fill="#FFFFFF">${badge.abbr}</text>
+                        </svg>
+                        <div class="detail-bus-overlay-name">${station.name}</div>
+                    </div>`;
                 panel.appendChild(overlay);
             }
         }
@@ -1610,9 +1617,9 @@ function setUIMode(mode) {
         else routesHeaderEl.classList.add('hidden');
     }
 
-    // Hide the station selector bar ONLY on detailed (walk) screen
+    // Hide the station selector bar ONLY on detailed (3rd) screen
     if (floatingControlsEl) {
-        if (mode === 'walk') floatingControlsEl.classList.add('hidden');
+        if (mode === 'walk' && busDetailActive) floatingControlsEl.classList.add('hidden');
         else floatingControlsEl.classList.remove('hidden');
     }
 
@@ -1639,7 +1646,7 @@ function setUIMode(mode) {
     const panelEl = document.querySelector('.arrivals-panel');
     if (panelEl) {
         panelEl.classList.add('panel-green');
-        if (mode === 'walk') {
+        if (mode === 'walk' && busDetailActive) {
             panelEl.classList.add('no-selector');
         } else {
             panelEl.classList.remove('no-selector');
