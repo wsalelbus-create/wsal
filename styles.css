@@ -34,7 +34,7 @@
 
 body {
     font-family: 'Outfit', sans-serif;
-    background: #f2f2f7;
+    background: rgb(64, 115, 148); /* match arrivals panel blue behind rounded corners */
     color: var(--text-main);
     width: 100vw;
     min-height: 100vh;
@@ -54,7 +54,7 @@ body {
     min-height: 100vh;
     /* Allow container to grow */
     position: relative;
-    background: #e5e5ea;
+    background: rgb(64, 115, 148); /* match arrivals panel blue so rounded corners don't show grey */
     /* Extend behind status bar */
     margin-top: 0;
 }
@@ -72,7 +72,8 @@ body {
     width: 100%;
     z-index: 1;
     overflow: hidden;
-    padding-bottom: 40px;
+    padding-bottom: 0; /* map reaches the container bottom so corners show map */
+    margin-bottom: -80px; /* overlap so panel corners sit over the map */
     /* Extend map down - bar will overlap this */
     transition: height 0.3s ease;
     /* Smooth expansion */
@@ -91,8 +92,7 @@ body {
     height: 100%;
     min-height: 360px;
     /* Leaflet needs explicit height */
-    /* Match arrivals panel blue so rounded corners don't show grey */
-    background: var(--arrivals-blue);
+    background: transparent; /* avoid grey showing through at panel corners */
     /* Solid background - no transparency */
     /* Performance optimizations */
     transform: translate3d(0, 0, 0);
@@ -333,9 +333,8 @@ body {
     /* In document flow, not overlapping */
     width: 100%;
     padding: 0 16px;
-    margin-top: -80px;
-    /* Pull up to overlap map (40px) and panel (40px) */
-    margin-bottom: -40px;
+    margin-top: -72px;   /* sit correctly between map and panel */
+    margin-bottom: -40px;/* slight overlap into panel */
     /* Compensate for overlap into panel */
     z-index: 200;
 }
@@ -423,7 +422,7 @@ body {
     position: relative;
     transition: min-height 0.3s ease;
     /* Smooth resize */
-    margin-top: 0;                  /* keep panel in normal flow; station bar stays put */
+    margin-top: 0;                  /* normal flow; map overlaps up instead */
 }
 
 /* When selector bar is hidden (detailed screen), reduce top padding */
