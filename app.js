@@ -145,10 +145,10 @@ function renderBusStations(withDelay = false) {
                 currentStation = station;
                 // Re-render map for this station
                 if (typeof updateMap === 'function') updateMap();
-                // Show only this station's arrivals in the panel
+                // Show only this station using the exact Bus screen card design (no other cards)
                 if (routesListEl) {
                     routesListEl.classList.remove('hidden');
-                    renderRoutes(currentStation);
+                    renderBusStationDetail(currentStation);
                 }
             } catch (err) {
                 console.warn('station card drill-down error', err);
@@ -156,6 +156,103 @@ function renderBusStations(withDelay = false) {
         });
         routesListEl.appendChild(card);
     });
+}
+ 
+// Render a single station using the exact Bus screen card design (header + arrivals)
+function renderBusStationDetail(station, withDelay = false) {
+    if (!routesListEl || !station) return;
+    routesListEl.innerHTML = '';
+
+    const card = document.createElement('div');
+    card.className = 'station-card';
+
+    const badge = stationBadgeFor(station.name);
+    const served = station.routes.map(r => r.number).join(', ');
+    let distanceText = '';
+    try {
+        let anchorLat = userLat, anchorLon = userLon;
+        if (!anchorLat || !anchorLon) { anchorLat = station.lat; anchorLon = station.lon; }
+        const distKm = getDistanceFromLatLonInKm(anchorLat, anchorLon, station.lat, station.lon);
+        distanceText = `${distKm.toFixed(1)} km`;
+    } catch { distanceText = ''; }
+
+    const headerHtml = `
+        <div class="station-header">
+            <div class="station-badge" style="background:${badge.color}"><span>${badge.abbr}</span></div>
+            <div class="station-title">
+                <div class="station-name">${station.name}</div>
+                <div class="station-serves">${served}</div>
+            </div>
+            <div class="station-distance">${distanceText}</div>
+        </div>
+        <div class="station-divider"></div>
+    `;
+
+    const buildArrivalsHtml = () => {
+        const arrivals = calculateArrivals(station);
+        return arrivals.map(arrival => {
+            let timeDisplayHtml = '';
+            if (arrival.status === 'Active') {
+                timeDisplayHtml = `
+                    <div class="time-inline">
+                        <svg class="live-radar" width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M3 9 C 9 3 15 3 21 9" stroke="var(--live-orange)" stroke-width="3" stroke-linecap="round"/>
+                            <path d="M9.5 12 C 12 10.2 12 10.2 14.5 12" stroke="var(--live-orange)" stroke-width="3" stroke-linecap="round"/>
+                        </svg>
+                        <div class="time-stack">
+                            <div class="time-big">${arrival.minutes}</div>
+                            <div class="time-unit">min</div>
+                        </div>
+                    </div>
+                `;
+            } else {
+                timeDisplayHtml = `
+                    <div class="route-status" style="color: var(--accent-color); font-weight: 600; font-size: 0.8rem;">
+                        ${arrival.message}
+                    </div>
+                `;
+            }
+
+            return `
+                <div class="station-arrival-row">
+                    <div class="route-left">
+                        <div class="route-chip">
+                            <svg class="mini-bus" width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <rect x="4" y="5" width="16" height="12" rx="2" fill="#00B2FF"/>
+                                <rect x="7" y="7" width="10" height="5" fill="#E6F2FF"/>
+                                <circle cx="9" cy="16" r="1.3" fill="#00B2FF"/>
+                                <circle cx="15" cy="16" r="1.3" fill="#00B2FF"/>
+                            </svg>
+                            <span class="chip-number">${arrival.number}</span>
+                        </div>
+                        <div class="chip-dest">to ${arrival.dest}</div>
+                    </div>
+                    <div class="route-time">${timeDisplayHtml}</div>
+                </div>
+            `;
+        }).join('');
+    };
+
+    card.innerHTML = headerHtml;
+    const arrivalsDiv = document.createElement('div');
+    arrivalsDiv.className = 'station-arrivals';
+    if (withDelay) {
+        arrivalsDiv.classList.add('loading');
+        arrivalsDiv.innerHTML = `
+            <div class="loading-row">
+                <span class="loading-text">Loading next departures</span>
+                <div class="loader loader-sm" aria-hidden="true"></div>
+            </div>
+        `;
+        setTimeout(() => {
+            arrivalsDiv.classList.remove('loading');
+            arrivalsDiv.innerHTML = buildArrivalsHtml();
+        }, 850);
+    } else {
+        arrivalsDiv.innerHTML = buildArrivalsHtml();
+    }
+    card.appendChild(arrivalsDiv);
+    routesListEl.appendChild(card);
 }
 // Route Paths - GPS waypoints for all routes
 // Each route has waypoints representing major stops along the path
