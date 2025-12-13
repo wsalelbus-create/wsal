@@ -91,7 +91,8 @@ body {
     height: 100%;
     min-height: 360px;
     /* Leaflet needs explicit height */
-    background: #f2f2f7;
+    /* Match arrivals panel blue so rounded corners don't show grey */
+    background: var(--arrivals-blue);
     /* Solid background - no transparency */
     /* Performance optimizations */
     transform: translate3d(0, 0, 0);
@@ -422,7 +423,7 @@ body {
     position: relative;
     transition: min-height 0.3s ease;
     /* Smooth resize */
-    margin-top: -40px;              /* overlap map to eliminate grey gap */
+    margin-top: 0;                  /* keep panel in normal flow; station bar stays put */
 }
 
 /* When selector bar is hidden (detailed screen), reduce top padding */
