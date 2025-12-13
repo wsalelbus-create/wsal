@@ -1739,15 +1739,23 @@ if (actionBusBtn) {
     });
 }
 
-// Back button returns to previous screen (Bus list if we drilled down from Bus)
+// Back button navigation rules:
+// - If on 3rd screen (walk + busDetailActive), go back to Bus list.
+// - Else if on Bus list, go back to Home (idle).
+// - Else (e.g., Walk screen from quick action), go to previous or Home.
 if (backBtn) {
     backBtn.addEventListener('click', () => {
-        if (uiMode === 'walk' && busDetailActive && previousMode === 'bus') {
+        if (uiMode === 'walk' && busDetailActive) {
             busDetailActive = false;
             setUIMode('bus');
-        } else {
-            setUIMode(previousMode || 'idle');
+            return;
         }
+        if (uiMode === 'bus') {
+            busDetailActive = false;
+            setUIMode('idle');
+            return;
+        }
+        setUIMode(previousMode || 'idle');
     });
 }
 
