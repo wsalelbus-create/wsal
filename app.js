@@ -31,6 +31,8 @@ function nearestStations(fromLat, fromLon, count = 5) {
 function renderBusStations(withDelay = false) {
     if (!routesListEl) return;
     routesListEl.innerHTML = '';
+    // Entering Bus mode list resets any detail drill-down state
+    busDetailActive = false;
 
     // Anchor position: prefer user location
     let anchorLat = userLat, anchorLon = userLon;
@@ -143,6 +145,8 @@ function renderBusStations(withDelay = false) {
                 }
                 // Lock focus on this station for walking map (OSRM route + pole/shadow)
                 currentStation = station;
+                // Persist Bus-style arrivals while in Walk mode
+                busDetailActive = true;
                 // Re-render map for this station
                 if (typeof updateMap === 'function') updateMap();
                 // Show only this station using the exact Bus screen card design (no other cards)
@@ -419,6 +423,7 @@ let userLon = null;
 let routeLayer = null;
 let busStationsLayer = null; // LayerGroup for all bus stop markers (bus mode)
 let uiMode = 'idle'; // 'idle' | 'walk' | 'bus'
+let busDetailActive = false; // When true, keep Bus-style single-station card visible in Walk mode
 // Base/walk tile layers
 let baseTileLayer = null;      // Standard OSM
 let walkTileLayer = null;      // Simplified, no labels (Citymapper-like)
@@ -791,7 +796,12 @@ function renderStation(station) {
     // updateWalkingTime(station);
 
     // Render Routes
-    renderRoutes(station);
+    if (busDetailActive) {
+        // Keep the Bus screen card style when in drill-down
+        renderBusStationDetail(station);
+    } else {
+        renderRoutes(station);
+    }
 
     // Update map
     if (mapInitialized) {
@@ -1735,7 +1745,14 @@ setInterval(() => {
         if (typeof uiMode !== 'undefined' && uiMode === 'bus') {
             renderBusStations();
         } else {
-            if (currentStation) renderRoutes(currentStation);
+            if (currentStation) {
+                // Keep the Bus-style single-card view alive while in Walk mode drill-down
+                if (busDetailActive) {
+                    renderBusStationDetail(currentStation);
+                } else {
+                    renderRoutes(currentStation);
+                }
+            }
         }
     } catch (e) { console.warn('refresh error', e); }
 }, 60000);
