@@ -426,7 +426,8 @@ body {
 
 /* When selector bar is hidden (detailed screen), reduce top padding */
 .arrivals-panel.no-selector {
-    padding-top: 16px;
+    /* Provide room for the stop badge overlay at the top-left */
+    padding-top: 40px;
 }
 
 /* Collapsed arrivals when map expanded */
@@ -529,6 +530,17 @@ body {
     filter: drop-shadow(0 1px 2px rgba(0,0,0,0.15));
 }
 .detail-bus-overlay svg { width: 24px; height: 24px; display: block; }
+
+/* Panel-level overlay (for detailed screen) */
+.detail-bus-overlay-panel {
+    position: absolute;
+    left: 16px;   /* align with panel padding */
+    top: 10px;    /* inside panel, above first card */
+    z-index: 130; /* above cards */
+    pointer-events: none;
+    filter: drop-shadow(0 1px 2px rgba(0,0,0,0.15));
+}
+.detail-bus-overlay-panel svg { width: 24px; height: 24px; display: block; }
 
 .station-header {
     display: flex;

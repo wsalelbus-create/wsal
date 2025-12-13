@@ -8,6 +8,36 @@ function shouldShowCone() {
     return hasHeadingFix;
 }
 
+// Ensure the station badge overlay is present on the detailed screen (3rd screen)
+function applyDetailOverlay() {
+    try {
+        if (!currentStation) return;
+        if (!((typeof uiMode !== 'undefined' && uiMode === 'walk') || (typeof busDetailActive !== 'undefined' && busDetailActive))) {
+            const panel = document.querySelector('.arrivals-panel');
+            if (panel) {
+                const old = panel.querySelector('.detail-bus-overlay-panel');
+                if (old) old.remove();
+            }
+            return;
+        }
+        const panel = document.querySelector('.arrivals-panel');
+        if (!panel) return;
+        const badge = stationBadgeFor(currentStation.name);
+        // Replace existing overlay
+        const old = panel.querySelector('.detail-bus-overlay-panel');
+        if (old) old.remove();
+        const overlay = document.createElement('div');
+        overlay.className = 'detail-bus-overlay-panel';
+        overlay.setAttribute('role', 'presentation');
+        overlay.innerHTML = `
+            <svg width="24" height="24" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                <rect x="2" y="2" width="24" height="24" rx="8" fill="${badge.color}" stroke="#FFFFFF" stroke-width="3"/>
+                <text x="14" y="14" dominant-baseline="middle" text-anchor="middle" font-family="Outfit, sans-serif" font-size="12" font-weight="900" fill="#FFFFFF">${badge.abbr}</text>
+            </svg>`;
+        panel.appendChild(overlay);
+    } catch {}
+}
+
 // --- Bus Screen: Nearest Stations (cards) ---
 function stationBadgeFor(name) {
     const lower = (name || '').toLowerCase();
@@ -121,21 +151,24 @@ function renderBusStations(withDelay = false) {
 
         // Build card and optionally show a brief loading state for arrivals
         card.innerHTML = headerHtml;
-    // Add overlay station badge icon above the badge ONLY on detailed (walk) screen
+    // Add overlay station badge icon ABOVE THE CARDS in the panel ONLY on detailed (walk/drilldown) screen
     try {
         if ((typeof uiMode !== 'undefined' && uiMode === 'walk') || (typeof busDetailActive !== 'undefined' && busDetailActive)) {
-            // Ensure only one overlay per card
-            const prev = card.querySelector('.detail-bus-overlay');
-            if (prev) prev.remove();
-            const overlay = document.createElement('div');
-            overlay.className = 'detail-bus-overlay';
-            overlay.innerHTML = `
-                <svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-                    <circle cx="14" cy="14" r="11" fill="${badge.color}" stroke="#FFFFFF" stroke-width="3"/>
-                    <text x="14" y="14" dominant-baseline="middle" text-anchor="middle" font-family="Outfit, sans-serif" font-size="12" font-weight="900" fill="#FFFFFF">${badge.abbr}</text>
-                </svg>`;
-            // Attach to card so absolute positioning can place it outside the card edge
-            card.appendChild(overlay);
+            const panel = document.querySelector('.arrivals-panel');
+            if (panel) {
+                // Ensure only one overlay in the panel
+                const old = panel.querySelector('.detail-bus-overlay-panel');
+                if (old) old.remove();
+                const overlay = document.createElement('div');
+                overlay.className = 'detail-bus-overlay-panel';
+                overlay.setAttribute('role', 'presentation');
+                overlay.innerHTML = `
+                    <svg width="24" height="24" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                        <rect x="2" y="2" width="24" height="24" rx="10" fill="${badge.color}" stroke="#FFFFFF" stroke-width="3"/>
+                        <text x="14" y="14" dominant-baseline="middle" text-anchor="middle" font-family="Outfit, sans-serif" font-size="12" font-weight="900" fill="#FFFFFF">${badge.abbr}</text>
+                    </svg>`;
+                panel.appendChild(overlay);
+            }
         }
     } catch {}
         const arrivalsDiv = document.createElement('div');
@@ -181,6 +214,7 @@ function renderBusStations(withDelay = false) {
                     routesListEl.classList.remove('hidden');
                     // Show brief loading animation like Bus screen, then arrivals
                     renderBusStationDetail(currentStation, true);
+                    applyDetailOverlay();
                 }
             } catch (err) {
                 console.warn('station card drill-down error', err);
@@ -1605,8 +1639,13 @@ function setUIMode(mode) {
     const panelEl = document.querySelector('.arrivals-panel');
     if (panelEl) {
         panelEl.classList.add('panel-green');
-        if (mode === 'walk') panelEl.classList.add('no-selector');
-        else panelEl.classList.remove('no-selector');
+        if (mode === 'walk') {
+            panelEl.classList.add('no-selector');
+        } else {
+            panelEl.classList.remove('no-selector');
+            const oldOverlay = panelEl.querySelector('.detail-bus-overlay-panel');
+            if (oldOverlay) oldOverlay.remove();
+        }
     }
 
     // Choose nearest station when switching modes if we have a location
@@ -1624,6 +1663,8 @@ function setUIMode(mode) {
         if (currentStation) {
             // Unified arrivals design: always render Bus screen card
             renderBusStationDetail(currentStation);
+            // Ensure overlay is applied for detailed screen
+            applyDetailOverlay();
         }
     }
 
