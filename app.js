@@ -75,27 +75,24 @@ function renderBusStations(withDelay = false) {
             let timeDisplayHtml = '';
             if (nextArrival.status === 'Active') {
                 timeDisplayHtml = `
-                    <div class="time-inline" style="display:flex; align-items:center; color: var(--accent-color)">
+                    <div class="time-inline" style="display:flex; align-items:center; color: var(--text-main)">
                         <svg class="live-radar" width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                             <path d="M3 9 C 9 3 15 3 21 9" stroke="var(--live-orange)" stroke-width="3" stroke-linecap="round"/>
                             <path d="M9.5 12 C 12 10.2 12 10.2 14.5 12" stroke="var(--live-orange)" stroke-width="3" stroke-linecap="round"/>
                         </svg>
                         <div class="time-stack">
-                            <div class="time-big">${nextArrival.minutes}</div>
+                            <div class="time-big" style="color: var(--text-main)">${nextArrival.minutes}</div>
                             <div class="time-unit">min</div>
                         </div>
-                        <svg class="chevron" width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" style="margin-left: 8px;">
-                            <path d="M9 6 L15 12 L9 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        <svg class="chevron" width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" style="margin-left: 12px;">
+                            <path d="M9 6 L15 12 L9 18" stroke="var(--chevron-color)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
                         </svg>
                     </div>
                 `;
             } else {
                 timeDisplayHtml = `
-                    <div class="route-status" style="color: var(--accent-color); font-weight: 600; font-size: 0.8rem; display:flex; align-items:center;">
+                    <div class="route-status" style="color: var(--text-main); font-weight: 600; font-size: 0.8rem; display:flex; align-items:center;">
                         ${nextArrival.message}
-                        <svg class="chevron" width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" style="margin-left: 8px;">
-                            <path d="M9 6 L15 12 L9 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                        </svg>
                     </div>
                 `;
             }
