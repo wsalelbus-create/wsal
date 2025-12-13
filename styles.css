@@ -424,26 +424,15 @@ body {
     /* Smooth resize */
 }
 
-/* When showing an overlay station badge on detail screen, increase top padding */
-.arrivals-panel.overlay-badge {
-    padding-top: 64px;
+/* When selector bar is hidden (detailed screen), reduce top padding */
+.arrivals-panel.no-selector {
+    padding-top: 16px;
 }
 
 /* Collapsed arrivals when map expanded */
 .arrivals-panel.collapsed {
     min-height: 20vh;
     /* 20% when map expanded */
-}
-
-/* Floating station badge overlay used on detail screen */
-.detail-station-badge {
-    position: absolute;
-    top: 8px;
-    left: 16px;
-    z-index: 2;
-}
-.detail-station-badge .station-badge {
-    box-shadow: 0 0 0 3px #ffffff; /* white stroke around the colored square */
 }
 
 /* Walking Time Card */
@@ -527,7 +516,18 @@ body {
     border-radius: 16px;
     padding: 14px 16px 10px;
     box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+    position: relative; /* anchor overlay icon */
 }
+
+/* Overlay bus icon placed outside the card, aligned above the badge */
+.detail-bus-overlay {
+    position: absolute;
+    left: 24px;   /* center above 44px badge (16 + (44-28)/2) */
+    top: -22px;   /* sit just above card edge */
+    z-index: 2;
+    pointer-events: none; /* do not block taps */
+}
+.detail-bus-overlay svg { width: 28px; height: 28px; display: block; }
 
 .station-header {
     display: flex;

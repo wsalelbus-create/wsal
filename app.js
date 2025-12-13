@@ -121,6 +121,22 @@ function renderBusStations(withDelay = false) {
 
         // Build card and optionally show a brief loading state for arrivals
         card.innerHTML = headerHtml;
+    // Add overlay bus icon above the badge ONLY on detailed (walk) screen
+    try {
+        if (typeof uiMode !== 'undefined' && uiMode === 'walk') {
+            const overlay = document.createElement('div');
+            overlay.className = 'detail-bus-overlay';
+            overlay.innerHTML = `
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                    <rect x="4" y="4" width="16" height="14" rx="2" fill="#00B2FF" stroke="#FFFFFF" stroke-width="1.5"/>
+                    <rect x="6" y="6" width="12" height="6" fill="#E6F2FF"/>
+                    <circle cx="8" cy="16" r="1.5" fill="#FFFFFF"/>
+                    <circle cx="16" cy="16" r="1.5" fill="#FFFFFF"/>
+                    <line x1="12" y1="6" x2="12" y2="12" stroke="#00B2FF" stroke-width="1"/>
+                </svg>`;
+            card.appendChild(overlay);
+        }
+    } catch {}
         const arrivalsDiv = document.createElement('div');
         arrivalsDiv.className = 'station-arrivals';
         if (withDelay) {
@@ -190,23 +206,6 @@ function renderBusStationDetail(station, withDelay = false) {
         const distKm = getDistanceFromLatLonInKm(anchorLat, anchorLon, station.lat, station.lon);
         distanceText = `${distKm.toFixed(1)} km`;
     } catch { distanceText = ''; }
-
-    // Detail screen: show floating station badge overlay above arrivals panel
-    try {
-        const panelEl = document.querySelector('.arrivals-panel');
-        if (panelEl) {
-            panelEl.classList.add('overlay-badge');
-            const oldOverlay = panelEl.querySelector('.detail-station-badge');
-            if (oldOverlay) oldOverlay.remove();
-            const overlay = document.createElement('div');
-            overlay.className = 'detail-station-badge';
-            overlay.innerHTML = `<div class="station-badge" style="background:${badge.color}"><span>${badge.abbr}</span></div>`;
-            panelEl.prepend(overlay);
-        }
-        // Also hide the floating station selector bar only on this screen
-        const floatingControls = document.getElementById('floating-controls');
-        if (floatingControls) floatingControls.classList.add('hidden');
-    } catch {}
 
     const headerHtml = `
         <div class="station-header">
@@ -490,6 +489,7 @@ function applyWalkRouteStyle() {
 
 // --- DOM Elements ---
 const stationSelectorTrigger = document.getElementById('station-selector-trigger');
+const floatingControlsEl = document.getElementById('floating-controls');
 const stationNameEl = document.getElementById('station-name');
 const walkTimeText = document.getElementById('walk-time-text');
 const routesListEl = document.getElementById('routes-list');
@@ -1575,6 +1575,12 @@ function setUIMode(mode) {
         else routesHeaderEl.classList.add('hidden');
     }
 
+    // Hide the station selector bar ONLY on detailed (walk) screen
+    if (floatingControlsEl) {
+        if (mode === 'walk') floatingControlsEl.classList.add('hidden');
+        else floatingControlsEl.classList.remove('hidden');
+    }
+
     // Basemap policy: always use clean no-labels + labels overlay in ALL modes
     if (map && walkTileLayer) {
         try {
@@ -1596,20 +1602,10 @@ function setUIMode(mode) {
 
     // Panel background: always green in all modes
     const panelEl = document.querySelector('.arrivals-panel');
-    if (panelEl) { panelEl.classList.add('panel-green'); }
-
-    // Toggle the floating station selector bar: hide on detailed arrivals (walk), show otherwise
-    const floatingControls = document.getElementById('floating-controls');
-    if (floatingControls) {
-        if (mode === 'walk') floatingControls.classList.add('hidden');
-        else floatingControls.classList.remove('hidden');
-    }
-
-    // When leaving detail (not walk), remove overlay badge if present
-    if (panelEl && mode !== 'walk') {
-        panelEl.classList.remove('overlay-badge');
-        const oldOverlay = panelEl.querySelector('.detail-station-badge');
-        if (oldOverlay) oldOverlay.remove();
+    if (panelEl) {
+        panelEl.classList.add('panel-green');
+        if (mode === 'walk') panelEl.classList.add('no-selector');
+        else panelEl.classList.remove('no-selector');
     }
 
     // Choose nearest station when switching modes if we have a location
