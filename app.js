@@ -191,6 +191,23 @@ function renderBusStationDetail(station, withDelay = false) {
         distanceText = `${distKm.toFixed(1)} km`;
     } catch { distanceText = ''; }
 
+    // Detail screen: show floating station badge overlay above arrivals panel
+    try {
+        const panelEl = document.querySelector('.arrivals-panel');
+        if (panelEl) {
+            panelEl.classList.add('overlay-badge');
+            const oldOverlay = panelEl.querySelector('.detail-station-badge');
+            if (oldOverlay) oldOverlay.remove();
+            const overlay = document.createElement('div');
+            overlay.className = 'detail-station-badge';
+            overlay.innerHTML = `<div class="station-badge" style="background:${badge.color}"><span>${badge.abbr}</span></div>`;
+            panelEl.prepend(overlay);
+        }
+        // Also hide the floating station selector bar only on this screen
+        const floatingControls = document.getElementById('floating-controls');
+        if (floatingControls) floatingControls.classList.add('hidden');
+    } catch {}
+
     const headerHtml = `
         <div class="station-header">
             <div class="station-badge" style="background:${badge.color}"><span>${badge.abbr}</span></div>
@@ -1580,6 +1597,20 @@ function setUIMode(mode) {
     // Panel background: always green in all modes
     const panelEl = document.querySelector('.arrivals-panel');
     if (panelEl) { panelEl.classList.add('panel-green'); }
+
+    // Toggle the floating station selector bar: hide on detailed arrivals (walk), show otherwise
+    const floatingControls = document.getElementById('floating-controls');
+    if (floatingControls) {
+        if (mode === 'walk') floatingControls.classList.add('hidden');
+        else floatingControls.classList.remove('hidden');
+    }
+
+    // When leaving detail (not walk), remove overlay badge if present
+    if (panelEl && mode !== 'walk') {
+        panelEl.classList.remove('overlay-badge');
+        const oldOverlay = panelEl.querySelector('.detail-station-badge');
+        if (oldOverlay) oldOverlay.remove();
+    }
 
     // Choose nearest station when switching modes if we have a location
     // Do NOT override when in bus-detail drilldown

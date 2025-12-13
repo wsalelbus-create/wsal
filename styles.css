@@ -424,10 +424,26 @@ body {
     /* Smooth resize */
 }
 
+/* When showing an overlay station badge on detail screen, increase top padding */
+.arrivals-panel.overlay-badge {
+    padding-top: 64px;
+}
+
 /* Collapsed arrivals when map expanded */
 .arrivals-panel.collapsed {
     min-height: 20vh;
     /* 20% when map expanded */
+}
+
+/* Floating station badge overlay used on detail screen */
+.detail-station-badge {
+    position: absolute;
+    top: 8px;
+    left: 16px;
+    z-index: 2;
+}
+.detail-station-badge .station-badge {
+    box-shadow: 0 0 0 3px #ffffff; /* white stroke around the colored square */
 }
 
 /* Walking Time Card */
