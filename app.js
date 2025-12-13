@@ -84,8 +84,8 @@ function renderBusStations(withDelay = false) {
                             <div class="time-big" style="color: var(--text-main)">${nextArrival.minutes}</div>
                             <div class="time-unit">min</div>
                         </div>
-                        <svg class="chevron" width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" style="margin-left: 12px;">
-                            <path d="M9 6 L15 12 L9 18" stroke="var(--chevron-color)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+                        <svg class="chevron" width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" style="margin-left: 12px;">
+                            <path d="M9 6 L15 12 L9 18" stroke="var(--text-main)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
                         </svg>
                     </div>
                 `;
@@ -93,6 +93,9 @@ function renderBusStations(withDelay = false) {
                 timeDisplayHtml = `
                     <div class="route-status" style="color: var(--text-main); font-weight: 600; font-size: 0.8rem; display:flex; align-items:center;">
                         ${nextArrival.message}
+                        <svg class="chevron" width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" style="margin-left: 12px;">
+                            <path d="M9 6 L15 12 L9 18" stroke="var(--text-main)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
                     </div>
                 `;
             }
