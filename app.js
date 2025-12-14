@@ -1887,10 +1887,39 @@ function getPanelMaxPx() {
         // In Bus mode (station list), allow expanding up to the viewport height
         // or to fit all content if smaller
         if (uiMode === 'bus' && !busDetailActive) {
-            const contentH = panel.scrollHeight;        // full content height
             const minPx = vhToPx(PANEL_MIN_VH);
-            // Do NOT clamp to viewport height; allow growing behind status bar
-            return Math.max(minPx, contentH);
+            const panelRect = panel.getBoundingClientRect();
+            // Prefer the bottom of .routes-list (cards) as the content bottom
+            let inFlowBottom = panelRect.top;
+            const listEl = panel.querySelector('.routes-list');
+            if (listEl) {
+                try { inFlowBottom = Math.max(inFlowBottom, listEl.getBoundingClientRect().bottom); } catch {}
+            } else {
+                // Fallback: scan all non-absolute children except the skyline
+                const children = Array.from(panel.children || []);
+                for (const el of children) {
+                    try {
+                        if (!el || el.id === 'skyline-inline') continue;
+                        const cs = window.getComputedStyle(el);
+                        if (cs.position === 'absolute') continue;
+                        const r = el.getBoundingClientRect();
+                        if (r.bottom > inFlowBottom) inFlowBottom = r.bottom;
+                    } catch {}
+                }
+            }
+            // Skyline visible height
+            let skylineH = 0;
+            try {
+                const sky = panel.querySelector('#skyline-inline');
+                if (sky) {
+                    const csSky = window.getComputedStyle(sky);
+                    skylineH = parseFloat(csSky.height) || sky.getBoundingClientRect().height || 0;
+                }
+            } catch {}
+            const contentH = Math.max(0, inFlowBottom - panelRect.top);
+            // Stop exactly when cards meet skyline (no growing blue gap)
+            const desired = Math.ceil(Math.max(minPx, contentH + skylineH));
+            return desired;
         }
     } catch {}
     // Default cap

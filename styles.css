@@ -561,6 +561,7 @@ html, body {
     max-height: none;            /* no cap */
     -webkit-overflow-scrolling: auto;
     touch-action: none;          /* gestures reserved for sheet drag */
+    padding-bottom: 0;           /* remove gap above skyline */
 }
 
 /* Hide scrollbars for bottom-sheet feel */
