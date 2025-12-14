@@ -433,7 +433,7 @@ html, body {
     z-index: 1000;                  /* above map/controls; under header/back badge */
     padding: 16px;
     padding-top: 40px;              /* space under station selector area */
-    padding-bottom: calc(140px + env(safe-area-inset-bottom)); /* reserve space for skyline band at panel bottom */
+    padding-bottom: calc(6px + env(safe-area-inset-bottom)); /* safe area */
     display: flex;
     flex-direction: column;         /* internal layout */
     align-items: stretch;
@@ -539,8 +539,8 @@ html, body {
 .routes-list {
     display: flex;
     flex-direction: column;
-    gap: 16px;                      /* slightly more space between cards */
-    padding-bottom: 8px;            /* minimal gap below last card */
+    gap: 16px; /* slightly more space between cards */
+    padding-bottom: 20px;
     flex: 1 1 auto;                 /* take remaining space in panel */
     min-height: 0;                  /* allow flex child to shrink for scroll */
     overflow-y: auto;               /* default, will be disabled when not expanded */
@@ -1060,3 +1060,20 @@ html, body {
 .arrivals-panel .routes-header,
 .arrivals-panel .routes-list,
 .arrivals-panel .version-footer { position: relative; z-index: 1; }
+
+/* Inline skyline placed at the end of arrivals panel content: relative (not fixed) */
+.arrivals-panel .skyline-inline {
+  position: relative;
+  bottom: auto;
+  height: 140px;
+  margin-top: 16px;   /* space above skyline */
+  margin-bottom: 8px; /* slight bottom breathing room */
+  pointer-events: none;
+  z-index: auto;
+}
+
+/* Hide legacy footer completely */
+.version-footer { display: none !important; }
+
+/* Hide the old skyline block that used inline style (kept for safety) */
+.arrivals-panel > .skyline-bg[style] { display: none !important; }
