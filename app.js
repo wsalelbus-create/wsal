@@ -5,13 +5,17 @@ function shouldShowCone() {
         return orientationPermissionGranted && hasHeadingFix;
     }
 
+    // On other platforms, show after we have any heading fix
+    return hasHeadingFix;
+}
+
 // Drag sensitivity: make bus mode feel heavier, like Citymapper
 function getDragScale() {
     // Slightly heavier to avoid overshooting when flicking
     return (uiMode === 'bus' && !busDetailActive) ? 0.55 : 0.95;
 }
 
-// Snap stops: collapsed (40vh), mid (60vh), high (85vh), and max content height
+// Snap stops: collapsed (40vh), mid (50/60/70vh), high (85/92/96vh), and max content height
 function getSnapStopsPx() {
     const minPx = vhToPx(PANEL_MIN_VH);
     const maxPx = getPanelMaxPx();
@@ -64,9 +68,6 @@ function pickSnapTarget(currentH, velocityPxPerMs) {
         if (d < bestDist) { best = stops[i]; bestDist = d; }
     }
     return best;
-}
-    // On other platforms, show after we have any heading fix
-    return hasHeadingFix;
 }
 
 // Ensure the station badge overlay is present on the detailed screen (3rd screen)
