@@ -1646,6 +1646,9 @@ function setUIMode(mode) {
     const panelEl = document.querySelector('.arrivals-panel');
     if (panelEl) {
         panelEl.classList.add('panel-green');
+        // Mark bus mode for special sheet behavior (no internal scroll, expand to content)
+        if (mode === 'bus' && !busDetailActive) panelEl.classList.add('bus-mode');
+        else panelEl.classList.remove('bus-mode');
         if (mode === 'walk' && busDetailActive) {
             panelEl.classList.add('no-selector');
         } else {
@@ -1808,6 +1811,24 @@ let startTarget = null;
 
 function vhToPx(vh) { return Math.round(window.innerHeight * (vh / 100)); }
 function clamp(n, min, max) { return Math.max(min, Math.min(max, n)); }
+// Compute dynamic maximum height for the bottom sheet
+function getPanelMaxPx() {
+    try {
+        const panel = arrivalsPanel || document.querySelector('.arrivals-panel');
+        if (!panel) return vhToPx(PANEL_MAX_VH);
+        // In Bus mode (station list), allow expanding up to the viewport height
+        // or to fit all content if smaller
+        if (uiMode === 'bus' && !busDetailActive) {
+            const contentH = panel.scrollHeight;        // full content height
+            const viewportH = window.innerHeight;       // available screen height
+            const minPx = vhToPx(PANEL_MIN_VH);
+            const desired = Math.min(contentH, viewportH);
+            return clamp(desired, minPx, viewportH);
+        }
+    } catch {}
+    // Default cap
+    return vhToPx(PANEL_MAX_VH);
+}
 
 function setupPanelDrag() {
     if (!arrivalsPanel) return;
@@ -1853,7 +1874,7 @@ function setupPanelDrag() {
         if (!dragging) return;
         const delta = startY - y; // drag up -> positive delta
         const minPx = vhToPx(PANEL_MIN_VH);
-        const maxPx = vhToPx(PANEL_MAX_VH);
+        const maxPx = getPanelMaxPx();
         const next = clamp(startH + delta, minPx, maxPx);
         arrivalsPanel.style.height = `${next}px`;
     };
@@ -1865,7 +1886,7 @@ function setupPanelDrag() {
         panelDragging = false;
         arrivalsPanel.style.transition = 'height 0.25s ease';
         const minPx = vhToPx(PANEL_MIN_VH);
-        const maxPx = vhToPx(PANEL_MAX_VH);
+        const maxPx = getPanelMaxPx();
         const rect = arrivalsPanel.getBoundingClientRect();
         const mid = (minPx + maxPx) / 2;
         if (rect.height >= mid) {
@@ -1894,14 +1915,18 @@ function setupPanelDrag() {
     // Tap-to-toggle for reliability on iOS
     grabber.addEventListener('click', (e) => {
         e.preventDefault();
-        const maxOffset = vhToPx(PANEL_MAX_VH - PANEL_MIN_VH);
-        if (sheetOffset > 0) {
-            sheetOffset = 0; arrivalsPanel.classList.add('expanded');
+        const minPx = vhToPx(PANEL_MIN_VH);
+        const maxPx = getPanelMaxPx();
+        const rect = arrivalsPanel.getBoundingClientRect();
+        const mid = (minPx + maxPx) / 2;
+        arrivalsPanel.style.transition = 'height 0.25s ease';
+        if (rect.height < mid) {
+            arrivalsPanel.style.height = `${maxPx}px`;
+            arrivalsPanel.classList.add('expanded');
         } else {
-            sheetOffset = maxOffset; arrivalsPanel.classList.remove('expanded');
+            arrivalsPanel.style.height = `${minPx}px`;
+            arrivalsPanel.classList.remove('expanded');
         }
-        arrivalsPanel.style.transition = 'transform 0.25s ease';
-        applySheetOffset(sheetOffset);
     });
 
     arrivalsPanel.addEventListener('touchstart', (e) => {

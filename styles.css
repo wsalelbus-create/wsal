@@ -551,6 +551,17 @@ html, body {
 .arrivals-panel:not(.expanded) .routes-list { overflow: hidden; touch-action: none; }
 .arrivals-panel.expanded .routes-list { overflow-y: auto; touch-action: pan-y; }
 
+/* In Bus mode, make the list non-scrollable and let it size to content.
+   The sheet itself will expand up to the viewport to reveal items. */
+.arrivals-panel.bus-mode .routes-list {
+    overflow: hidden;            /* no internal scroll */
+    flex: 0 0 auto;              /* do not take remaining space */
+    min-height: auto;            /* allow intrinsic height */
+    max-height: none;            /* no cap */
+    -webkit-overflow-scrolling: auto;
+    touch-action: none;          /* gestures reserved for sheet drag */
+}
+
 /* Hide scrollbars for bottom-sheet feel */
 .routes-list::-webkit-scrollbar { display: none; }
 .arrivals-panel::-webkit-scrollbar { display: none; }
