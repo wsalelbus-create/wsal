@@ -987,6 +987,14 @@ html, body {
     border-top: none;              /* ensure no border draws a line */
 }
 
+/* Ensure the footer inside the panel renders after content (at the end) */
+.arrivals-panel > .version-footer {
+    order: 10; /* push to bottom of flex column */
+}
+
+/* Hide any global footer outside the panel (panel is fixed and overlays it) */
+.app-container > .version-footer { display: none; }
+
 /* Ensure no accidental bottom border on the arrivals panel */
 .arrivals-panel { border-bottom: 0; }
 
