@@ -230,97 +230,6 @@ function renderBusStations(withDelay = false) {
         routesListEl.appendChild(card);
     });
 }
-
-// --- Arrivals Panel: Drag to Expand/Collapse (Bottom Sheet behavior) ---
-try {
-    const panelEl = document.querySelector('.arrivals-panel');
-    const listEl = routesListEl; // #routes-list
-    const drag = { active: false, startY: 0, startH: 0, lastH: 0, anchors: { collapsed: 0, mid: 0, expanded: 0 } };
-
-    function computeAnchors() {
-        const vh = window.innerHeight || document.documentElement.clientHeight || 700;
-        drag.anchors.collapsed = Math.round(vh * 0.40);
-        drag.anchors.mid       = Math.round(vh * 0.60);
-        drag.anchors.expanded  = Math.round(vh * 0.92);
-        // If current height not set, initialize to mid anchor
-        if (panelEl && !drag.lastH) {
-            drag.lastH = drag.anchors.mid;
-            panelEl.style.height = `${drag.lastH}px`;
-        }
-    }
-
-    function clamp(val, lo, hi) { return Math.max(lo, Math.min(hi, val)); }
-
-    function applyPanelHeight(h) {
-        if (!panelEl) return;
-        drag.lastH = h;
-        panelEl.style.height = `${h}px`;
-        // Enable inner list scroll only when sufficiently tall
-        if (listEl) {
-            if (h >= drag.anchors.mid) {
-                listEl.style.overflowY = 'auto';
-                listEl.style.webkitOverflowScrolling = 'touch';
-            } else {
-                listEl.style.overflowY = 'hidden';
-            }
-        }
-    }
-
-    function nearestAnchor(h) {
-        const a = drag.anchors;
-        const d = [a.collapsed, a.mid, a.expanded]
-            .map(v => ({ v, d: Math.abs(v - h) }))
-            .sort((x, y) => x.d - y.d);
-        return d[0].v;
-    }
-
-    function onStart(ev) {
-        if (!panelEl) return;
-        const t = ev.touches ? ev.touches[0] : ev;
-        const rect = panelEl.getBoundingClientRect();
-        const yInPanel = t.clientY - rect.top;
-        // Only allow drag when starting near the top (handle zone ~48px) or outside the scroll list
-        if (yInPanel > 48 && listEl && listEl.contains(ev.target)) {
-            // Let the inner list scroll
-            return;
-        }
-        drag.active = true;
-        drag.startY = t.clientY;
-        drag.startH = panelEl.getBoundingClientRect().height;
-        panelEl.classList.add('dragging');
-        // prevent default only for actual drags to avoid page bounce
-        if (ev.cancelable) ev.preventDefault();
-    }
-    function onMove(ev) {
-        if (!drag.active || !panelEl) return;
-        const t = ev.touches ? ev.touches[0] : ev;
-        const dy = drag.startY - t.clientY; // up -> positive
-        const nh = clamp(drag.startH + dy, drag.anchors.collapsed, drag.anchors.expanded);
-        applyPanelHeight(nh);
-        if (ev.cancelable) ev.preventDefault();
-    }
-    function onEnd() {
-        if (!drag.active || !panelEl) return;
-        drag.active = false;
-        panelEl.classList.remove('dragging');
-        const snap = nearestAnchor(drag.lastH);
-        applyPanelHeight(snap);
-        // Give layout a moment, then resize map tiles for visual stability
-        try { setTimeout(() => { if (map) map.invalidateSize(); }, 220); } catch {}
-    }
-
-    if (panelEl) {
-        computeAnchors();
-        // Pointer listeners
-        panelEl.addEventListener('touchstart', onStart, { passive: false });
-        panelEl.addEventListener('mousedown', onStart);
-        window.addEventListener('touchmove', onMove, { passive: false });
-        window.addEventListener('mousemove', onMove);
-        window.addEventListener('touchend', onEnd);
-        window.addEventListener('mouseup', onEnd);
-        window.addEventListener('resize', () => { computeAnchors(); applyPanelHeight(nearestAnchor(drag.lastH || drag.anchors.mid)); });
-    }
-} catch (e) { console.warn('panel drag init failed', e); }
  
 // Render a single station using the exact Bus screen card design (header + arrivals)
 function renderBusStationDetail(station, withDelay = false) {
@@ -1862,31 +1771,96 @@ if (compassBtn) {
     });
 }
 
-// Map Expansion Toggle - Click map to expand/collapse
+// Bottom Sheet: drag the arrivals panel up/down, no page bounce
 const mapViewContainer = document.querySelector('.map-view-container');
 const arrivalsPanel = document.querySelector('.arrivals-panel');
+const PANEL_MIN_VH = 40; // default sheet height
+const PANEL_MAX_VH = 85; // expanded sheet height
 
-if (mapViewContainer && arrivalsPanel) {
-    mapViewContainer.addEventListener('click', (e) => {
-        // Don't toggle if clicking on controls
-        if (e.target.closest('.glass-header') ||
-            e.target.closest('.walking-time-badge') ||
-            e.target.closest('.map-controls-stack')) {
-            return;
+function vhToPx(vh) { return Math.round(window.innerHeight * (vh / 100)); }
+function clamp(n, min, max) { return Math.max(min, Math.min(max, n)); }
+
+function setupPanelDrag() {
+    if (!arrivalsPanel) return;
+    let dragging = false;
+    let startY = 0;
+    let startH = 0;
+
+    const handleStart = (y, target) => {
+        // Only start a drag if the gesture begins near the top of the panel (handle area ~56px)
+        const rect = arrivalsPanel.getBoundingClientRect();
+        if ((y - rect.top) > 56) return false;
+        // Avoid starting a drag when interacting with internal scroll if not at the top
+        const list = arrivalsPanel.querySelector('.routes-list');
+        if (list && list.scrollTop > 0) return false;
+        dragging = true;
+        startY = y;
+        startH = rect.height;
+        arrivalsPanel.style.transition = 'none';
+        return true;
+    };
+
+    const handleMove = (y) => {
+        if (!dragging) return;
+        const delta = startY - y; // drag up -> positive delta
+        const minPx = vhToPx(PANEL_MIN_VH);
+        const maxPx = vhToPx(PANEL_MAX_VH);
+        const next = clamp(startH + delta, minPx, maxPx);
+        arrivalsPanel.style.height = `${next}px`;
+    };
+
+    const handleEnd = () => {
+        if (!dragging) return;
+        dragging = false;
+        arrivalsPanel.style.transition = 'min-height 0.25s ease, height 0.25s ease';
+        const rect = arrivalsPanel.getBoundingClientRect();
+        const minPx = vhToPx(PANEL_MIN_VH);
+        const maxPx = vhToPx(PANEL_MAX_VH);
+        const mid = (minPx + maxPx) / 2;
+        if (rect.height >= mid) {
+            arrivalsPanel.style.height = `${PANEL_MAX_VH}vh`;
+            arrivalsPanel.classList.add('expanded');
+        } else {
+            arrivalsPanel.style.height = `${PANEL_MIN_VH}vh`;
+            arrivalsPanel.classList.remove('expanded');
         }
+        // Invalidate map size in case the panel height change impacts layout
+        setTimeout(() => { try { if (map) map.invalidateSize(); } catch {} }, 260);
+    };
 
-        // Toggle expanded state
-        mapViewContainer.classList.toggle('expanded');
-        arrivalsPanel.classList.toggle('collapsed');
+    // Touch events (mobile)
+    arrivalsPanel.addEventListener('touchstart', (e) => {
+        const t = e.touches[0];
+        if (handleStart(t.clientY, e.target)) e.preventDefault();
+    }, { passive: false });
+    arrivalsPanel.addEventListener('touchmove', (e) => {
+        const t = e.touches[0];
+        handleMove(t.clientY);
+        if (dragging) e.preventDefault();
+    }, { passive: false });
+    arrivalsPanel.addEventListener('touchend', () => handleEnd());
 
-        // Invalidate map size after transition
-        setTimeout(() => {
-            if (map) {
-                map.invalidateSize();
-            }
-        }, 300);
-    });
+    // Pointer events (desktop/testing)
+    arrivalsPanel.addEventListener('pointerdown', (e) => { handleStart(e.clientY, e.target); });
+    window.addEventListener('pointermove', (e) => { handleMove(e.clientY); });
+    window.addEventListener('pointerup', () => handleEnd());
+
+    // Initialize to default min height
+    arrivalsPanel.style.height = `${PANEL_MIN_VH}vh`;
 }
+
+// Prevent global rubber-band: allow scroll on known internal scroll areas (map, lists, modal)
+function installBounceGuard() {
+    const allowSelectors = ['#map-container', '.leaflet-container', '.routes-list', '.station-list', '.modal-content'];
+    document.addEventListener('touchmove', (e) => {
+        const ok = allowSelectors.some(sel => e.target.closest(sel));
+        if (ok) return; // allow default touchmove
+        e.preventDefault(); // block page-level drag/bounce
+    }, { passive: false });
+}
+
+setupPanelDrag();
+installBounceGuard();
 
 // Init
 initMap(); // Initialize map immediately (background)

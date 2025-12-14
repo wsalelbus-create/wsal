@@ -38,12 +38,20 @@ body {
     color: var(--text-main);
     width: 100vw;
     min-height: 100vh;
-    /* Prevent page scroll bounce; only the panel will move */
-    overflow: hidden;
-    overscroll-behavior: none;
+    /* Allow page to grow */
+    overflow-x: hidden;
+    /* Disable document-level scroll to remove rubber-band */
+    overflow-y: hidden;
     margin: 0;
     padding: 0;
     /* NO padding on body - fixed elements handle safe area themselves */
+}
+
+/* Prevent page rubber-band globally; only internal containers may scroll */
+html, body {
+    height: 100%;
+    overscroll-behavior: none;
+    overscroll-behavior-y: none;
 }
 
 .app-container {
@@ -418,14 +426,16 @@ body {
     overflow-y: visible;
     /* No scroll - page scrolls */
     position: relative;
+    display: flex;
+    flex-direction: column;         /* allow internal list to flex */
+    align-items: stretch;           /* stretch children to panel width */
     transition: min-height 0.3s ease;
     /* Smooth resize */
     margin-top: 0;                  /* normal flow; map overlaps up instead */
-    cursor: grab;                   /* hint draggable */
-    user-select: none;              /* avoid text select during drag */
-    -webkit-user-select: none;
-    touch-action: none;             /* we handle vertical pan via JS */
 }
+
+/* Expanded sheet height (drag up) */
+.arrivals-panel.expanded { min-height: 85vh; }
 
 /* When selector bar is hidden (detailed screen), reduce top padding */
 .arrivals-panel.no-selector {
@@ -509,11 +519,15 @@ body {
     flex-direction: column;
     gap: 16px; /* slightly more space between cards */
     padding-bottom: 20px;
-    overflow-y: hidden;             /* JS enables when expanded */
-    -ms-overflow-style: none;       /* hide scrollbar in IE/Edge */
-    scrollbar-width: none;          /* hide scrollbar in Firefox */
+    flex: 1 1 auto;                 /* take remaining space in panel */
+    min-height: 0;                  /* allow flex child to shrink for scroll */
+    overflow-y: auto;               /* internal scroll only */
+    -webkit-overflow-scrolling: touch;
 }
+
+/* Hide scrollbars for bottom-sheet feel */
 .routes-list::-webkit-scrollbar { display: none; }
+.arrivals-panel::-webkit-scrollbar { display: none; }
 
 /* =============================
    BUS SCREEN: Station Cards
