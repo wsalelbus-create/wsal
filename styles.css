@@ -1045,10 +1045,10 @@ html, body {
   /* Place after content in the flex column */
   order: 1000;
   align-self: stretch;
-  --bleed-correction: 1px; /* tiny left overscan to hide hairline gap */
-  width: calc(100% + 16px + var(--bleed-correction)); /* remove left padding only */
+  --bleed-correction: 1px; /* tiny overscan to hide hairline gaps */
+  width: calc(100% + 32px + 2 * var(--bleed-correction)); /* cancel 16px padding on both sides + small bleed */
   margin-left: calc(-16px - var(--bleed-correction));
-  margin-right: 0; /* no right overscan to avoid distortion */
+  margin-right: calc(-16px - var(--bleed-correction));
   flex-shrink: 0;
   --skyline-max-height: clamp(200px, 30vh, 320px);
   height: var(--skyline-max-height);
@@ -1061,9 +1061,9 @@ html, body {
 /* On devices with safe-area insets (iOS), extend skyline to true edges */
 @supports (padding: env(safe-area-inset-left)) {
   .arrivals-panel .skyline-inline {
-    width: calc(100% + 16px + env(safe-area-inset-left) + var(--bleed-correction));
+    width: calc(100% + 32px + env(safe-area-inset-left) + env(safe-area-inset-right) + 2 * var(--bleed-correction));
     margin-left: calc(-16px - env(safe-area-inset-left) - var(--bleed-correction));
-    margin-right: 0;
+    margin-right: calc(-16px - env(safe-area-inset-right) - var(--bleed-correction));
   }
 }
 
