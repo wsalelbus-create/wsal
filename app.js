@@ -12,7 +12,7 @@ function shouldShowCone() {
 // Drag sensitivity: make bus mode feel heavier, like Citymapper
 function getDragScale() {
     // Slightly heavier to avoid overshooting when flicking
-    return (uiMode === 'bus' && !busDetailActive) ? 0.55 : 0.95;
+    return 1.0;
 }
 
 // Snap stops: collapsed (40vh), mid (50/60/70vh), high (85/92/96vh), and max content height
@@ -36,9 +36,9 @@ function getSnapStopsPx() {
 
 function pickSnapTarget(currentH, velocityPxPerMs) {
     const stops = getSnapStopsPx();
-    // Fling thresholds (px/ms): require a faster flick to jump multiple stops
-    const UP_FLING = 1.0;   // ~1000 px/s
-    const DOWN_FLING = -0.8; // ~800 px/s downward
+    // Fling thresholds (px/ms): slightly easier to advance to next stop
+    const UP_FLING = 0.8;   // ~800 px/s
+    const DOWN_FLING = -0.7; // ~700 px/s downward
     if (velocityPxPerMs > UP_FLING) {
         // next stop above current; add gating to avoid jumping straight to max near the top
         let next = stops[stops.length - 1];
@@ -1926,7 +1926,7 @@ function setupPanelDrag() {
     const handleMove = (y) => {
         if (pendingDrag && !dragging) {
             const dy = Math.abs(y - startY);
-            if (dy > 12) { // threshold to distinguish drag from tap
+            if (dy > 6) { // threshold to distinguish drag from tap
                 dragging = true;
                 panelDragging = true;
                 arrivalsPanel.style.transition = 'none';
@@ -1953,7 +1953,7 @@ function setupPanelDrag() {
         dragging = false;
         pendingDrag = false;
         panelDragging = false;
-        arrivalsPanel.style.transition = 'height 0.25s ease-out';
+        arrivalsPanel.style.transition = 'height 0.28s cubic-bezier(.2,.7,.2,1)';
         const minPx = vhToPx(PANEL_MIN_VH);
         const maxPx = getPanelMaxPx();
         const rect = arrivalsPanel.getBoundingClientRect();
@@ -1965,7 +1965,8 @@ function setupPanelDrag() {
             const dt = Math.max(1, b.t - a.t);
             velocity = (b.h - a.h) / dt; // px/ms (positive = upward growth)
         }
-        const target = pickSnapTarget(rect.height, velocity);
+        const projected = clamp(rect.height + velocity * 140, minPx, maxPx);
+        const target = pickSnapTarget(projected, velocity);
         arrivalsPanel.style.height = `${target}px`;
         if (target >= (minPx + maxPx) / 2) arrivalsPanel.classList.add('expanded');
         else arrivalsPanel.classList.remove('expanded');
