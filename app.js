@@ -1820,10 +1820,9 @@ function getPanelMaxPx() {
         // or to fit all content if smaller
         if (uiMode === 'bus' && !busDetailActive) {
             const contentH = panel.scrollHeight;        // full content height
-            const viewportH = window.innerHeight;       // available screen height
             const minPx = vhToPx(PANEL_MIN_VH);
-            const desired = Math.min(contentH, viewportH);
-            return clamp(desired, minPx, viewportH);
+            // Do NOT clamp to viewport height; allow growing behind status bar
+            return Math.max(minPx, contentH);
         }
     } catch {}
     // Default cap
