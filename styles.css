@@ -1044,7 +1044,7 @@ html, body {
   position: absolute;
   left: 0;
   right: 0;
-  bottom: 0;
+  top: 0;
   --skyline-max-height: clamp(200px, 30vh, 320px);
   height: var(--skyline-max-height);
   opacity: 1;
