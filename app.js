@@ -1904,6 +1904,9 @@ function setupPanelDrag() {
     let startY = 0;
     let startH = 0;
     let lastMoves = [];
+    // Inertial glide state
+    let inertiaActive = false;
+    let inertiaFrame = 0;
 
     const handleStart = (y, target) => {
         const list = arrivalsPanel.querySelector('.routes-list');
@@ -1914,6 +1917,11 @@ function setupPanelDrag() {
         dragging = false;           // don't start dragging yet
         pendingDrag = true;         // wait for movement threshold
         panelDragging = false;
+        // If inertia is running, cancel it and take control
+        if (inertiaActive) {
+            inertiaActive = false;
+            try { cancelAnimationFrame(inertiaFrame); } catch {}
+        }
         startTarget = target || null;
         startY = y;
         // read current height (px)
@@ -1953,7 +1961,8 @@ function setupPanelDrag() {
         dragging = false;
         pendingDrag = false;
         panelDragging = false;
-        arrivalsPanel.style.transition = 'height 0.28s cubic-bezier(.2,.7,.2,1)';
+        // We'll handle inertia manually; disable CSS transition during the glide
+        arrivalsPanel.style.transition = 'none';
         const minPx = vhToPx(PANEL_MIN_VH);
         const maxPx = getPanelMaxPx();
         const rect = arrivalsPanel.getBoundingClientRect();
@@ -1965,14 +1974,54 @@ function setupPanelDrag() {
             const dt = Math.max(1, b.t - a.t);
             velocity = (b.h - a.h) / dt; // px/ms (positive = upward growth)
         }
-        const projected = clamp(rect.height + velocity * 140, minPx, maxPx);
-        const target = pickSnapTarget(projected, velocity);
-        arrivalsPanel.style.height = `${target}px`;
-        if (target >= (minPx + maxPx) / 2) arrivalsPanel.classList.add('expanded');
-        else arrivalsPanel.classList.remove('expanded');
-        lastMoves = [];
-        // Invalidate map size in case the panel height change impacts layout
-        setTimeout(() => { try { if (map) map.invalidateSize(); } catch {} }, 260);
+        const absV = Math.abs(velocity);
+        // Start an inertial glide if velocity is meaningful; else snap immediately
+        if (absV > 0.06) { // ~60 px/s threshold
+            inertiaActive = true;
+            let h = rect.height;
+            const dir = velocity >= 0 ? 1 : -1;
+            const DECEL = 0.0014; // px/ms^2 (lower decel => longer glide)
+            const MIN_GLIDE_MS = 260; // ensure at least this long glide for scroll feel
+            const startTs = performance.now();
+            let lastTs = startTs;
+            const step = (ts) => {
+                if (!inertiaActive) return;
+                const dt = Math.max(1, ts - lastTs);
+                lastTs = ts;
+                const elapsed = ts - startTs;
+                // Speed decreases linearly with time until it hits 0
+                const vNow = Math.max(0, absV - DECEL * elapsed);
+                h = clamp(h + dir * vNow * dt, minPx, maxPx);
+                arrivalsPanel.style.height = `${h}px`;
+                // Stop if speed nearly zero or bounds reached
+                const nearBound = (h <= minPx + 0.5) || (h >= maxPx - 0.5);
+                if ((elapsed >= MIN_GLIDE_MS && vNow <= 0.012) || nearBound) {
+                    inertiaActive = false;
+                    // Final snap with a soft easing
+                    const target = pickSnapTarget(h, dir * vNow);
+                    arrivalsPanel.style.transition = 'height 0.24s cubic-bezier(.2,.7,.2,1)';
+                    arrivalsPanel.style.height = `${target}px`;
+                    if (target >= (minPx + maxPx) / 2) arrivalsPanel.classList.add('expanded');
+                    else arrivalsPanel.classList.remove('expanded');
+                    lastMoves = [];
+                    setTimeout(() => { try { if (map) map.invalidateSize(); } catch {} }, 260);
+                    return;
+                }
+                inertiaFrame = requestAnimationFrame(step);
+            };
+            inertiaFrame = requestAnimationFrame(step);
+        } else {
+            // No meaningful velocity: snap to nearest stop
+            const projected = clamp(rect.height + velocity * 140, minPx, maxPx);
+            const target = pickSnapTarget(projected, velocity);
+            arrivalsPanel.style.transition = 'height 0.24s cubic-bezier(.2,.7,.2,1)';
+            arrivalsPanel.style.height = `${target}px`;
+            if (target >= (minPx + maxPx) / 2) arrivalsPanel.classList.add('expanded');
+            else arrivalsPanel.classList.remove('expanded');
+            lastMoves = [];
+            setTimeout(() => { try { if (map) map.invalidateSize(); } catch {} }, 260);
+        }
+        // Invalidate map size handled after snap where appropriate
     };
 
     // Touch events (mobile)
