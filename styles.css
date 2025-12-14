@@ -1045,7 +1045,9 @@ html, body {
   left: 0;
   right: 0;
   bottom: 0;
-  height: clamp(200px, 30vh, 320px); /* bigger and responsive */
+  --skyline-max-height: clamp(200px, 30vh, 320px);
+  height: calc(var(--skyline-max-height) * var(--sheet-progress, 1));
+  opacity: var(--sheet-progress, 1);
   margin: 0;
   pointer-events: none;
   z-index: 0; /* sit behind panel content */

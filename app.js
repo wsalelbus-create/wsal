@@ -1913,6 +1913,15 @@ function setupPanelDrag() {
     // Inertial glide state
     let inertiaActive = false;
     let inertiaFrame = 0;
+    
+    // Update CSS variable to drive skyline size/opacity based on sheet progress [0..1]
+    const updateSheetProgress = (h, minPx, maxPx) => {
+        try {
+            const denom = Math.max(1, (maxPx - minPx));
+            const p = Math.max(0, Math.min(1, (h - minPx) / denom));
+            arrivalsPanel.style.setProperty('--sheet-progress', String(p));
+        } catch {}
+    };
 
     const handleStart = (y, target) => {
         const list = arrivalsPanel.querySelector('.routes-list');
@@ -1955,6 +1964,7 @@ function setupPanelDrag() {
         const scale = getDragScale();
         const next = clamp(startH + delta * scale, minPx, maxPx);
         arrivalsPanel.style.height = `${next}px`;
+        updateSheetProgress(next, minPx, maxPx);
         // record movement for velocity calculation
         const now = performance.now();
         lastMoves.push({ t: now, h: next });
@@ -1999,6 +2009,7 @@ function setupPanelDrag() {
                 const vNow = Math.max(0, absV - DECEL * elapsed);
                 h = clamp(h + dir * vNow * dt, minPx, maxPx);
                 arrivalsPanel.style.height = `${h}px`;
+                updateSheetProgress(h, minPx, maxPx);
                 // Stop if speed nearly zero or bounds reached
                 const nearBound = (h <= minPx + 0.5) || (h >= maxPx - 0.5);
                 if ((elapsed >= MIN_GLIDE_MS && vNow <= 0.009) || nearBound) {
@@ -2007,6 +2018,7 @@ function setupPanelDrag() {
                     const target = pickSnapTarget(h, dir * vNow);
                     arrivalsPanel.style.transition = 'height 0.24s cubic-bezier(.2,.7,.2,1)';
                     arrivalsPanel.style.height = `${target}px`;
+                    updateSheetProgress(target, minPx, maxPx);
                     if (target >= (minPx + maxPx) / 2) arrivalsPanel.classList.add('expanded');
                     else arrivalsPanel.classList.remove('expanded');
                     lastMoves = [];
@@ -2022,6 +2034,7 @@ function setupPanelDrag() {
             const target = pickSnapTarget(projected, velocity);
             arrivalsPanel.style.transition = 'height 0.24s cubic-bezier(.2,.7,.2,1)';
             arrivalsPanel.style.height = `${target}px`;
+            updateSheetProgress(target, minPx, maxPx);
             if (target >= (minPx + maxPx) / 2) arrivalsPanel.classList.add('expanded');
             else arrivalsPanel.classList.remove('expanded');
             lastMoves = [];
@@ -2052,9 +2065,11 @@ function setupPanelDrag() {
         arrivalsPanel.style.transition = 'height 0.25s ease';
         if (rect.height < mid) {
             arrivalsPanel.style.height = `${maxPx}px`;
+            updateSheetProgress(maxPx, minPx, maxPx);
             arrivalsPanel.classList.add('expanded');
         } else {
             arrivalsPanel.style.height = `${minPx}px`;
+            updateSheetProgress(minPx, minPx, maxPx);
             arrivalsPanel.classList.remove('expanded');
         }
     });
@@ -2098,6 +2113,7 @@ function setupPanelDrag() {
     arrivalsPanel.classList.remove('expanded');
     arrivalsPanel.style.willChange = 'height';
     arrivalsPanel.style.height = `${minPx}px`;
+    updateSheetProgress(minPx, minPx, getPanelMaxPx());
 
     // Also, after creating grabber, move floating controls into the panel
     try {
