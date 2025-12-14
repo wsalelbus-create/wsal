@@ -4,6 +4,67 @@ function shouldShowCone() {
         // On iOS 13+, show only when explicit permission granted and we have a heading fix
         return orientationPermissionGranted && hasHeadingFix;
     }
+
+// Drag sensitivity: make bus mode feel heavier, like Citymapper
+function getDragScale() {
+    // Slightly heavier to avoid overshooting when flicking
+    return (uiMode === 'bus' && !busDetailActive) ? 0.55 : 0.95;
+}
+
+// Snap stops: collapsed (40vh), mid (60vh), high (85vh), and max content height
+function getSnapStopsPx() {
+    const minPx = vhToPx(PANEL_MIN_VH);
+    const maxPx = getPanelMaxPx();
+    const stops = [minPx];
+    const s50 = vhToPx(50);
+    const s60 = vhToPx(60);
+    const s70 = vhToPx(70);
+    const s85 = vhToPx(85);
+    const s92 = vhToPx(92);
+    const s96 = vhToPx(96);
+    // Add mid stops if within range
+    ;[s50, s60, s70, s85, s92, s96].forEach(s => {
+        if (s > minPx && s < maxPx && !stops.includes(s)) stops.push(s);
+    });
+    if (stops[stops.length - 1] !== maxPx) stops.push(maxPx);
+    return stops;
+}
+
+function pickSnapTarget(currentH, velocityPxPerMs) {
+    const stops = getSnapStopsPx();
+    // Fling thresholds (px/ms): require a faster flick to jump multiple stops
+    const UP_FLING = 1.0;   // ~1000 px/s
+    const DOWN_FLING = -0.8; // ~800 px/s downward
+    if (velocityPxPerMs > UP_FLING) {
+        // next stop above current; add gating to avoid jumping straight to max near the top
+        let next = stops[stops.length - 1];
+        for (let i = 0; i < stops.length; i++) {
+            if (stops[i] > currentH + 1) { next = stops[i]; break; }
+        }
+        const s85 = vhToPx(85), s92 = vhToPx(92);
+        const max = stops[stops.length - 1];
+        if (next === max && currentH < s92 && velocityPxPerMs < 1.2) {
+            // If not very close to the top and flick not extremely fast, land on 85vh instead of max
+            return s85;
+        }
+        return next;
+    }
+    if (velocityPxPerMs < DOWN_FLING) {
+        // previous stop below current
+        for (let i = stops.length - 1; i >= 0; i--) {
+            if (stops[i] < currentH - 1) return stops[i];
+        }
+        return stops[0];
+    }
+    // Nearest stop
+    let best = stops[0];
+    let bestDist = Math.abs(currentH - best);
+    for (let i = 1; i < stops.length; i++) {
+        const d = Math.abs(currentH - stops[i]);
+        if (d < bestDist) { best = stops[i]; bestDist = d; }
+    }
+    return best;
+}
     // On other platforms, show after we have any heading fix
     return hasHeadingFix;
 }
@@ -1841,6 +1902,7 @@ function setupPanelDrag() {
     let dragging = false;
     let startY = 0;
     let startH = 0;
+    let lastMoves = [];
 
     const handleStart = (y, target) => {
         const list = arrivalsPanel.querySelector('.routes-list');
@@ -1856,6 +1918,7 @@ function setupPanelDrag() {
         // read current height (px)
         const rect = arrivalsPanel.getBoundingClientRect();
         startH = rect.height;
+        lastMoves = [{ t: performance.now(), h: startH }];
         return true;
     };
 
@@ -1874,8 +1937,14 @@ function setupPanelDrag() {
         const delta = startY - y; // drag up -> positive delta
         const minPx = vhToPx(PANEL_MIN_VH);
         const maxPx = getPanelMaxPx();
-        const next = clamp(startH + delta, minPx, maxPx);
+        const scale = getDragScale();
+        const next = clamp(startH + delta * scale, minPx, maxPx);
         arrivalsPanel.style.height = `${next}px`;
+        // record movement for velocity calculation
+        const now = performance.now();
+        lastMoves.push({ t: now, h: next });
+        // keep only recent samples (~120ms window)
+        while (lastMoves.length > 2 && (now - lastMoves[0].t) > 140) lastMoves.shift();
     };
 
     const handleEnd = () => {
@@ -1883,18 +1952,23 @@ function setupPanelDrag() {
         dragging = false;
         pendingDrag = false;
         panelDragging = false;
-        arrivalsPanel.style.transition = 'height 0.25s ease';
+        arrivalsPanel.style.transition = 'height 0.25s ease-out';
         const minPx = vhToPx(PANEL_MIN_VH);
         const maxPx = getPanelMaxPx();
         const rect = arrivalsPanel.getBoundingClientRect();
-        const mid = (minPx + maxPx) / 2;
-        if (rect.height >= mid) {
-            arrivalsPanel.style.height = `${maxPx}px`;
-            arrivalsPanel.classList.add('expanded');
-        } else {
-            arrivalsPanel.style.height = `${minPx}px`;
-            arrivalsPanel.classList.remove('expanded');
+        // compute velocity using recent samples (~120ms)
+        let velocity = 0;
+        if (lastMoves.length >= 2) {
+            const a = lastMoves[0];
+            const b = lastMoves[lastMoves.length - 1];
+            const dt = Math.max(1, b.t - a.t);
+            velocity = (b.h - a.h) / dt; // px/ms (positive = upward growth)
         }
+        const target = pickSnapTarget(rect.height, velocity);
+        arrivalsPanel.style.height = `${target}px`;
+        if (target >= (minPx + maxPx) / 2) arrivalsPanel.classList.add('expanded');
+        else arrivalsPanel.classList.remove('expanded');
+        lastMoves = [];
         // Invalidate map size in case the panel height change impacts layout
         setTimeout(() => { try { if (map) map.invalidateSize(); } catch {} }, 260);
     };
