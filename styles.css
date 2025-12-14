@@ -1039,31 +1039,27 @@ html, body {
 .arrivals-panel .routes-header,
 .arrivals-panel .routes-list { position: relative; z-index: 1; }
 
-/* Skyline: always bottom-anchored like Citymapper */
+/* Skyline: pinned to the panel bottom, always flush to blue edge */
 .arrivals-panel .skyline-inline {
-  position: relative; /* participate in flow */
-  /* Place after content in the flex column */
-  order: 1000;
-  align-self: stretch;
-  --bleed-correction: 1px; /* tiny overscan to hide hairline gaps */
-  width: calc(100% + 32px + 2 * var(--bleed-correction)); /* cancel 16px padding on both sides + small bleed */
-  margin-left: calc(-16px - var(--bleed-correction));
-  margin-right: calc(-16px - var(--bleed-correction));
-  flex-shrink: 0;
+  position: absolute; /* take out of flow so content above doesn't move it */
+  bottom: calc(-6px - env(safe-area-inset-bottom)); /* cancel panel bottom padding so it touches the edge */
+  left: calc(-16px - var(--bleed-correction));  /* cancel panel side padding + tiny overscan */
+  right: calc(-16px - var(--bleed-correction)); /* cancel panel side padding + tiny overscan */
+  --bleed-correction: 1px; /* tiny overscan to hide hairline gaps at edges */
   --skyline-max-height: clamp(200px, 30vh, 320px);
   height: var(--skyline-max-height);
   opacity: 1;
-  margin: 12px 0 0 0; /* spacing above skyline */
+  margin: 0;                 /* no extra gap below city */
   pointer-events: none;
-  z-index: 0; /* below content in stacking order */
+  z-index: 0;                /* behind all content */
 }
 
 /* On devices with safe-area insets (iOS), extend skyline to true edges */
 @supports (padding: env(safe-area-inset-left)) {
   .arrivals-panel .skyline-inline {
-    width: calc(100% + 32px + env(safe-area-inset-left) + env(safe-area-inset-right) + 2 * var(--bleed-correction));
-    margin-left: calc(-16px - env(safe-area-inset-left) - var(--bleed-correction));
-    margin-right: calc(-16px - env(safe-area-inset-right) - var(--bleed-correction));
+    left: calc(-16px - env(safe-area-inset-left) - var(--bleed-correction));
+    right: calc(-16px - env(safe-area-inset-right) - var(--bleed-correction));
+    bottom: calc(-6px - env(safe-area-inset-bottom));
   }
 }
 
