@@ -1732,11 +1732,23 @@ if (actionWalkBtn) {
     actionWalkBtn.addEventListener('click', () => {
         setUIMode('walk');
     });
+    // iOS Safari/PWA: ensure tap triggers even if click is swallowed
+    actionWalkBtn.addEventListener('touchend', (e) => {
+        e.preventDefault();
+        setUIMode('walk');
+    }, { passive: false });
+    actionWalkBtn.addEventListener('pointerup', () => { setUIMode('walk'); });
 }
 if (actionBusBtn) {
     actionBusBtn.addEventListener('click', () => {
         setUIMode('bus');
     });
+    // iOS Safari/PWA: ensure tap triggers even if click is swallowed
+    actionBusBtn.addEventListener('touchend', (e) => {
+        e.preventDefault();
+        setUIMode('bus');
+    }, { passive: false });
+    actionBusBtn.addEventListener('pointerup', () => { setUIMode('bus'); });
 }
 
 // Back button navigation rules:
@@ -1774,67 +1786,113 @@ if (compassBtn) {
 // Bottom Sheet: drag the arrivals panel up/down, no page bounce
 const mapViewContainer = document.querySelector('.map-view-container');
 const arrivalsPanel = document.querySelector('.arrivals-panel');
-const PANEL_MIN_VH = 40; // default sheet height
-const PANEL_MAX_VH = 85; // expanded sheet height
+const PANEL_MIN_VH = 40; // visible height when collapsed
+const PANEL_MAX_VH = 85; // visible height when expanded
 let panelDragging = false; // global flag to coordinate with bounce guard
+let pendingDrag = false;   // waiting to see if movement exceeds threshold
+let startTarget = null;
+let sheetOffset = 0;       // current translateY in px (0 = expanded)
 
 function vhToPx(vh) { return Math.round(window.innerHeight * (vh / 100)); }
 function clamp(n, min, max) { return Math.max(min, Math.min(max, n)); }
+function applySheetOffset(px) { arrivalsPanel.style.transform = `translateY(${Math.round(px)}px)`; }
 
 function setupPanelDrag() {
     if (!arrivalsPanel) return;
+    // Inject a visible grabber handle for reliability on iOS
+    let grabber = arrivalsPanel.querySelector('.sheet-grabber');
+    if (!grabber) {
+        grabber = document.createElement('div');
+        grabber.className = 'sheet-grabber';
+        arrivalsPanel.prepend(grabber);
+    }
     let dragging = false;
     let startY = 0;
-    let startH = 0;
+    let startOffset = 0;
 
     const handleStart = (y, target) => {
-        const rect = arrivalsPanel.getBoundingClientRect();
         const list = arrivalsPanel.querySelector('.routes-list');
         const inList = !!(target && target.closest && target.closest('.routes-list'));
         const isExpanded = arrivalsPanel.classList.contains('expanded');
         // If starting inside the list while expanded and the list is scrolled, let it scroll instead of dragging
         if (inList && isExpanded && list && list.scrollTop > 0) return false;
-        dragging = true;
-        panelDragging = true;
+        dragging = false;           // don't start dragging yet
+        pendingDrag = true;         // wait for movement threshold
+        panelDragging = false;
+        startTarget = target || null;
         startY = y;
-        startH = rect.height;
-        arrivalsPanel.style.transition = 'none';
+        startOffset = sheetOffset;
         return true;
     };
 
     const handleMove = (y) => {
+        if (pendingDrag && !dragging) {
+            const dy = Math.abs(y - startY);
+            if (dy > 12) { // threshold to distinguish drag from tap
+                dragging = true;
+                panelDragging = true;
+                arrivalsPanel.style.transition = 'none';
+            } else {
+                return; // not enough movement yet
+            }
+        }
         if (!dragging) return;
         const delta = startY - y; // drag up -> positive delta
-        const minPx = vhToPx(PANEL_MIN_VH);
-        const maxPx = vhToPx(PANEL_MAX_VH);
-        const next = clamp(startH + delta, minPx, maxPx);
-        arrivalsPanel.style.height = `${next}px`;
+        const minOffset = 0; // expanded
+        const maxOffset = vhToPx(PANEL_MAX_VH - PANEL_MIN_VH); // fully collapsed offset
+        sheetOffset = clamp(startOffset - delta, minOffset, maxOffset);
+        applySheetOffset(sheetOffset);
     };
 
     const handleEnd = () => {
         if (!dragging) return;
         dragging = false;
+        pendingDrag = false;
         panelDragging = false;
-        arrivalsPanel.style.transition = 'min-height 0.25s ease, height 0.25s ease';
-        const rect = arrivalsPanel.getBoundingClientRect();
-        const minPx = vhToPx(PANEL_MIN_VH);
-        const maxPx = vhToPx(PANEL_MAX_VH);
-        const mid = (minPx + maxPx) / 2;
-        if (rect.height >= mid) {
-            arrivalsPanel.style.height = `${PANEL_MAX_VH}vh`;
+        arrivalsPanel.style.transition = 'transform 0.25s ease';
+        const maxOffset = vhToPx(PANEL_MAX_VH - PANEL_MIN_VH);
+        const mid = maxOffset / 2;
+        if (sheetOffset <= mid) {
+            sheetOffset = 0;
             arrivalsPanel.classList.add('expanded');
         } else {
-            arrivalsPanel.style.height = `${PANEL_MIN_VH}vh`;
+            sheetOffset = maxOffset;
             arrivalsPanel.classList.remove('expanded');
         }
+        applySheetOffset(sheetOffset);
         // Invalidate map size in case the panel height change impacts layout
         setTimeout(() => { try { if (map) map.invalidateSize(); } catch {} }, 260);
     };
 
     // Touch events (mobile)
+    grabber.addEventListener('touchstart', (e) => {
+        const t = e.touches[0];
+        handleStart(t.clientY, e.target);
+        e.preventDefault(); // ensure we capture drag from handle
+    }, { passive: false, capture: true });
+    grabber.addEventListener('touchmove', (e) => {
+        const t = e.touches[0];
+        handleMove(t.clientY);
+        if (pendingDrag || panelDragging) e.preventDefault();
+    }, { passive: false, capture: true });
+    grabber.addEventListener('touchend', () => handleEnd(), { capture: true });
+    // Tap-to-toggle for reliability on iOS
+    grabber.addEventListener('click', (e) => {
+        e.preventDefault();
+        const maxOffset = vhToPx(PANEL_MAX_VH - PANEL_MIN_VH);
+        if (sheetOffset > 0) {
+            sheetOffset = 0; arrivalsPanel.classList.add('expanded');
+        } else {
+            sheetOffset = maxOffset; arrivalsPanel.classList.remove('expanded');
+        }
+        arrivalsPanel.style.transition = 'transform 0.25s ease';
+        applySheetOffset(sheetOffset);
+    });
+
     arrivalsPanel.addEventListener('touchstart', (e) => {
         const t = e.touches[0];
-        if (handleStart(t.clientY, e.target)) e.preventDefault();
+        handleStart(t.clientY, e.target);
+        // do NOT preventDefault on touchstart; allow taps to become clicks
     }, { passive: false, capture: true });
     arrivalsPanel.addEventListener('touchmove', (e) => {
         const t = e.touches[0];
@@ -1849,7 +1907,7 @@ function setupPanelDrag() {
         if (!inPanel) return;
         const t = e.touches && e.touches[0];
         if (!t) return;
-        if (handleStart(t.clientY, e.target)) e.preventDefault();
+        handleStart(t.clientY, e.target);
     }, { passive: false, capture: true });
     document.addEventListener('touchmove', (e) => {
         if (!panelDragging) return;
@@ -1865,15 +1923,23 @@ function setupPanelDrag() {
     window.addEventListener('pointermove', (e) => { handleMove(e.clientY); });
     window.addEventListener('pointerup', () => handleEnd());
 
-    // Initialize to default min height
-    arrivalsPanel.style.willChange = 'height';
-    arrivalsPanel.style.height = `${PANEL_MIN_VH}vh`;
+    // Initialize to collapsed position using translateY
+    const maxOffset = vhToPx(PANEL_MAX_VH - PANEL_MIN_VH);
+    sheetOffset = maxOffset;
     arrivalsPanel.classList.remove('expanded');
+    arrivalsPanel.style.willChange = 'transform';
+    applySheetOffset(sheetOffset);
 }
 
 // Prevent global rubber-band: allow scroll on known internal scroll areas (map, lists, modal)
 function installBounceGuard() {
-    const allowSelectors = ['#map-container', '.leaflet-container', '.routes-list', '.station-list', '.modal-content'];
+    const allowSelectors = [
+        '#map-container', '.leaflet-container',
+        '.arrivals-panel', '.routes-list',
+        '.quick-actions-panel', '.qa-btn',
+        '.station-list', '.modal-content',
+        '#action-bus', '#action-walk', '.back-badge', '#settings-btn'
+    ];
     document.addEventListener('touchmove', (e) => {
         if (panelDragging) { e.preventDefault(); return; }
         const ok = allowSelectors.some(sel => e.target.closest(sel));

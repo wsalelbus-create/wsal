@@ -412,31 +412,44 @@ html, body {
    3. ARRIVALS PANEL (Bottom 40%)
    ========================================= */
 .arrivals-panel {
-    min-height: 40vh;
-    /* Minimum height, grows with content */
+    /* Fixed bottom sheet */
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 85vh;                   /* constant sheet height; JS translates to show 40vh collapsed */
+    max-height: 100vh;
     background: white;
     border-radius: 24px 24px 0 0;
-    box-shadow: none;               /* remove shadow to avoid separation line */
-    z-index: 100;
+    box-shadow: none;               /* remove hairline */
+    z-index: 1000;                  /* above map/controls; under header/back badge */
     padding: 16px;
-    padding-top: 40px;              /* leave room under station selector card */
-    /* Space for overlapping bar */
-    padding-bottom: calc(4px + env(safe-area-inset-bottom));
-    /* Safe area for bottom */
-    overflow-y: visible;
-    /* No scroll - page scrolls */
-    position: relative;
+    padding-top: 40px;              /* space under station selector area */
+    padding-bottom: calc(6px + env(safe-area-inset-bottom)); /* safe area */
     display: flex;
-    flex-direction: column;         /* allow internal list to flex */
-    align-items: stretch;           /* stretch children to panel width */
+    flex-direction: column;         /* internal layout */
+    align-items: stretch;
+    overflow: hidden;               /* hide overflow when collapsed */
     touch-action: none;             /* gestures handled by JS for sheet drag */
-    transition: min-height 0.3s ease;
-    /* Smooth resize */
-    margin-top: 0;                  /* normal flow; map overlaps up instead */
+    transition: transform 0.25s ease;  /* smooth translate */
+    will-change: transform;
 }
 
 /* Expanded sheet height (drag up) */
-.arrivals-panel.expanded { min-height: 85vh; }
+.arrivals-panel.expanded { height: 85vh; /* explicit, same as base */ }
+
+/* Visible sheet grabber for better affordance and touch target */
+.sheet-grabber {
+    position: absolute;
+    top: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 48px;
+    height: 6px;
+    border-radius: 3px;
+    background: rgba(0,0,0,0.18);
+    pointer-events: auto; /* receive touch events for reliable drag start */
+}
 
 /* When selector bar is hidden (detailed screen), reduce top padding */
 .arrivals-panel.no-selector {
