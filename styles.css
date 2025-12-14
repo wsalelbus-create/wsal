@@ -540,7 +540,7 @@ html, body {
     display: flex;
     flex-direction: column;
     gap: 16px; /* slightly more space between cards */
-    padding-bottom: 20px;
+    padding-bottom: calc(160px + env(safe-area-inset-bottom));
     flex: 1 1 auto;                 /* take remaining space in panel */
     min-height: 0;                  /* allow flex child to shrink for scroll */
     overflow-y: auto;               /* default, will be disabled when not expanded */
@@ -969,12 +969,13 @@ html, body {
     }
 }
 
-/* Footer (Hidden mostly but basic styles) */
+/* Footer (removed; skyline lives inside the arrivals panel) */
 .glass-footer {
     display: none;
 }
 
 .version-footer {
+    display: none !important;      /* fully disable global footer */
     position: relative;
     height: 140px;                 /* skyline band height */
     background: rgb(64, 115, 148); /* match arrivals panel blue */
