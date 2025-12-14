@@ -345,6 +345,14 @@ html, body {
     z-index: 200;
 }
 
+/* When the station selector is moved inside the bottom sheet, remove outside-overlap margins */
+.arrivals-panel .floating-controls {
+    margin-top: 0;
+    margin-bottom: 8px;
+    padding: 0 16px;
+    z-index: 2; /* above skyline */
+}
+
 .station-selector-card {
     background: white;
     border-radius: 16px;
@@ -431,8 +439,8 @@ html, body {
     align-items: stretch;
     overflow: hidden;               /* hide overflow when collapsed */
     touch-action: none;             /* gestures handled by JS for sheet drag */
-    transition: transform 0.25s ease;  /* smooth translate */
-    will-change: transform;
+    transition: height 0.25s ease;  /* smooth height change */
+    will-change: height;
 }
 
 /* Expanded sheet height (drag up) */

@@ -1653,6 +1653,20 @@ function setUIMode(mode) {
             const oldOverlay = panelEl.querySelector('.detail-bus-overlay-panel');
             if (oldOverlay) oldOverlay.remove();
         }
+        // Ensure floating station controls live inside the panel so they move with the sheet
+        try {
+            const fc = document.getElementById('floating-controls');
+            const grab = panelEl.querySelector('.sheet-grabber');
+            if (fc) {
+                if (grab) {
+                    if (fc.previousElementSibling !== grab) {
+                        panelEl.insertBefore(fc, grab.nextSibling);
+                    }
+                } else if (fc.parentElement !== panelEl) {
+                    panelEl.insertBefore(fc, panelEl.firstChild);
+                }
+            }
+        } catch {}
     }
 
     // Choose nearest station when switching modes if we have a location
@@ -1791,11 +1805,9 @@ const PANEL_MAX_VH = 85; // visible height when expanded
 let panelDragging = false; // global flag to coordinate with bounce guard
 let pendingDrag = false;   // waiting to see if movement exceeds threshold
 let startTarget = null;
-let sheetOffset = 0;       // current translateY in px (0 = expanded)
 
 function vhToPx(vh) { return Math.round(window.innerHeight * (vh / 100)); }
 function clamp(n, min, max) { return Math.max(min, Math.min(max, n)); }
-function applySheetOffset(px) { arrivalsPanel.style.transform = `translateY(${Math.round(px)}px)`; }
 
 function setupPanelDrag() {
     if (!arrivalsPanel) return;
@@ -1808,7 +1820,7 @@ function setupPanelDrag() {
     }
     let dragging = false;
     let startY = 0;
-    let startOffset = 0;
+    let startH = 0;
 
     const handleStart = (y, target) => {
         const list = arrivalsPanel.querySelector('.routes-list');
@@ -1821,7 +1833,9 @@ function setupPanelDrag() {
         panelDragging = false;
         startTarget = target || null;
         startY = y;
-        startOffset = sheetOffset;
+        // read current height (px)
+        const rect = arrivalsPanel.getBoundingClientRect();
+        startH = rect.height;
         return true;
     };
 
@@ -1838,10 +1852,10 @@ function setupPanelDrag() {
         }
         if (!dragging) return;
         const delta = startY - y; // drag up -> positive delta
-        const minOffset = 0; // expanded
-        const maxOffset = vhToPx(PANEL_MAX_VH - PANEL_MIN_VH); // fully collapsed offset
-        sheetOffset = clamp(startOffset - delta, minOffset, maxOffset);
-        applySheetOffset(sheetOffset);
+        const minPx = vhToPx(PANEL_MIN_VH);
+        const maxPx = vhToPx(PANEL_MAX_VH);
+        const next = clamp(startH + delta, minPx, maxPx);
+        arrivalsPanel.style.height = `${next}px`;
     };
 
     const handleEnd = () => {
@@ -1849,17 +1863,18 @@ function setupPanelDrag() {
         dragging = false;
         pendingDrag = false;
         panelDragging = false;
-        arrivalsPanel.style.transition = 'transform 0.25s ease';
-        const maxOffset = vhToPx(PANEL_MAX_VH - PANEL_MIN_VH);
-        const mid = maxOffset / 2;
-        if (sheetOffset <= mid) {
-            sheetOffset = 0;
+        arrivalsPanel.style.transition = 'height 0.25s ease';
+        const minPx = vhToPx(PANEL_MIN_VH);
+        const maxPx = vhToPx(PANEL_MAX_VH);
+        const rect = arrivalsPanel.getBoundingClientRect();
+        const mid = (minPx + maxPx) / 2;
+        if (rect.height >= mid) {
+            arrivalsPanel.style.height = `${maxPx}px`;
             arrivalsPanel.classList.add('expanded');
         } else {
-            sheetOffset = maxOffset;
+            arrivalsPanel.style.height = `${minPx}px`;
             arrivalsPanel.classList.remove('expanded');
         }
-        applySheetOffset(sheetOffset);
         // Invalidate map size in case the panel height change impacts layout
         setTimeout(() => { try { if (map) map.invalidateSize(); } catch {} }, 260);
     };
@@ -1923,12 +1938,19 @@ function setupPanelDrag() {
     window.addEventListener('pointermove', (e) => { handleMove(e.clientY); });
     window.addEventListener('pointerup', () => handleEnd());
 
-    // Initialize to collapsed position using translateY
-    const maxOffset = vhToPx(PANEL_MAX_VH - PANEL_MIN_VH);
-    sheetOffset = maxOffset;
+    // Initialize to collapsed height
+    const minPx = vhToPx(PANEL_MIN_VH);
     arrivalsPanel.classList.remove('expanded');
-    arrivalsPanel.style.willChange = 'transform';
-    applySheetOffset(sheetOffset);
+    arrivalsPanel.style.willChange = 'height';
+    arrivalsPanel.style.height = `${minPx}px`;
+
+    // Also, after creating grabber, move floating controls into the panel
+    try {
+        const fc = document.getElementById('floating-controls');
+        if (fc && fc.parentElement !== arrivalsPanel) {
+            arrivalsPanel.insertBefore(fc, grabber.nextSibling);
+        }
+    } catch {}
 }
 
 // Prevent global rubber-band: allow scroll on known internal scroll areas (map, lists, modal)
