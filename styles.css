@@ -1046,8 +1046,8 @@ html, body {
   right: 0;
   bottom: 0;
   --skyline-max-height: clamp(200px, 30vh, 320px);
-  height: calc(var(--skyline-max-height) * var(--sheet-progress, 1));
-  opacity: var(--sheet-progress, 1);
+  height: var(--skyline-max-height);
+  opacity: 1;
   margin: 0;
   pointer-events: none;
   z-index: 0; /* sit behind panel content */
