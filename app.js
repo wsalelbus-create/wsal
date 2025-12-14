@@ -1776,6 +1776,7 @@ const mapViewContainer = document.querySelector('.map-view-container');
 const arrivalsPanel = document.querySelector('.arrivals-panel');
 const PANEL_MIN_VH = 40; // default sheet height
 const PANEL_MAX_VH = 85; // expanded sheet height
+let panelDragging = false; // global flag to coordinate with bounce guard
 
 function vhToPx(vh) { return Math.round(window.innerHeight * (vh / 100)); }
 function clamp(n, min, max) { return Math.max(min, Math.min(max, n)); }
@@ -1787,13 +1788,14 @@ function setupPanelDrag() {
     let startH = 0;
 
     const handleStart = (y, target) => {
-        // Only start a drag if the gesture begins near the top of the panel (handle area ~56px)
         const rect = arrivalsPanel.getBoundingClientRect();
-        if ((y - rect.top) > 56) return false;
-        // Avoid starting a drag when interacting with internal scroll if not at the top
         const list = arrivalsPanel.querySelector('.routes-list');
-        if (list && list.scrollTop > 0) return false;
+        const inList = !!(target && target.closest && target.closest('.routes-list'));
+        const isExpanded = arrivalsPanel.classList.contains('expanded');
+        // If starting inside the list while expanded and the list is scrolled, let it scroll instead of dragging
+        if (inList && isExpanded && list && list.scrollTop > 0) return false;
         dragging = true;
+        panelDragging = true;
         startY = y;
         startH = rect.height;
         arrivalsPanel.style.transition = 'none';
@@ -1812,6 +1814,7 @@ function setupPanelDrag() {
     const handleEnd = () => {
         if (!dragging) return;
         dragging = false;
+        panelDragging = false;
         arrivalsPanel.style.transition = 'min-height 0.25s ease, height 0.25s ease';
         const rect = arrivalsPanel.getBoundingClientRect();
         const minPx = vhToPx(PANEL_MIN_VH);
@@ -1832,13 +1835,30 @@ function setupPanelDrag() {
     arrivalsPanel.addEventListener('touchstart', (e) => {
         const t = e.touches[0];
         if (handleStart(t.clientY, e.target)) e.preventDefault();
-    }, { passive: false });
+    }, { passive: false, capture: true });
     arrivalsPanel.addEventListener('touchmove', (e) => {
         const t = e.touches[0];
         handleMove(t.clientY);
         if (dragging) e.preventDefault();
-    }, { passive: false });
+    }, { passive: false, capture: true });
     arrivalsPanel.addEventListener('touchend', () => handleEnd());
+
+    // Document-level capture to guarantee drag from anywhere inside the panel
+    document.addEventListener('touchstart', (e) => {
+        const inPanel = e.target && e.target.closest && e.target.closest('.arrivals-panel');
+        if (!inPanel) return;
+        const t = e.touches && e.touches[0];
+        if (!t) return;
+        if (handleStart(t.clientY, e.target)) e.preventDefault();
+    }, { passive: false, capture: true });
+    document.addEventListener('touchmove', (e) => {
+        if (!panelDragging) return;
+        const t = e.touches && e.touches[0];
+        if (!t) return;
+        handleMove(t.clientY);
+        e.preventDefault();
+    }, { passive: false, capture: true });
+    document.addEventListener('touchend', () => { if (panelDragging) handleEnd(); }, { capture: true });
 
     // Pointer events (desktop/testing)
     arrivalsPanel.addEventListener('pointerdown', (e) => { handleStart(e.clientY, e.target); });
@@ -1846,13 +1866,16 @@ function setupPanelDrag() {
     window.addEventListener('pointerup', () => handleEnd());
 
     // Initialize to default min height
+    arrivalsPanel.style.willChange = 'height';
     arrivalsPanel.style.height = `${PANEL_MIN_VH}vh`;
+    arrivalsPanel.classList.remove('expanded');
 }
 
 // Prevent global rubber-band: allow scroll on known internal scroll areas (map, lists, modal)
 function installBounceGuard() {
     const allowSelectors = ['#map-container', '.leaflet-container', '.routes-list', '.station-list', '.modal-content'];
     document.addEventListener('touchmove', (e) => {
+        if (panelDragging) { e.preventDefault(); return; }
         const ok = allowSelectors.some(sel => e.target.closest(sel));
         if (ok) return; // allow default touchmove
         e.preventDefault(); // block page-level drag/bounce

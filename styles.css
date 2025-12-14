@@ -429,6 +429,7 @@ html, body {
     display: flex;
     flex-direction: column;         /* allow internal list to flex */
     align-items: stretch;           /* stretch children to panel width */
+    touch-action: none;             /* gestures handled by JS for sheet drag */
     transition: min-height 0.3s ease;
     /* Smooth resize */
     margin-top: 0;                  /* normal flow; map overlaps up instead */
@@ -521,9 +522,13 @@ html, body {
     padding-bottom: 20px;
     flex: 1 1 auto;                 /* take remaining space in panel */
     min-height: 0;                  /* allow flex child to shrink for scroll */
-    overflow-y: auto;               /* internal scroll only */
+    overflow-y: auto;               /* default, will be disabled when not expanded */
     -webkit-overflow-scrolling: touch;
 }
+
+/* Disable list scroll when the sheet is collapsed; enable only when expanded */
+.arrivals-panel:not(.expanded) .routes-list { overflow: hidden; touch-action: none; }
+.arrivals-panel.expanded .routes-list { overflow-y: auto; touch-action: pan-y; }
 
 /* Hide scrollbars for bottom-sheet feel */
 .routes-list::-webkit-scrollbar { display: none; }
