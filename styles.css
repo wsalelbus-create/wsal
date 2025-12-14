@@ -38,11 +38,9 @@ body {
     color: var(--text-main);
     width: 100vw;
     min-height: 100vh;
-    /* Allow page to grow */
-    overflow-x: hidden;
-    /* Only prevent horizontal scroll */
-    overflow-y: auto;
-    /* Allow vertical scroll */
+    /* Prevent page scroll bounce; only the panel will move */
+    overflow: hidden;
+    overscroll-behavior: none;
     margin: 0;
     padding: 0;
     /* NO padding on body - fixed elements handle safe area themselves */
@@ -423,6 +421,10 @@ body {
     transition: min-height 0.3s ease;
     /* Smooth resize */
     margin-top: 0;                  /* normal flow; map overlaps up instead */
+    cursor: grab;                   /* hint draggable */
+    user-select: none;              /* avoid text select during drag */
+    -webkit-user-select: none;
+    touch-action: none;             /* we handle vertical pan via JS */
 }
 
 /* When selector bar is hidden (detailed screen), reduce top padding */
@@ -507,7 +509,11 @@ body {
     flex-direction: column;
     gap: 16px; /* slightly more space between cards */
     padding-bottom: 20px;
+    overflow-y: hidden;             /* JS enables when expanded */
+    -ms-overflow-style: none;       /* hide scrollbar in IE/Edge */
+    scrollbar-width: none;          /* hide scrollbar in Firefox */
 }
+.routes-list::-webkit-scrollbar { display: none; }
 
 /* =============================
    BUS SCREEN: Station Cards
