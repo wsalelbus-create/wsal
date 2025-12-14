@@ -1704,6 +1704,12 @@ function setUIMode(mode) {
         else quickActionsEl.classList.add('hidden');
     }
 
+    // Skyline: always visible in all modes (ensure not hidden)
+    const skylineEl = document.getElementById('skyline-inline');
+    if (skylineEl) {
+        skylineEl.classList.remove('hidden');
+    }
+
     // Panel background: always green in all modes
     const panelEl = document.querySelector('.arrivals-panel');
     if (panelEl) {

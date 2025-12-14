@@ -974,18 +974,7 @@ html, body {
     display: none;
 }
 
-.version-footer {
-    position: relative;
-    height: 140px;                 /* skyline band height */
-    background: rgb(64, 115, 148); /* match arrivals panel blue */
-    overflow: hidden;              /* clip skyline */
-    text-align: center;
-    color: #ccc;
-    font-size: 0.7rem;
-    padding: 0;                    /* no padding to keep exact height */
-    margin-top: -2px;              /* pull up slightly more to eliminate hairline */
-    border-top: none;              /* ensure no border draws a line */
-}
+/* legacy version-footer removed */
 
 /* Ensure no accidental bottom border on the arrivals panel */
 .arrivals-panel { border-bottom: 0; }
@@ -1046,34 +1035,29 @@ html, body {
 /* =============================
    CITY SKYLINE BACKDROP (Algiers-inspired)
    ============================= */
-.skyline-bg {
-    position: absolute;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    height: 140px;                 /* skyline band height */
-    pointer-events: none;          /* non-interactive */
-    z-index: 0;                    /* behind panel content */
-}
-.skyline-bg svg { width: 100%; height: 100%; display: block; }
 .arrivals-panel .quick-actions-panel,
 .arrivals-panel .routes-header,
-.arrivals-panel .routes-list,
-.arrivals-panel .version-footer { position: relative; z-index: 1; }
+.arrivals-panel .routes-list { position: relative; z-index: 1; }
 
-/* Inline skyline placed at the end of arrivals panel content: relative (not fixed) */
+/* Skyline: always bottom-anchored like Citymapper */
 .arrivals-panel .skyline-inline {
-  position: relative;
-  bottom: auto;
-  height: 140px;
-  margin-top: 16px;   /* space above skyline */
-  margin-bottom: 8px; /* slight bottom breathing room */
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: clamp(200px, 30vh, 320px); /* bigger and responsive */
+  margin: 0;
   pointer-events: none;
-  z-index: auto;
+  z-index: 0; /* sit behind panel content */
 }
 
-/* Hide legacy footer completely */
-.version-footer { display: none !important; }
+/* Ensure SVG scales to container height */
+.arrivals-panel .skyline-inline svg { width: 100%; height: 100%; display: block; }
 
-/* Hide the old skyline block that used inline style (kept for safety) */
-.arrivals-panel > .skyline-bg[style] { display: none !important; }
+/* Force one uniform color across all skyline layers */
+.arrivals-panel .skyline-inline svg * {
+  fill: rgba(0, 0, 0, 0.26) !important; /* single dark silhouette over blue */
+  stroke: none !important;
+}
+
+/* cleaned: removed legacy footer skyline rules */
