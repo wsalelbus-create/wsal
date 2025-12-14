@@ -433,7 +433,7 @@ html, body {
     z-index: 1000;                  /* above map/controls; under header/back badge */
     padding: 16px;
     padding-top: 40px;              /* space under station selector area */
-    padding-bottom: calc(6px + env(safe-area-inset-bottom)); /* safe area */
+    padding-bottom: calc(140px + env(safe-area-inset-bottom)); /* reserve space for skyline band */
     display: flex;
     flex-direction: column;         /* internal layout */
     align-items: stretch;
@@ -539,8 +539,8 @@ html, body {
 .routes-list {
     display: flex;
     flex-direction: column;
-    gap: 16px; /* slightly more space between cards */
-    padding-bottom: calc(160px + env(safe-area-inset-bottom));
+    gap: 16px;                      /* slightly more space between cards */
+    padding-bottom: 8px;            /* keep cards clear of skyline without big gap */
     flex: 1 1 auto;                 /* take remaining space in panel */
     min-height: 0;                  /* allow flex child to shrink for scroll */
     overflow-y: auto;               /* default, will be disabled when not expanded */
@@ -969,13 +969,12 @@ html, body {
     }
 }
 
-/* Footer (removed; skyline lives inside the arrivals panel) */
+/* Footer (Hidden mostly but basic styles) */
 .glass-footer {
     display: none;
 }
 
 .version-footer {
-    display: none !important;      /* fully disable global footer */
     position: relative;
     height: 140px;                 /* skyline band height */
     background: rgb(64, 115, 148); /* match arrivals panel blue */
