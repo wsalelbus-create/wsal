@@ -439,8 +439,9 @@ html, body {
     align-items: stretch;
     overflow: hidden;               /* hide overflow when collapsed */
     touch-action: none;             /* gestures handled by JS for sheet drag */
-    transition: height 0.25s ease;  /* smooth height change */
-    will-change: height;
+    transform: translateY(0);       /* base: whole sheet moves, not just top */
+    transition: transform 0.25s ease;  /* smooth translate change */
+    will-change: transform;
 }
 
 /* Expanded sheet height (drag up) */

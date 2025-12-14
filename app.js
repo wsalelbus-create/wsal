@@ -1908,7 +1908,7 @@ function setupPanelDrag() {
     }
     let dragging = false;
     let startY = 0;
-    let startH = 0;
+    let startVisible = 0; // visible height of the sheet during drag
     let lastMoves = [];
     // Inertial glide state
     let inertiaActive = false;
@@ -1921,6 +1921,24 @@ function setupPanelDrag() {
             const p = Math.max(0, Math.min(1, (h - minPx) / denom));
             arrivalsPanel.style.setProperty('--sheet-progress', String(p));
         } catch {}
+    };
+
+    // Helpers to set/get visible height by translating the fixed-bottom panel
+    const setPanelVisibleHeight = (visiblePx) => {
+        const minPx = vhToPx(PANEL_MIN_VH);
+        const maxPx = getPanelMaxPx();
+        const vis = clamp(visiblePx, minPx, maxPx);
+        const offset = Math.max(0, maxPx - vis); // how far to push the panel down
+        arrivalsPanel.style.transform = `translateY(${offset}px)`;
+        arrivalsPanel.style.height = `${maxPx}px`; // keep the panel sized to its max
+        arrivalsPanel.dataset.visibleH = String(vis);
+        updateSheetProgress(vis, minPx, maxPx);
+    };
+    const getPanelVisibleHeight = () => {
+        const v = parseFloat(arrivalsPanel?.dataset?.visibleH || '');
+        if (!Number.isNaN(v)) return v;
+        // Fallback to collapsed on first run
+        return vhToPx(PANEL_MIN_VH);
     };
 
     const handleStart = (y, target) => {
@@ -1939,10 +1957,9 @@ function setupPanelDrag() {
         }
         startTarget = target || null;
         startY = y;
-        // read current height (px)
-        const rect = arrivalsPanel.getBoundingClientRect();
-        startH = rect.height;
-        lastMoves = [{ t: performance.now(), h: startH }];
+        // read current visible height (px)
+        startVisible = getPanelVisibleHeight();
+        lastMoves = [{ t: performance.now(), h: startVisible }];
         return true;
     };
 
@@ -1962,9 +1979,8 @@ function setupPanelDrag() {
         const minPx = vhToPx(PANEL_MIN_VH);
         const maxPx = getPanelMaxPx();
         const scale = getDragScale();
-        const next = clamp(startH + delta * scale, minPx, maxPx);
-        arrivalsPanel.style.height = `${next}px`;
-        updateSheetProgress(next, minPx, maxPx);
+        const next = clamp(startVisible + delta * scale, minPx, maxPx);
+        setPanelVisibleHeight(next);
         // record movement for velocity calculation
         const now = performance.now();
         lastMoves.push({ t: now, h: next });
@@ -1981,7 +1997,6 @@ function setupPanelDrag() {
         arrivalsPanel.style.transition = 'none';
         const minPx = vhToPx(PANEL_MIN_VH);
         const maxPx = getPanelMaxPx();
-        const rect = arrivalsPanel.getBoundingClientRect();
         // compute velocity using recent samples (~120ms)
         let velocity = 0;
         if (lastMoves.length >= 2) {
@@ -1994,7 +2009,7 @@ function setupPanelDrag() {
         // Start an inertial glide if velocity is meaningful; else snap immediately
         if (absV > 0.04) { // ~40 px/s threshold
             inertiaActive = true;
-            let h = rect.height;
+            let h = getPanelVisibleHeight();
             const dir = velocity >= 0 ? 1 : -1;
             const DECEL = 0.0011; // px/ms^2 (lower decel => longer glide)
             const MIN_GLIDE_MS = 380; // ensure a longer glide for scroll feel
@@ -2008,17 +2023,15 @@ function setupPanelDrag() {
                 // Speed decreases linearly with time until it hits 0
                 const vNow = Math.max(0, absV - DECEL * elapsed);
                 h = clamp(h + dir * vNow * dt, minPx, maxPx);
-                arrivalsPanel.style.height = `${h}px`;
-                updateSheetProgress(h, minPx, maxPx);
+                setPanelVisibleHeight(h);
                 // Stop if speed nearly zero or bounds reached
                 const nearBound = (h <= minPx + 0.5) || (h >= maxPx - 0.5);
                 if ((elapsed >= MIN_GLIDE_MS && vNow <= 0.009) || nearBound) {
                     inertiaActive = false;
                     // Final snap with a soft easing
                     const target = pickSnapTarget(h, dir * vNow);
-                    arrivalsPanel.style.transition = 'height 0.24s cubic-bezier(.2,.7,.2,1)';
-                    arrivalsPanel.style.height = `${target}px`;
-                    updateSheetProgress(target, minPx, maxPx);
+                    arrivalsPanel.style.transition = 'transform 0.24s cubic-bezier(.2,.7,.2,1)';
+                    setPanelVisibleHeight(target);
                     if (target >= (minPx + maxPx) / 2) arrivalsPanel.classList.add('expanded');
                     else arrivalsPanel.classList.remove('expanded');
                     lastMoves = [];
@@ -2030,11 +2043,10 @@ function setupPanelDrag() {
             inertiaFrame = requestAnimationFrame(step);
         } else {
             // No meaningful velocity: snap to nearest stop
-            const projected = clamp(rect.height + velocity * 140, minPx, maxPx);
+            const projected = clamp(getPanelVisibleHeight() + velocity * 140, minPx, maxPx);
             const target = pickSnapTarget(projected, velocity);
-            arrivalsPanel.style.transition = 'height 0.24s cubic-bezier(.2,.7,.2,1)';
-            arrivalsPanel.style.height = `${target}px`;
-            updateSheetProgress(target, minPx, maxPx);
+            arrivalsPanel.style.transition = 'transform 0.24s cubic-bezier(.2,.7,.2,1)';
+            setPanelVisibleHeight(target);
             if (target >= (minPx + maxPx) / 2) arrivalsPanel.classList.add('expanded');
             else arrivalsPanel.classList.remove('expanded');
             lastMoves = [];
@@ -2060,16 +2072,13 @@ function setupPanelDrag() {
         e.preventDefault();
         const minPx = vhToPx(PANEL_MIN_VH);
         const maxPx = getPanelMaxPx();
-        const rect = arrivalsPanel.getBoundingClientRect();
         const mid = (minPx + maxPx) / 2;
-        arrivalsPanel.style.transition = 'height 0.25s ease';
-        if (rect.height < mid) {
-            arrivalsPanel.style.height = `${maxPx}px`;
-            updateSheetProgress(maxPx, minPx, maxPx);
+        arrivalsPanel.style.transition = 'transform 0.25s ease';
+        if (getPanelVisibleHeight() < mid) {
+            setPanelVisibleHeight(maxPx);
             arrivalsPanel.classList.add('expanded');
         } else {
-            arrivalsPanel.style.height = `${minPx}px`;
-            updateSheetProgress(minPx, minPx, maxPx);
+            setPanelVisibleHeight(minPx);
             arrivalsPanel.classList.remove('expanded');
         }
     });
@@ -2108,12 +2117,11 @@ function setupPanelDrag() {
     window.addEventListener('pointermove', (e) => { handleMove(e.clientY); });
     window.addEventListener('pointerup', () => handleEnd());
 
-    // Initialize to collapsed height
+    // Initialize to collapsed height using translateY (panel moves as a whole)
     const minPx = vhToPx(PANEL_MIN_VH);
     arrivalsPanel.classList.remove('expanded');
-    arrivalsPanel.style.willChange = 'height';
-    arrivalsPanel.style.height = `${minPx}px`;
-    updateSheetProgress(minPx, minPx, getPanelMaxPx());
+    arrivalsPanel.style.willChange = 'transform';
+    setPanelVisibleHeight(minPx);
 
     // Also, after creating grabber, move floating controls into the panel
     try {
