@@ -1045,7 +1045,9 @@ html, body {
   /* Place after content in the flex column */
   order: 1000;
   align-self: stretch;
-  width: 100%;
+  width: calc(100% + 32px); /* full-bleed across panel, cancel 16px side padding */
+  margin-left: -16px;
+  margin-right: -16px;
   flex-shrink: 0;
   --skyline-max-height: clamp(200px, 30vh, 320px);
   height: var(--skyline-max-height);
@@ -1060,7 +1062,9 @@ html, body {
 
 /* Force one uniform color across all skyline layers */
 .arrivals-panel .skyline-inline svg * {
-  fill: rgba(0, 0, 0, 0.26) !important; /* single dark silhouette over blue */
+  fill: #2c5169 !important; /* solid silhouette (no opacity) to avoid intersection darkening */
+  fill-opacity: 1 !important;
+  opacity: 1 !important;
   stroke: none !important;
 }
 
