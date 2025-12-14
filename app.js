@@ -36,9 +36,9 @@ function getSnapStopsPx() {
 
 function pickSnapTarget(currentH, velocityPxPerMs) {
     const stops = getSnapStopsPx();
-    // Fling thresholds (px/ms): slightly easier to advance to next stop
-    const UP_FLING = 0.8;   // ~800 px/s
-    const DOWN_FLING = -0.7; // ~700 px/s downward
+    // Fling thresholds (px/ms): advance to next stop with lighter flicks
+    const UP_FLING = 0.6;   // ~600 px/s
+    const DOWN_FLING = -0.55; // ~550 px/s downward
     if (velocityPxPerMs > UP_FLING) {
         // next stop above current; add gating to avoid jumping straight to max near the top
         let next = stops[stops.length - 1];
@@ -1934,7 +1934,7 @@ function setupPanelDrag() {
     const handleMove = (y) => {
         if (pendingDrag && !dragging) {
             const dy = Math.abs(y - startY);
-            if (dy > 6) { // threshold to distinguish drag from tap
+            if (dy > 5) { // slightly lower threshold to start dragging sooner
                 dragging = true;
                 panelDragging = true;
                 arrivalsPanel.style.transition = 'none';
@@ -1976,12 +1976,12 @@ function setupPanelDrag() {
         }
         const absV = Math.abs(velocity);
         // Start an inertial glide if velocity is meaningful; else snap immediately
-        if (absV > 0.06) { // ~60 px/s threshold
+        if (absV > 0.04) { // ~40 px/s threshold
             inertiaActive = true;
             let h = rect.height;
             const dir = velocity >= 0 ? 1 : -1;
-            const DECEL = 0.0014; // px/ms^2 (lower decel => longer glide)
-            const MIN_GLIDE_MS = 260; // ensure at least this long glide for scroll feel
+            const DECEL = 0.0011; // px/ms^2 (lower decel => longer glide)
+            const MIN_GLIDE_MS = 380; // ensure a longer glide for scroll feel
             const startTs = performance.now();
             let lastTs = startTs;
             const step = (ts) => {
@@ -1995,7 +1995,7 @@ function setupPanelDrag() {
                 arrivalsPanel.style.height = `${h}px`;
                 // Stop if speed nearly zero or bounds reached
                 const nearBound = (h <= minPx + 0.5) || (h >= maxPx - 0.5);
-                if ((elapsed >= MIN_GLIDE_MS && vNow <= 0.012) || nearBound) {
+                if ((elapsed >= MIN_GLIDE_MS && vNow <= 0.009) || nearBound) {
                     inertiaActive = false;
                     // Final snap with a soft easing
                     const target = pickSnapTarget(h, dir * vNow);
