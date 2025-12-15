@@ -28,9 +28,12 @@ function applySkylineSizing() {
 function installViewportPolyfill() {
     const apply = () => {
         try {
-            const h = (window.visualViewport && typeof window.visualViewport.height === 'number')
+            let h = (window.visualViewport && typeof window.visualViewport.height === 'number')
                 ? window.visualViewport.height
-                : window.innerHeight;
+                : 0;
+            if (!h || h < 200) {
+                h = window.innerHeight || document.documentElement?.clientHeight || screen?.height || 800;
+            }
             const vh = h * 0.01;
             document.documentElement.style.setProperty('--vh', `${vh}px`);
         } catch {}
@@ -1910,9 +1913,8 @@ let pendingDrag = false;   // waiting to see if movement exceeds threshold
 let startTarget = null;
 
 function vhToPx(vh) {
-    const h = (window.visualViewport && typeof window.visualViewport.height === 'number')
-        ? window.visualViewport.height
-        : window.innerHeight;
+    // Use innerHeight for stable Safari behavior
+    const h = window.innerHeight || document.documentElement?.clientHeight || 800;
     return Math.round(h * (vh / 100));
 }
 function clamp(n, min, max) { return Math.max(min, Math.min(max, n)); }
@@ -2148,8 +2150,6 @@ function setupPanelDrag() {
             arrivalsPanel.classList.add('expanded');
         } else {
             setPanelVisibleHeight(minPx);
-    // Ensure skyline sizing is applied once panel exists
-    applySkylineSizing();
             arrivalsPanel.classList.remove('expanded');
         }
     });
@@ -2223,11 +2223,6 @@ function installBounceGuard() {
 installViewportPolyfill();
 setupPanelDrag();
 installBounceGuard();
-// Recompute skyline height on viewport changes (Safari vs PWA)
-window.addEventListener('resize', applySkylineSizing);
-window.addEventListener('orientationchange', applySkylineSizing);
-try { if (window.visualViewport) window.visualViewport.addEventListener('resize', applySkylineSizing); } catch {}
-applySkylineSizing();
 
 // Init
 initMap(); // Initialize map immediately (background)
