@@ -1048,14 +1048,9 @@ html, body {
   left: calc(-16px - var(--bleed-correction));  /* cancel panel side padding + tiny overscan */
   right: calc(-16px - var(--bleed-correction)); /* cancel panel side padding + tiny overscan */
   --bleed-correction: 1px; /* tiny overscan to hide hairline gaps at edges */
-  /* Make skyline size proportional to the sheet itself (not raw viewport) */
-  /* JS exposes --panel-max-h; fallback uses normalized vh */
-  --skyline-max-height: clamp(
-    200px,
-    calc(var(--panel-max-h, calc(var(--vh, 1vh) * 85)) * 0.353), /* ~30/85 ratio */
-    320px
-  );
-  height: calc(var(--skyline-max-height) * var(--skyline-scale, 1));
+  /* Use custom vh unit to normalize Safari/PWA viewport differences */
+  --skyline-max-height: clamp(200px, calc(var(--vh, 1vh) * 30), 320px);
+  height: var(--skyline-max-height);
   opacity: 1;
   margin: 0;                 /* no extra gap below city */
   pointer-events: none;

@@ -5,19 +5,6 @@ function shouldShowCone() {
         return orientationPermissionGranted && hasHeadingFix;
     }
 
-// Keep skyline bottom exactly flush with the blue edge by cancelling panel padding-bottom
-function syncSkylineBottom() {
-    try {
-        const panel = document.getElementById('arrivals-panel');
-        if (!panel) return;
-        const sky = panel.querySelector('#skyline-inline');
-        if (!sky) return;
-        const cs = window.getComputedStyle(panel);
-        const padBottom = parseFloat(cs.paddingBottom) || 0; // already includes safe-area via env()
-        sky.style.bottom = `${-Math.round(padBottom)}px`;
-    } catch {}
-}
-
     // On other platforms, show after we have any heading fix
     return hasHeadingFix;
 }
@@ -26,12 +13,10 @@ function syncSkylineBottom() {
 function installViewportPolyfill() {
     const apply = () => {
         try {
-            const vals = [];
-            try { if (window.visualViewport && typeof window.visualViewport.height === 'number') vals.push(window.visualViewport.height); } catch {}
-            try { if (typeof window.innerHeight === 'number') vals.push(window.innerHeight); } catch {}
-            try { const ch = document.documentElement && document.documentElement.clientHeight; if (ch) vals.push(ch); } catch {}
-            const base = (vals.length ? Math.min.apply(null, vals.filter(n => typeof n === 'number' && isFinite(n) && n > 0)) : window.innerHeight);
-            const vh = base * 0.01; // px per 1vh
+            const h = (window.visualViewport && typeof window.visualViewport.height === 'number')
+                ? window.visualViewport.height
+                : window.innerHeight;
+            const vh = h * 0.01;
             document.documentElement.style.setProperty('--vh', `${vh}px`);
         } catch {}
     };
@@ -1916,12 +1901,6 @@ function vhToPx(vh) {
     return Math.round(h * (vh / 100));
 }
 function clamp(n, min, max) { return Math.max(min, Math.min(max, n)); }
-function isStandalonePWA() {
-    try {
-        return (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) ||
-               (typeof window.navigator !== 'undefined' && window.navigator.standalone === true);
-    } catch { return false; }
-}
 // Compute dynamic maximum height for the bottom sheet
 function getPanelMaxPx() {
     try {
@@ -1965,8 +1944,8 @@ function getPanelMaxPx() {
             return desired;
         }
     } catch {}
-    // Default cap (non-bus): slightly lower in standalone PWA to match Safari proportions
-    return vhToPx(isStandalonePWA() ? 80 : PANEL_MAX_VH);
+    // Default cap
+    return vhToPx(PANEL_MAX_VH);
 }
 
 function setupPanelDrag() {
@@ -2003,12 +1982,8 @@ function setupPanelDrag() {
         const offset = Math.max(0, maxPx - vis); // how far to push the panel down
         arrivalsPanel.style.transform = `translateY(${offset}px)`;
         arrivalsPanel.style.height = `${maxPx}px`; // keep the panel sized to its max
-        // Expose heights to CSS so children (skyline) can size relative to the sheet
-        arrivalsPanel.style.setProperty('--panel-max-h', `${maxPx}px`);
-        arrivalsPanel.style.setProperty('--panel-visible-h', `${vis}px`);
         arrivalsPanel.dataset.visibleH = String(vis);
         updateSheetProgress(vis, minPx, maxPx);
-        syncSkylineBottom();
     };
     const getPanelVisibleHeight = () => {
         const v = parseFloat(arrivalsPanel?.dataset?.visibleH || '');
