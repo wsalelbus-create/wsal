@@ -980,16 +980,8 @@ function renderStation(station) {
         updateMap();
     }
 
-    // If entering the detailed screen, auto-expand the sheet so content can scroll
-    try {
-        if (mode === 'walk' && busDetailActive) {
-            const minPx = vhToPx(PANEL_MIN_VH);
-            const maxPx = getPanelMaxPx();
-            arrivalsPanel.classList.add('expanded');
-            arrivalsPanel.style.transition = 'transform 0.24s cubic-bezier(.2,.7,.2,1)';
-            setPanelVisibleHeight(Math.max(minPx, maxPx));
-        }
-    } catch {}
+    // Detailed screen: start with the same collapsed sheet behavior as other screens.
+    // User can drag the sheet; internal list will not scroll in bus-mode.
 }
 
 /*
@@ -1768,8 +1760,8 @@ function setUIMode(mode) {
     const panelEl = document.querySelector('.arrivals-panel');
     if (panelEl) {
         panelEl.classList.add('panel-green');
-        // Mark bus mode for special sheet behavior (no internal scroll, expand to content)
-        if (mode === 'bus' && !busDetailActive) panelEl.classList.add('bus-mode');
+        // Use bus-mode behavior on Bus list AND on detailed (3rd) screen to unify UX
+        if ((mode === 'bus') || (mode === 'walk' && busDetailActive)) panelEl.classList.add('bus-mode');
         else panelEl.classList.remove('bus-mode');
         if (mode === 'walk' && busDetailActive) {
             panelEl.classList.add('no-selector');
@@ -1942,9 +1934,9 @@ function getPanelMaxPx() {
     try {
         const panel = arrivalsPanel || document.querySelector('.arrivals-panel');
         if (!panel) return vhToPx(PANEL_MAX_VH);
-        // In Bus mode (station list), allow expanding up to the viewport height
-        // or to fit all content if smaller
-        if (uiMode === 'bus' && !busDetailActive) {
+        // In Bus mode (station list) OR Detailed (3rd) screen, allow expanding up to
+        // the viewport height or to fit all content if smaller.
+        if ((uiMode === 'bus' && !busDetailActive) || (uiMode === 'walk' && busDetailActive)) {
             const minPx = vhToPx(PANEL_MIN_VH);
             const panelRect = panel.getBoundingClientRect();
             // Prefer the bottom of .routes-list (cards) as the content bottom
@@ -2047,8 +2039,9 @@ function setupPanelDrag() {
         const list = arrivalsPanel.querySelector('.routes-list');
         const inList = !!(target && target.closest && target.closest('.routes-list'));
         const isExpanded = arrivalsPanel.classList.contains('expanded');
+        const isBusMode = arrivalsPanel.classList.contains('bus-mode');
         // If starting inside the list while expanded and the list is scrolled, let it scroll instead of dragging
-        if (inList && isExpanded && list && list.scrollTop > 0) return false;
+        if (!isBusMode && inList && isExpanded && list && list.scrollTop > 0) return false;
         startInList = inList;
         startListEl = list || null;
         startListScrollTop = list ? list.scrollTop : 0;
@@ -2073,7 +2066,7 @@ function setupPanelDrag() {
             // If gesture started inside the routes list and the sheet is expanded,
             // allow the list to handle its own scroll for upward drags or when the
             // list has scrollable content.
-            if (startInList && arrivalsPanel.classList.contains('expanded')) {
+            if (startInList && arrivalsPanel.classList.contains('expanded') && !arrivalsPanel.classList.contains('bus-mode')) {
                 const list = startListEl || arrivalsPanel.querySelector('.routes-list');
                 const canScroll = !!(list && (list.scrollHeight - list.clientHeight > 1));
                 const dySigned = y - startY; // up < 0, down > 0
