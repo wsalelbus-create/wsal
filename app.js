@@ -1932,7 +1932,14 @@ function getPanelMaxPx() {
             let inFlowBottom = panelRect.top;
             const listEl = panel.querySelector('.routes-list');
             if (listEl) {
-                try { inFlowBottom = Math.max(inFlowBottom, listEl.getBoundingClientRect().bottom); } catch {}
+                try {
+                    const r = listEl.getBoundingClientRect();
+                    let bottom = r.bottom;
+                    const csList = window.getComputedStyle(listEl);
+                    const pb = parseFloat(csList.paddingBottom) || 0;
+                    bottom -= pb; // exclude reserved skyline padding from content bottom
+                    inFlowBottom = Math.max(inFlowBottom, bottom);
+                } catch {}
             } else {
                 // Fallback: scan all non-absolute children except the skyline
                 const children = Array.from(panel.children || []);

@@ -431,6 +431,8 @@ html, body {
     border-radius: 24px 24px 0 0;
     box-shadow: none;               /* remove hairline */
     z-index: 1000;                  /* above map/controls; under header/back badge */
+    /* Skyline size made global so children (routes-list) can reserve space */
+    --skyline-max-height: clamp(200px, 30vh, 320px);
     padding: 16px;
     padding-top: 40px;              /* space under station selector area */
     --panel-pad-bottom: calc(6px + env(safe-area-inset-bottom));
@@ -542,7 +544,8 @@ html, body {
     display: flex;
     flex-direction: column;
     gap: 16px; /* slightly more space between cards */
-    padding-bottom: 20px;
+    /* Reserve space so cards never overlap skyline backdrop */
+    padding-bottom: calc(20px + var(--skyline-max-height));
     flex: 1 1 auto;                 /* take remaining space in panel */
     min-height: 0;                  /* allow flex child to shrink for scroll */
     overflow-y: auto;               /* default, will be disabled when not expanded */
@@ -562,7 +565,8 @@ html, body {
     max-height: none;            /* no cap */
     -webkit-overflow-scrolling: auto;
     touch-action: none;          /* gestures reserved for sheet drag */
-    padding-bottom: 0;           /* remove gap above skyline */
+    /* Reserve skyline height so the last card never overlaps backdrop */
+    padding-bottom: var(--skyline-max-height);
 }
 
 /* Hide scrollbars for bottom-sheet feel */
