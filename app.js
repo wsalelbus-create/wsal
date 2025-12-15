@@ -9,6 +9,23 @@ function shouldShowCone() {
     return hasHeadingFix;
 }
 
+// Normalize viewport units across Safari browser and iOS PWA standalone
+function installViewportPolyfill() {
+    const apply = () => {
+        try {
+            const h = (window.visualViewport && typeof window.visualViewport.height === 'number')
+                ? window.visualViewport.height
+                : window.innerHeight;
+            const vh = h * 0.01;
+            document.documentElement.style.setProperty('--vh', `${vh}px`);
+        } catch {}
+    };
+    apply();
+    window.addEventListener('resize', apply);
+    window.addEventListener('orientationchange', apply);
+    try { if (window.visualViewport) window.visualViewport.addEventListener('resize', apply); } catch {}
+}
+
 // Drag sensitivity: make bus mode feel heavier, like Citymapper
 function getDragScale() {
     // Slightly heavier to avoid overshooting when flicking
@@ -1877,7 +1894,12 @@ let panelDragging = false; // global flag to coordinate with bounce guard
 let pendingDrag = false;   // waiting to see if movement exceeds threshold
 let startTarget = null;
 
-function vhToPx(vh) { return Math.round(window.innerHeight * (vh / 100)); }
+function vhToPx(vh) {
+    const h = (window.visualViewport && typeof window.visualViewport.height === 'number')
+        ? window.visualViewport.height
+        : window.innerHeight;
+    return Math.round(h * (vh / 100));
+}
 function clamp(n, min, max) { return Math.max(min, Math.min(max, n)); }
 // Compute dynamic maximum height for the bottom sheet
 function getPanelMaxPx() {
@@ -2178,6 +2200,7 @@ function installBounceGuard() {
     }, { passive: false });
 }
 
+installViewportPolyfill();
 setupPanelDrag();
 installBounceGuard();
 

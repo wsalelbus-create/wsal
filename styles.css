@@ -425,7 +425,7 @@ html, body {
     left: 0;
     right: 0;
     bottom: 0;
-    height: 85vh;                   /* constant sheet height; JS translates to show 40vh collapsed */
+    height: calc(var(--vh, 1vh) * 85);                   /* constant sheet height; JS translates to show 40vh collapsed */
     max-height: none;
     background: white;
     border-radius: 24px 24px 0 0;
@@ -468,7 +468,7 @@ html, body {
 
 /* Collapsed arrivals when map expanded */
 .arrivals-panel.collapsed {
-    min-height: 20vh;
+    min-height: calc(var(--vh, 1vh) * 20);
     /* 20% when map expanded */
 }
 
@@ -1048,7 +1048,8 @@ html, body {
   left: calc(-16px - var(--bleed-correction));  /* cancel panel side padding + tiny overscan */
   right: calc(-16px - var(--bleed-correction)); /* cancel panel side padding + tiny overscan */
   --bleed-correction: 1px; /* tiny overscan to hide hairline gaps at edges */
-  --skyline-max-height: clamp(200px, 30vh, 320px);
+  /* Use custom vh unit to normalize Safari/PWA viewport differences */
+  --skyline-max-height: clamp(200px, calc(var(--vh, 1vh) * 30), 320px);
   height: var(--skyline-max-height);
   opacity: 1;
   margin: 0;                 /* no extra gap below city */
