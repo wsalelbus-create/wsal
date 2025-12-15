@@ -445,7 +445,7 @@ html, body {
 }
 
 /* Expanded sheet height (drag up) */
-.arrivals-panel.expanded { height: 85vh; /* explicit, same as base */ }
+.arrivals-panel.expanded { height: calc(var(--vh, 1vh) * 85); /* explicit, same as base */ }
 
 /* Visible sheet grabber for better affordance and touch target */
 .sheet-grabber {
@@ -1048,8 +1048,10 @@ html, body {
   left: calc(-16px - var(--bleed-correction));  /* cancel panel side padding + tiny overscan */
   right: calc(-16px - var(--bleed-correction)); /* cancel panel side padding + tiny overscan */
   --bleed-correction: 1px; /* tiny overscan to hide hairline gaps at edges */
-  /* Use custom vh unit to normalize Safari/PWA viewport differences */
-  --skyline-max-height: clamp(200px, calc(var(--vh, 1vh) * 30), 320px);
+  /* Keep skyline proportional to the sheet's true max height (JS exposes --panel-max) */
+  /* Fallback to var(--vh)*85 if --panel-max is not yet initialized on first paint */
+  --panel-max-fallback: calc(var(--vh, 1vh) * 85);
+  --skyline-max-height: clamp(200px, calc(var(--panel-max, var(--panel-max-fallback)) * 0.30), 320px);
   height: var(--skyline-max-height);
   opacity: 1;
   margin: 0;                 /* no extra gap below city */

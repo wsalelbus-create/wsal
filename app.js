@@ -5,6 +5,21 @@ function shouldShowCone() {
         return orientationPermissionGranted && hasHeadingFix;
     }
 
+// Make skyline height consistent across Safari and iOS PWA
+function applySkylineSizing() {
+    try {
+        const panel = arrivalsPanel || document.querySelector('.arrivals-panel');
+        if (!panel) return;
+        const sky = panel.querySelector('#skyline-inline');
+        if (!sky) return;
+        // Use width-based ratio consistently across Safari and PWA for identical proportions
+        const w = Math.max(320, Math.min(600, (panel.clientWidth || document.documentElement?.clientWidth || window.innerWidth || 390)));
+        const ratio = 0.60; // tuned to match Safari proportions; consistent in PWA shortcut
+        const targetPx = Math.round(Math.max(200, Math.min(320, w * ratio)));
+        sky.style.setProperty('--skyline-max-height', `${targetPx}px`);
+    } catch {}
+}
+
     // On other platforms, show after we have any heading fix
     return hasHeadingFix;
 }
@@ -1982,6 +1997,9 @@ function setupPanelDrag() {
         const offset = Math.max(0, maxPx - vis); // how far to push the panel down
         arrivalsPanel.style.transform = `translateY(${offset}px)`;
         arrivalsPanel.style.height = `${maxPx}px`; // keep the panel sized to its max
+        // Expose sizes to CSS for consistent PWA/Safari proportions
+        arrivalsPanel.style.setProperty('--panel-visible', `${vis}px`);
+        arrivalsPanel.style.setProperty('--panel-max', `${maxPx}px`);
         arrivalsPanel.dataset.visibleH = String(vis);
         updateSheetProgress(vis, minPx, maxPx);
     };
@@ -2130,6 +2148,8 @@ function setupPanelDrag() {
             arrivalsPanel.classList.add('expanded');
         } else {
             setPanelVisibleHeight(minPx);
+    // Ensure skyline sizing is applied once panel exists
+    applySkylineSizing();
             arrivalsPanel.classList.remove('expanded');
         }
     });
@@ -2203,6 +2223,11 @@ function installBounceGuard() {
 installViewportPolyfill();
 setupPanelDrag();
 installBounceGuard();
+// Recompute skyline height on viewport changes (Safari vs PWA)
+window.addEventListener('resize', applySkylineSizing);
+window.addEventListener('orientationchange', applySkylineSizing);
+try { if (window.visualViewport) window.visualViewport.addEventListener('resize', applySkylineSizing); } catch {}
+applySkylineSizing();
 
 // Init
 initMap(); // Initialize map immediately (background)
