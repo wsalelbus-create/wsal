@@ -293,6 +293,14 @@ function renderBusStations(withDelay = false) {
             arrivalsDiv.innerHTML = buildArrivalsHtml();
         }
         card.appendChild(arrivalsDiv);
+    // Ensure the panel expands to show content and enable list scroll on detailed screen
+    try {
+        const minPx = vhToPx(PANEL_MIN_VH);
+        const maxPx = getPanelMaxPx();
+        arrivalsPanel.classList.add('expanded');
+        arrivalsPanel.style.transition = 'transform 0.24s cubic-bezier(.2,.7,.2,1)';
+        setPanelVisibleHeight(Math.max(minPx, maxPx));
+    } catch {}
         // Drill-down: tapping a station card switches to Walk mode focused on this station
         card.addEventListener('click', (e) => {
             try {
@@ -971,6 +979,17 @@ function renderStation(station) {
     if (mapInitialized) {
         updateMap();
     }
+
+    // If entering the detailed screen, auto-expand the sheet so content can scroll
+    try {
+        if (mode === 'walk' && busDetailActive) {
+            const minPx = vhToPx(PANEL_MIN_VH);
+            const maxPx = getPanelMaxPx();
+            arrivalsPanel.classList.add('expanded');
+            arrivalsPanel.style.transition = 'transform 0.24s cubic-bezier(.2,.7,.2,1)';
+            setPanelVisibleHeight(Math.max(minPx, maxPx));
+        }
+    } catch {}
 }
 
 /*
@@ -1933,11 +1952,13 @@ function getPanelMaxPx() {
             const listEl = panel.querySelector('.routes-list');
             if (listEl) {
                 try {
-                    const r = listEl.getBoundingClientRect();
-                    let bottom = r.bottom;
+                    const listRect = listEl.getBoundingClientRect();
                     const csList = window.getComputedStyle(listEl);
                     const pb = parseFloat(csList.paddingBottom) || 0;
-                    bottom -= pb; // exclude reserved skyline padding from content bottom
+                    const listTopInPanel = listRect.top - panelRect.top;
+                    // Use scrollHeight to capture full content height (not clipped by container)
+                    const contentHeight = Math.max(listEl.scrollHeight || 0, listRect.height || 0);
+                    let bottom = panelRect.top + listTopInPanel + contentHeight - pb;
                     inFlowBottom = Math.max(inFlowBottom, bottom);
                 } catch {}
             } else {
@@ -1985,6 +2006,9 @@ function setupPanelDrag() {
     let startY = 0;
     let startVisible = 0; // visible height of the sheet during drag
     let lastMoves = [];
+    let startInList = false;
+    let startListEl = null;
+    let startListScrollTop = 0;
     // Inertial glide state
     let inertiaActive = false;
     let inertiaFrame = 0;
@@ -2025,6 +2049,9 @@ function setupPanelDrag() {
         const isExpanded = arrivalsPanel.classList.contains('expanded');
         // If starting inside the list while expanded and the list is scrolled, let it scroll instead of dragging
         if (inList && isExpanded && list && list.scrollTop > 0) return false;
+        startInList = inList;
+        startListEl = list || null;
+        startListScrollTop = list ? list.scrollTop : 0;
         dragging = false;           // don't start dragging yet
         pendingDrag = true;         // wait for movement threshold
         panelDragging = false;
@@ -2043,6 +2070,20 @@ function setupPanelDrag() {
 
     const handleMove = (y) => {
         if (pendingDrag && !dragging) {
+            // If gesture started inside the routes list and the sheet is expanded,
+            // allow the list to handle its own scroll for upward drags or when the
+            // list has scrollable content.
+            if (startInList && arrivalsPanel.classList.contains('expanded')) {
+                const list = startListEl || arrivalsPanel.querySelector('.routes-list');
+                const canScroll = !!(list && (list.scrollHeight - list.clientHeight > 1));
+                const dySigned = y - startY; // up < 0, down > 0
+                if (canScroll) {
+                    // Upward gesture: always let the list scroll
+                    if (dySigned < 0) return;
+                    // Downward gesture: if list already scrolled, let it consume
+                    if (dySigned > 0 && startListScrollTop > 0) return;
+                }
+            }
             const dy = Math.abs(y - startY);
             if (dy > 5) { // slightly lower threshold to start dragging sooner
                 dragging = true;
