@@ -1877,15 +1877,7 @@ let panelDragging = false; // global flag to coordinate with bounce guard
 let pendingDrag = false;   // waiting to see if movement exceeds threshold
 let startTarget = null;
 
-function getViewportHeight() {
-    try {
-        if (window.visualViewport && typeof window.visualViewport.height === 'number') {
-            return Math.round(window.visualViewport.height);
-        }
-    } catch {}
-    return Math.round(window.innerHeight);
-}
-function vhToPx(vh) { return Math.round(getViewportHeight() * (vh / 100)); }
+function vhToPx(vh) { return Math.round(window.innerHeight * (vh / 100)); }
 function clamp(n, min, max) { return Math.max(min, Math.min(max, n)); }
 // Compute dynamic maximum height for the bottom sheet
 function getPanelMaxPx() {
@@ -1968,8 +1960,6 @@ function setupPanelDrag() {
         const offset = Math.max(0, maxPx - vis); // how far to push the panel down
         arrivalsPanel.style.transform = `translateY(${offset}px)`;
         arrivalsPanel.style.height = `${maxPx}px`; // keep the panel sized to its max
-        // Expose max height to CSS for sizing skyline without vh
-        arrivalsPanel.style.setProperty('--panel-max-px', `${maxPx}px`);
         arrivalsPanel.dataset.visibleH = String(vis);
         updateSheetProgress(vis, minPx, maxPx);
     };
