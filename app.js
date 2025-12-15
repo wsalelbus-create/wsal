@@ -13,11 +13,9 @@ function shouldShowCone() {
 function installViewportPolyfill() {
     const apply = () => {
         try {
-            const vals = [];
-            try { const v = document.documentElement && document.documentElement.clientHeight; if (v) vals.push(v); } catch {}
-            try { const v = window.innerHeight; if (v) vals.push(v); } catch {}
-            try { const v = window.visualViewport && window.visualViewport.height; if (v) vals.push(v); } catch {}
-            const h = (vals.length > 0) ? Math.min.apply(null, vals) : window.innerHeight;
+            const h = (window.visualViewport && typeof window.visualViewport.height === 'number')
+                ? window.visualViewport.height
+                : window.innerHeight;
             const vh = h * 0.01;
             document.documentElement.style.setProperty('--vh', `${vh}px`);
         } catch {}
@@ -1897,20 +1895,12 @@ let pendingDrag = false;   // waiting to see if movement exceeds threshold
 let startTarget = null;
 
 function vhToPx(vh) {
-    const vals = [];
-    try { const v = document.documentElement && document.documentElement.clientHeight; if (v) vals.push(v); } catch {}
-    try { const v = window.innerHeight; if (v) vals.push(v); } catch {}
-    try { const v = window.visualViewport && window.visualViewport.height; if (v) vals.push(v); } catch {}
-    const h = (vals.length > 0) ? Math.min.apply(null, vals) : window.innerHeight;
+    const h = (window.visualViewport && typeof window.visualViewport.height === 'number')
+        ? window.visualViewport.height
+        : window.innerHeight;
     return Math.round(h * (vh / 100));
 }
 function clamp(n, min, max) { return Math.max(min, Math.min(max, n)); }
-function isStandalone() {
-    try {
-        return (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) ||
-               (typeof window.navigator !== 'undefined' && (window.navigator.standalone === true));
-    } catch { return false; }
-}
 // Compute dynamic maximum height for the bottom sheet
 function getPanelMaxPx() {
     try {
@@ -1953,88 +1943,9 @@ function getPanelMaxPx() {
             const desired = Math.ceil(Math.max(minPx, contentH + skylineH));
             return desired;
         }
-        // Other modes: compute from in-flow content + skyline, but cap to 85vh (slightly less in standalone)
-        {
-            const minPx = vhToPx(PANEL_MIN_VH);
-            const panelRect = panel.getBoundingClientRect();
-            let inFlowBottom = panelRect.top;
-            const listEl = panel.querySelector('.routes-list');
-            if (listEl) {
-                try { inFlowBottom = Math.max(inFlowBottom, listEl.getBoundingClientRect().bottom); } catch {}
-            } else {
-                const children = Array.from(panel.children || []);
-                for (const el of children) {
-                    try {
-                        if (!el || el.id === 'skyline-inline') continue;
-                        const cs = window.getComputedStyle(el);
-                        if (cs.position === 'absolute') continue;
-                        const r = el.getBoundingClientRect();
-                        if (r.bottom > inFlowBottom) inFlowBottom = r.bottom;
-                    } catch {}
-                }
-            }
-            let skylineH = 0;
-            try {
-                const sky = panel.querySelector('#skyline-inline');
-                if (sky) {
-                    const csSky = window.getComputedStyle(sky);
-                    skylineH = parseFloat(csSky.height) || sky.getBoundingClientRect().height || 0;
-                }
-            } catch {}
-            const contentH = Math.max(0, inFlowBottom - panelRect.top);
-            const capVh = isStandalone() ? (PANEL_MAX_VH - 3) : PANEL_MAX_VH;
-            const cap = vhToPx(capVh);
-            const desired = Math.ceil(Math.max(minPx, Math.min(cap, contentH + skylineH)));
-            return desired;
-        }
     } catch {}
     // Default cap
-    const capVh = isStandalone() ? (PANEL_MAX_VH - 3) : PANEL_MAX_VH;
-    return vhToPx(capVh);
-}
-
-// Keep skyline height consistent across Safari vs PWA by deriving it from panel width (not viewport height)
-function updateSkylineMaxHeight() {
-    try {
-        const panel = arrivalsPanel || document.querySelector('.arrivals-panel');
-        if (!panel) return;
-        const rect = panel.getBoundingClientRect();
-        const panelW = Math.max(1, rect.width);
-        // Ratio tuned to match Safari; use a slightly smaller silhouette in iOS PWA to eliminate oversize
-        const ratio = (typeof isStandalone === 'function' && isStandalone()) ? 0.60 : 0.66;
-        const minH = 200; // px
-        const maxH = 320; // px
-        const target = Math.max(minH, Math.min(maxH, Math.round(panelW * ratio)));
-        panel.style.setProperty('--skyline-max-height', `${target}px`);
-        const sky = panel.querySelector('#skyline-inline');
-        if (sky && sky.style) sky.style.height = `${target}px`;
-    } catch {}
-}
-
-// Keep skyline offsets in sync with actual panel paddings (including safe areas)
-function syncPanelPaddingVars() {
-    try {
-        const panel = arrivalsPanel || document.querySelector('.arrivals-panel');
-        if (!panel) return;
-        const cs = window.getComputedStyle(panel);
-        const padLeft = parseFloat(cs.paddingLeft) || 0;
-        const padBottom = parseFloat(cs.paddingBottom) || 0;
-        panel.style.setProperty('--panel-side-pad', `${Math.round(padLeft)}px`);
-        panel.style.setProperty('--panel-bottom-cancel', `${Math.round(padBottom)}px`);
-    } catch {}
-}
-
-// Tag document in PWA standalone and set a small skyline bottom nudge to align spacing
-function applyStandaloneTagAndNudge() {
-    try {
-        const root = document.documentElement;
-        const standalone = isStandalone();
-        if (standalone) root.classList.add('pwa-standalone'); else root.classList.remove('pwa-standalone');
-        const panel = arrivalsPanel || document.querySelector('.arrivals-panel');
-        if (panel && panel.style) {
-            panel.style.setProperty('--skyline-bottom-nudge', standalone ? '2px' : '0px');
-        }
-    } catch {}
+    return vhToPx(PANEL_MAX_VH);
 }
 
 function setupPanelDrag() {
@@ -2262,10 +2173,6 @@ function setupPanelDrag() {
     arrivalsPanel.classList.remove('expanded');
     arrivalsPanel.style.willChange = 'transform';
     setPanelVisibleHeight(minPx);
-    // Sync skyline metrics for consistent layout
-    syncPanelPaddingVars();
-    updateSkylineMaxHeight();
-    updateSkylineMaxHeight();
 
     // Also, after creating grabber, move floating controls into the panel
     try {
@@ -2296,21 +2203,6 @@ function installBounceGuard() {
 installViewportPolyfill();
 setupPanelDrag();
 installBounceGuard();
-applyStandaloneTagAndNudge();
-// Recompute skyline metrics on viewport changes (handles PWA vs Safari toolbars/safe areas)
-try {
-    window.addEventListener('resize', () => { applyStandaloneTagAndNudge(); syncPanelPaddingVars(); updateSkylineMaxHeight(); });
-    window.addEventListener('orientationchange', () => { applyStandaloneTagAndNudge(); syncPanelPaddingVars(); updateSkylineMaxHeight(); });
-    if (window.visualViewport) window.visualViewport.addEventListener('resize', () => { applyStandaloneTagAndNudge(); syncPanelPaddingVars(); updateSkylineMaxHeight(); });
-} catch {}
-// Recalculate skyline height whenever viewport dimensions may change
-try {
-    window.addEventListener('resize', updateSkylineMaxHeight);
-    window.addEventListener('orientationchange', updateSkylineMaxHeight);
-    if (window.visualViewport) window.visualViewport.addEventListener('resize', updateSkylineMaxHeight);
-} catch {}
-// Initial computation
-updateSkylineMaxHeight();
 
 // Init
 initMap(); // Initialize map immediately (background)

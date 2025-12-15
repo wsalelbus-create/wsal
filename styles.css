@@ -427,8 +427,6 @@ html, body {
     bottom: 0;
     height: calc(var(--vh, 1vh) * 85);                   /* constant sheet height; JS translates to show 40vh collapsed */
     max-height: none;
-    /* Default skyline height (JS can override this custom property on the panel) */
-    --skyline-max-height: clamp(200px, calc(var(--vh, 1vh) * 30), 320px);
     background: white;
     border-radius: 24px 24px 0 0;
     box-shadow: none;               /* remove hairline */
@@ -1046,11 +1044,12 @@ html, body {
 /* Skyline: pinned to the panel bottom, always flush to blue edge */
 .arrivals-panel .skyline-inline {
   position: absolute; /* take out of flow so content above doesn't move it */
-  /* Cancel panel paddings via CSS variables that JS keeps in sync; allow a small upward nudge if needed */
-  bottom: calc(0px - var(--panel-bottom-cancel, calc(6px + env(safe-area-inset-bottom))) + var(--skyline-bottom-nudge, 0px));
-  left: calc(0px - var(--panel-side-pad, 16px) - var(--bleed-correction));
-  right: calc(0px - var(--panel-side-pad, 16px) - var(--bleed-correction));
+  bottom: calc(-6px - env(safe-area-inset-bottom)); /* cancel panel bottom padding so it touches the edge */
+  left: calc(-16px - var(--bleed-correction));  /* cancel panel side padding + tiny overscan */
+  right: calc(-16px - var(--bleed-correction)); /* cancel panel side padding + tiny overscan */
   --bleed-correction: 1px; /* tiny overscan to hide hairline gaps at edges */
+  /* Use custom vh unit to normalize Safari/PWA viewport differences */
+  --skyline-max-height: clamp(200px, calc(var(--vh, 1vh) * 30), 320px);
   height: var(--skyline-max-height);
   opacity: 1;
   margin: 0;                 /* no extra gap below city */
@@ -1061,14 +1060,11 @@ html, body {
 /* On devices with safe-area insets (iOS), extend skyline to true edges */
 @supports (padding: env(safe-area-inset-left)) {
   .arrivals-panel .skyline-inline {
-    left: calc(0px - var(--panel-side-pad, calc(16px + env(safe-area-inset-left))) - var(--bleed-correction));
-    right: calc(0px - var(--panel-side-pad, calc(16px + env(safe-area-inset-right))) - var(--bleed-correction));
-    bottom: calc(0px - var(--panel-bottom-cancel, calc(6px + env(safe-area-inset-bottom))) + var(--skyline-bottom-nudge, 0px));
+    left: calc(-16px - env(safe-area-inset-left) - var(--bleed-correction));
+    right: calc(-16px - env(safe-area-inset-right) - var(--bleed-correction));
+    bottom: calc(-6px - env(safe-area-inset-bottom));
   }
 }
-
-/* PWA standalone: slightly reduce bottom padding under cards to match Safari visual spacing */
-.pwa-standalone .routes-list { padding-bottom: 12px; }
 
 /* Ensure SVG scales to container height */
 .arrivals-panel .skyline-inline svg { width: 100%; height: 100%; display: block; }
