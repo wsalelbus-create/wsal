@@ -15,9 +15,9 @@
     min-height: 100vh !important;
     height: auto !important;
   }
-  /* Make skyline height match Safari by slightly reducing vh in PWA */
+  /* PWA-only: make skyline height match Safari visual size */
   .arrivals-panel {
-    --skyline-max-height: clamp(200px, 26vh, 320px);
+    --skyline-max-height: clamp(200px, 27vh, 320px);
   }
 }
 
