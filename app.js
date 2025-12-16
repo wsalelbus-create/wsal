@@ -18,17 +18,10 @@ function applyPWASkylineAnchoring() {
         const panel = arrivalsPanel || document.querySelector('.arrivals-panel');
         const sky = panel ? panel.querySelector('#skyline-inline') : null;
         if (!panel || !sky) return;
-        if (isStandalonePWA()) {
-            // Sit above home indicator (inside panel padding) and avoid side cropping
-            sky.style.bottom = '0px';
-            sky.style.left = '0px';
-            sky.style.right = '0px';
-        } else {
-            // Use CSS defaults (computed from panel padding and standard overscan)
-            sky.style.bottom = '';
-            sky.style.left = '';
-            sky.style.right = '';
-        }
+        // Defer anchoring to CSS for both Safari and PWA so values are identical
+        sky.style.bottom = '';
+        sky.style.left = '';
+        sky.style.right = '';
     } catch {}
 }
 
@@ -37,11 +30,14 @@ function applySkylineSizing() {
     try {
         const panel = arrivalsPanel || document.querySelector('.arrivals-panel');
         if (!panel) return;
-        // Use viewport polyfill for identical Safari/PWA proportions
+        // Combine viewport- and width-based sizing; pick the smaller to avoid extra cropping.
         const root = getComputedStyle(document.documentElement);
         const vhPx = parseFloat(root.getPropertyValue('--vh')) || ((window.visualViewport?.height || window.innerHeight || 800) / 100);
-        const target = vhPx * 40; // 40vh across both Safari and PWA (larger)
-        const h = Math.round(Math.max(240, Math.min(420, target)));
+        const hVh = vhPx * 30; // 30vh baseline
+        const w = Math.max(320, Math.min(800, panel.clientWidth || document.documentElement.clientWidth || window.innerWidth || 390));
+        const hW = w * 0.62;   // width-proportional cap
+        const target = Math.min(hVh, hW);
+        const h = Math.round(Math.max(220, Math.min(380, target)));
         panel.style.setProperty('--skyline-max-height', `${h}px`);
     } catch {}
 }

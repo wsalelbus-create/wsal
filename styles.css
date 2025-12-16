@@ -1063,8 +1063,8 @@ html, body {
 /* On devices with safe-area insets (iOS), extend skyline to true edges */
 @supports (padding: env(safe-area-inset-left)) {
   .arrivals-panel .skyline-inline {
-    left: calc(-16px - env(safe-area-inset-left) - var(--bleed-correction));
-    right: calc(-16px - env(safe-area-inset-right) - var(--bleed-correction));
+    left: calc(-16px - var(--bleed-correction));
+    right: calc(-16px - var(--bleed-correction));
     bottom: calc(-1 * var(--panel-pad-bottom));
   }
 }
