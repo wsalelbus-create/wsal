@@ -1,4 +1,4 @@
-const CACHE_NAME = 'wsal-el-bus-v6';
+const CACHE_NAME = 'wsal-el-bus-v7';
 const urlsToCache = [
     './',
     './index.html',

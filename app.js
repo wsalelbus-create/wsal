@@ -37,10 +37,11 @@ function applySkylineSizing() {
     try {
         const panel = arrivalsPanel || document.querySelector('.arrivals-panel');
         if (!panel) return;
-        // Width-based sizing yields identical proportions across Safari and PWA
-        const w = Math.max(320, Math.min(600, panel.clientWidth || document.documentElement.clientWidth || window.innerWidth || 390));
-        const ratio = 0.52; // tuned to match Safari screenshot
-        const h = Math.round(Math.max(200, Math.min(320, w * ratio)));
+        // Use viewport polyfill for identical Safari/PWA proportions
+        const root = getComputedStyle(document.documentElement);
+        const vhPx = parseFloat(root.getPropertyValue('--vh')) || ((window.visualViewport?.height || window.innerHeight || 800) / 100);
+        const target = vhPx * 40; // 40vh across both Safari and PWA (larger)
+        const h = Math.round(Math.max(240, Math.min(420, target)));
         panel.style.setProperty('--skyline-max-height', `${h}px`);
     } catch {}
 }
