@@ -17,7 +17,7 @@
   }
   /* PWA-only: make skyline height match Safari visual size */
   .arrivals-panel {
-    --skyline-max-height: clamp(200px, 30vh, 320px);
+    --skyline-max-height: clamp(200px, 35vh, 420px);
   }
 }
 
