@@ -357,8 +357,8 @@ html, body {
 .selector-row {
     display: flex;
     align-items: center;
-    gap: 14px;
-    padding: 16px 18px; /* taller padding like Citymapper */
+    gap: 12px;
+    padding: 12px 16px; /* shorter padding */
     cursor: pointer;
     transition: background 0.2s;
 }
@@ -368,13 +368,18 @@ html, body {
 }
 
 .selector-icon-circle {
-    width: 48px;
-    height: 48px;
+    width: 40px; /* smaller circle */
+    height: 40px;
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
     flex-shrink: 0;
+}
+
+.selector-icon-circle svg {
+    width: 20px; /* smaller icon */
+    height: 20px;
 }
 
 .home-icon {
@@ -425,7 +430,7 @@ html, body {
     /* Skyline size made global so children (routes-list) can reserve space */
     --skyline-max-height: 180px; /* fixed smaller height - identical in Safari and PWA */
     padding: 16px;
-    padding-top: 40px;              /* space under station selector area */
+    padding-top: 80px;              /* more space for floating selector + quick actions */
     --panel-pad-bottom: calc(6px + env(safe-area-inset-bottom));
     padding-bottom: var(--panel-pad-bottom); /* safe area */
     display: flex;
