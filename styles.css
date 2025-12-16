@@ -1063,11 +1063,11 @@ html, body {
 
 /* Ensure SVG scales to container height */
 .arrivals-panel .skyline-inline svg { 
-  width: 100%; 
+  width: 120%; /* make wider to show more content */
   height: 100%; 
   display: block;
-  object-fit: cover; /* ensure consistent scaling */
-  object-position: 35% bottom; /* shift left to show mosque minaret */
+  transform: translateX(-10%); /* shift left to reveal mosque minaret */
+  transform-origin: center bottom;
 }
 
 /* Force one uniform color across all skyline layers */
