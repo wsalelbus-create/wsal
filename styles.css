@@ -347,7 +347,7 @@ html, body {
     background: white;
     border-radius: 16px;
     padding: 0; /* no padding, rows handle their own */
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12); /* strong shadow like Citymapper */
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.18); /* stronger shadow like Citymapper - more visible on map side */
     display: flex;
     flex-direction: column;
     pointer-events: auto; /* re-enable clicks on the card itself */
@@ -424,7 +424,7 @@ html, body {
     height: 85vh;                   /* constant sheet height; JS translates to show 40vh collapsed */
     max-height: none;
     background: white;
-    border-radius: 24px 24px 0 0;
+    border-radius: 16px 16px 0 0;   /* match selector bar radius */
     box-shadow: none;               /* remove hairline */
     z-index: 1000;                  /* above map/controls; under header/back badge */
     /* Skyline size made global so children (routes-list) can reserve space */
@@ -497,7 +497,7 @@ html, body {
     display: flex;
     justify-content: flex-start; /* left align */
     align-items: center;
-    margin-top: 20px;               /* more space from quick actions */
+    margin-top: 24px;               /* more space from quick actions like Citymapper */
     margin-bottom: 12px;            /* space above first card */
     padding: 0 16px;                /* align with cards content */
 }
@@ -1003,7 +1003,7 @@ html, body {
     gap: 6px;                       /* slightly smaller gap between tiles */
     justify-content: center;
     align-items: center;
-    margin: 20px 0 16px 0;          /* proper spacing: 20px below selector, 16px above next element */
+    margin: 32px 0 20px 0;          /* more spacing like Citymapper: 32px below selector, 20px above next element */
     box-shadow: none;               /* flat */
 }
 
