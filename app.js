@@ -10,13 +10,11 @@ function applySkylineSizing() {
     try {
         const panel = arrivalsPanel || document.querySelector('.arrivals-panel');
         if (!panel) return;
-        const sky = panel.querySelector('#skyline-inline');
-        if (!sky) return;
-        // Use width-based ratio consistently across Safari and PWA for identical proportions
-        const w = Math.max(320, Math.min(600, (panel.clientWidth || document.documentElement?.clientWidth || window.innerWidth || 390)));
-        const ratio = 0.60; // tuned to match Safari proportions; consistent in PWA shortcut
-        const targetPx = Math.round(Math.max(200, Math.min(320, w * ratio)));
-        sky.style.setProperty('--skyline-max-height', `${targetPx}px`);
+        // Width-based sizing yields identical proportions across Safari and PWA
+        const w = Math.max(320, Math.min(600, panel.clientWidth || document.documentElement.clientWidth || window.innerWidth || 390));
+        const ratio = 0.52; // tuned to match Safari screenshot
+        const h = Math.round(Math.max(200, Math.min(320, w * ratio)));
+        panel.style.setProperty('--skyline-max-height', `${h}px`);
     } catch {}
 }
 
@@ -2027,6 +2025,8 @@ function setupPanelDrag() {
         arrivalsPanel.style.setProperty('--panel-max', `${maxPx}px`);
         arrivalsPanel.dataset.visibleH = String(vis);
         updateSheetProgress(vis, minPx, maxPx);
+        // Keep skyline height consistent across Safari and PWA
+        try { applySkylineSizing(); } catch {}
     };
     const getPanelVisibleHeight = () => {
         const v = parseFloat(arrivalsPanel?.dataset?.visibleH || '');
