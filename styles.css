@@ -1053,8 +1053,6 @@ html, body {
   left: calc(-16px - var(--bleed-correction));  /* cancel panel side padding + tiny overscan */
   right: calc(-16px - var(--bleed-correction)); /* cancel panel side padding + tiny overscan */
   --bleed-correction: 1px; /* tiny overscan to hide hairline gaps at edges */
-  /* Use plain vh to match Safari-good baseline */
-  --skyline-max-height: clamp(200px, 30vh, 320px);
   height: var(--skyline-max-height);
   opacity: 1;
   margin: 0;                 /* no extra gap below city */
