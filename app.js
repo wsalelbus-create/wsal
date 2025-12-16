@@ -5,6 +5,33 @@ function shouldShowCone() {
         return orientationPermissionGranted && hasHeadingFix;
     }
 
+function isStandalonePWA() {
+    try {
+        return (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) || !!window.navigator.standalone;
+    } catch { return false; }
+}
+
+// Keep skyline anchored identically in Safari and PWA. In PWA we avoid subtracting
+// extra safe-area from the bottom and we remove large side overscan that can look cut.
+function applyPWASkylineAnchoring() {
+    try {
+        const panel = arrivalsPanel || document.querySelector('.arrivals-panel');
+        const sky = panel ? panel.querySelector('#skyline-inline') : null;
+        if (!panel || !sky) return;
+        if (isStandalonePWA()) {
+            // Sit above home indicator (inside panel padding) and avoid side cropping
+            sky.style.bottom = '0px';
+            sky.style.left = '0px';
+            sky.style.right = '0px';
+        } else {
+            // Use CSS defaults (computed from panel padding and standard overscan)
+            sky.style.bottom = '';
+            sky.style.left = '';
+            sky.style.right = '';
+        }
+    } catch {}
+}
+
 // Make skyline height consistent across Safari and iOS PWA
 function applySkylineSizing() {
     try {
@@ -2026,7 +2053,7 @@ function setupPanelDrag() {
         arrivalsPanel.dataset.visibleH = String(vis);
         updateSheetProgress(vis, minPx, maxPx);
         // Keep skyline height consistent across Safari and PWA
-        try { applySkylineSizing(); } catch {}
+        try { applySkylineSizing(); applyPWASkylineAnchoring(); } catch {}
     };
     const getPanelVisibleHeight = () => {
         const v = parseFloat(arrivalsPanel?.dataset?.visibleH || '');
@@ -2264,6 +2291,12 @@ function installBounceGuard() {
 installViewportPolyfill();
 setupPanelDrag();
 installBounceGuard();
+// Keep skyline sizing/anchoring updated on viewport changes (Safari + PWA)
+window.addEventListener('resize', () => { try { applySkylineSizing(); applyPWASkylineAnchoring(); } catch {} });
+window.addEventListener('orientationchange', () => { try { applySkylineSizing(); applyPWASkylineAnchoring(); } catch {} });
+try { if (window.visualViewport) window.visualViewport.addEventListener('resize', () => { try { applySkylineSizing(); applyPWASkylineAnchoring(); } catch {} }); } catch {}
+// Apply once after DOM ready as a safeguard
+document.addEventListener('DOMContentLoaded', () => { try { applySkylineSizing(); applyPWASkylineAnchoring(); } catch {} });
 
 // Init
 initMap(); // Initialize map immediately (background)

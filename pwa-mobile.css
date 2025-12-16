@@ -15,6 +15,14 @@
     min-height: 100vh !important;
     height: auto !important;
   }
+  /* PWA: keep skyline fully visible (no bottom/side cropping) */
+  .arrivals-panel .skyline-inline {
+    /* Sit inside the panel's bottom padding so it's above the home indicator */
+    bottom: 0 !important;
+    /* Use smaller symmetric overscan to avoid side clipping from border radius */
+    left: calc(-8px - env(safe-area-inset-left)) !important;
+    right: calc(-8px - env(safe-area-inset-right)) !important;
+  }
 }
 
 /* Desktop: center the app */
