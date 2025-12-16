@@ -72,7 +72,7 @@ html, body {
    1. TOP MAP SECTION (60%)
    ========================================= */
 .map-view-container {
-    height: calc(var(--vh, 1vh) * 60); /* use custom vh for consistency */
+    height: 60vh;
     /* Fixed height that animates */
     position: relative;
     width: 100%;
@@ -90,7 +90,7 @@ html, body {
 
 /* Expanded map state - 80% */
 .map-view-container.expanded {
-    height: calc(var(--vh, 1vh) * 80); /* use custom vh for consistency */
+    height: 80vh;
     /* Expands to 80% */
 }
 
@@ -425,7 +425,7 @@ html, body {
     left: 0;
     right: 0;
     bottom: 0;
-    height: calc(var(--vh, 1vh) * 85); /* use custom vh for consistency */
+    height: 85vh;                   /* constant sheet height; JS translates to show 40vh collapsed */
     max-height: none;
     background: white;
     border-radius: 16px 16px 0 0;   /* match selector bar radius */
@@ -448,7 +448,7 @@ html, body {
 }
 
 /* Expanded sheet height (drag up) */
-.arrivals-panel.expanded { height: calc(var(--vh, 1vh) * 85); /* use custom vh for consistency */ }
+.arrivals-panel.expanded { height: 85vh; /* explicit, same as base */ }
 
 /* Visible sheet grabber for better affordance and touch target */
 .sheet-grabber {
@@ -545,7 +545,7 @@ html, body {
     flex-direction: column;
     gap: 16px; /* slightly more space between cards */
     /* Reserve space so cards never overlap skyline backdrop */
-    padding-bottom: calc(20px + 180px); /* fixed padding for smaller skyline */
+    padding-bottom: 185px; /* tight spacing - identical in Safari and PWA */
     flex: 1 1 auto;                 /* take remaining space in panel */
     min-height: 0;                  /* allow flex child to shrink for scroll */
     overflow-y: auto;               /* default, will be disabled when not expanded */
@@ -566,7 +566,7 @@ html, body {
     -webkit-overflow-scrolling: auto;
     touch-action: none;          /* gestures reserved for sheet drag */
     /* Reserve skyline height so the last card never overlaps backdrop */
-    padding-bottom: 180px; /* fixed padding for smaller skyline */
+    padding-bottom: 185px; /* tight spacing - identical in Safari and PWA */
 }
 
 /* Hide scrollbars for bottom-sheet feel */
