@@ -343,18 +343,6 @@ html, body {
     pointer-events: none; /* allow clicks through container */
 }
 
-/* When the station selector is moved inside the bottom sheet, remove outside-overlap margins */
-.arrivals-panel .floating-controls {
-    position: relative; /* back to relative when inside panel */
-    bottom: auto;
-    left: auto;
-    right: auto;
-    margin-top: 0;
-    margin-bottom: 12px; /* more space like Citymapper */
-    padding: 0 16px;
-    z-index: 2; /* above skyline */
-}
-
 .station-selector-card {
     background: white;
     border-radius: 16px; /* match station cards */

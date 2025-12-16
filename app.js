@@ -1786,20 +1786,7 @@ function setUIMode(mode) {
             const oldOverlay = panelEl.querySelector('.detail-bus-overlay-panel');
             if (oldOverlay) oldOverlay.remove();
         }
-        // Ensure floating station controls live inside the panel so they move with the sheet
-        try {
-            const fc = document.getElementById('floating-controls');
-            const grab = panelEl.querySelector('.sheet-grabber');
-            if (fc) {
-                if (grab) {
-                    if (fc.previousElementSibling !== grab) {
-                        panelEl.insertBefore(fc, grab.nextSibling);
-                    }
-                } else if (fc.parentElement !== panelEl) {
-                    panelEl.insertBefore(fc, panelEl.firstChild);
-                }
-            }
-        } catch {}
+        // Floating controls now stay fixed above panel (Citymapper style)
     }
 
     // Choose nearest station when switching modes if we have a location
@@ -2253,13 +2240,7 @@ function setupPanelDrag() {
     arrivalsPanel.style.willChange = 'transform';
     setPanelVisibleHeight(minPx);
 
-    // Also, after creating grabber, move floating controls into the panel
-    try {
-        const fc = document.getElementById('floating-controls');
-        if (fc && fc.parentElement !== arrivalsPanel) {
-            arrivalsPanel.insertBefore(fc, grabber.nextSibling);
-        }
-    } catch {}
+    // Floating controls stay fixed above panel (Citymapper style) - no longer moved inside
 }
 
 // Prevent global rubber-band: allow scroll on known internal scroll areas (map, lists, modal)
