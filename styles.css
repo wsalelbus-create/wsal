@@ -341,13 +341,14 @@ html, body {
     right: 16px;
     z-index: 1001; /* above arrivals panel (1000) */
     pointer-events: none; /* allow clicks through container */
+    margin-bottom: 32px; /* global spacing below bar for all screens */
 }
 
 .station-selector-card {
     background: white;
     border-radius: 16px;
     padding: 0; /* no padding, rows handle their own */
-    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.18); /* stronger shadow like Citymapper - more visible on map side */
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.22); /* even stronger shadow - very visible on map */
     display: flex;
     flex-direction: column;
     pointer-events: auto; /* re-enable clicks on the card itself */
@@ -497,7 +498,7 @@ html, body {
     display: flex;
     justify-content: flex-start; /* left align */
     align-items: center;
-    margin-top: 24px;               /* more space from quick actions like Citymapper */
+    margin-top: 0;                  /* no extra margin - floating-controls handles spacing */
     margin-bottom: 12px;            /* space above first card */
     padding: 0 16px;                /* align with cards content */
 }
@@ -1003,7 +1004,7 @@ html, body {
     gap: 6px;                       /* slightly smaller gap between tiles */
     justify-content: center;
     align-items: center;
-    margin: 32px 0 20px 0;          /* more spacing like Citymapper: 32px below selector, 20px above next element */
+    margin: 0 0 20px 0;             /* no top margin - floating-controls handles spacing globally */
     box-shadow: none;               /* flat */
 }
 
