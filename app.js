@@ -30,14 +30,8 @@ function applySkylineSizing() {
     try {
         const panel = arrivalsPanel || document.querySelector('.arrivals-panel');
         if (!panel) return;
-        // Combine viewport- and width-based sizing; pick the smaller to avoid extra cropping.
-        const root = getComputedStyle(document.documentElement);
-        const vhPx = parseFloat(root.getPropertyValue('--vh')) || ((window.visualViewport?.height || window.innerHeight || 800) / 100);
-        const hVh = vhPx * 30; // 30vh baseline
-        const w = Math.max(320, Math.min(800, panel.clientWidth || document.documentElement.clientWidth || window.innerWidth || 390));
-        const hW = w * 0.62;   // width-proportional cap
-        const target = Math.min(hVh, hW);
-        const h = Math.round(Math.max(220, Math.min(380, target)));
+        // Fixed height for consistency - no dynamic calculations
+        const h = 180; // smaller, fixed height identical in Safari and PWA
         panel.style.setProperty('--skyline-max-height', `${h}px`);
     } catch {}
 }

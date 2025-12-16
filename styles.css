@@ -432,7 +432,7 @@ html, body {
     box-shadow: none;               /* remove hairline */
     z-index: 1000;                  /* above map/controls; under header/back badge */
     /* Skyline size made global so children (routes-list) can reserve space */
-    --skyline-max-height: clamp(220px, 38vh, 380px);
+    --skyline-max-height: 180px; /* fixed smaller height - identical in Safari and PWA */
     padding: 16px;
     padding-top: 40px;              /* space under station selector area */
     --panel-pad-bottom: calc(6px + env(safe-area-inset-bottom));
@@ -545,7 +545,7 @@ html, body {
     flex-direction: column;
     gap: 16px; /* slightly more space between cards */
     /* Reserve space so cards never overlap skyline backdrop */
-    padding-bottom: calc(20px + var(--skyline-max-height));
+    padding-bottom: calc(20px + 180px); /* fixed padding for smaller skyline */
     flex: 1 1 auto;                 /* take remaining space in panel */
     min-height: 0;                  /* allow flex child to shrink for scroll */
     overflow-y: auto;               /* default, will be disabled when not expanded */
@@ -566,7 +566,7 @@ html, body {
     -webkit-overflow-scrolling: auto;
     touch-action: none;          /* gestures reserved for sheet drag */
     /* Reserve skyline height so the last card never overlaps backdrop */
-    padding-bottom: var(--skyline-max-height);
+    padding-bottom: 180px; /* fixed padding for smaller skyline */
 }
 
 /* Hide scrollbars for bottom-sheet feel */
@@ -1049,28 +1049,26 @@ html, body {
 /* Skyline: pinned to the panel bottom, always flush to blue edge */
 .arrivals-panel .skyline-inline {
   position: absolute; /* take out of flow so content above doesn't move it */
-  bottom: calc(-1 * var(--panel-pad-bottom)); /* cancel panel bottom padding so it touches the edge */
-  left: calc(-16px - var(--bleed-correction));  /* cancel panel side padding + tiny overscan */
-  right: calc(-16px - var(--bleed-correction)); /* cancel panel side padding + tiny overscan */
-  --bleed-correction: 1px; /* tiny overscan to hide hairline gaps at edges */
-  height: var(--skyline-max-height);
+  bottom: 0; /* sit flush at panel bottom - no safe area offset */
+  left: -16px;  /* cancel panel side padding */
+  right: -16px; /* cancel panel side padding */
+  height: 180px; /* fixed smaller height - identical in Safari and PWA */
+  max-height: 180px;
   opacity: 1;
-  margin: 0;                 /* no extra gap below city */
+  margin: 0;
   pointer-events: none;
-  z-index: 0;                /* behind all content */
-}
-
-/* On devices with safe-area insets (iOS), extend skyline to true edges */
-@supports (padding: env(safe-area-inset-left)) {
-  .arrivals-panel .skyline-inline {
-    left: calc(-16px - var(--bleed-correction));
-    right: calc(-16px - var(--bleed-correction));
-    bottom: calc(-1 * var(--panel-pad-bottom));
-  }
+  z-index: 0; /* behind all content */
+  overflow: hidden; /* clip any overflow */
 }
 
 /* Ensure SVG scales to container height */
-.arrivals-panel .skyline-inline svg { width: 100%; height: 100%; display: block; }
+.arrivals-panel .skyline-inline svg { 
+  width: 100%; 
+  height: 100%; 
+  display: block;
+  object-fit: cover; /* ensure consistent scaling */
+  object-position: center bottom; /* anchor to bottom */
+}
 
 /* Force one uniform color across all skyline layers */
 .arrivals-panel .skyline-inline svg * {
