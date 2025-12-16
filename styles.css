@@ -431,7 +431,7 @@ html, body {
     display: flex;
     flex-direction: column;         /* internal layout */
     align-items: stretch;
-    overflow: hidden;               /* hide overflow when collapsed */
+    overflow: visible;              /* allow floating controls to show above panel */
     touch-action: none;             /* gestures handled by JS for sheet drag */
     transform: translateY(0);       /* base: whole sheet moves, not just top */
     transition: transform 0.25s ease;  /* smooth translate change */
