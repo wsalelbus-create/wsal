@@ -335,18 +335,20 @@ html, body {
    2. FLOATING CONTROLS (Between Map & Arrivals)
    ========================================= */
 .floating-controls {
-    position: relative;
-    /* In document flow, not overlapping */
-    width: 100%;
-    padding: 0 16px;
-    margin-top: -72px;   /* sit correctly between map and panel */
-    margin-bottom: -40px;/* slight overlap into panel */
-    /* Compensate for overlap into panel */
-    z-index: 200;
+    position: fixed; /* fixed positioning like Citymapper */
+    bottom: calc(40vh + 16px); /* sit above the collapsed panel with spacing */
+    left: 16px;
+    right: 16px;
+    z-index: 1001; /* above arrivals panel (1000) */
+    pointer-events: none; /* allow clicks through container */
 }
 
 /* When the station selector is moved inside the bottom sheet, remove outside-overlap margins */
 .arrivals-panel .floating-controls {
+    position: relative; /* back to relative when inside panel */
+    bottom: auto;
+    left: auto;
+    right: auto;
     margin-top: 0;
     margin-bottom: 12px; /* more space like Citymapper */
     padding: 0 16px;
@@ -355,15 +357,15 @@ html, body {
 
 .station-selector-card {
     background: white;
-    border: 1px solid #f0f0f0; /* subtle border like station cards */
     border-radius: 16px; /* match station cards */
     padding: 14px 16px; /* match station cards padding */
-    box-shadow: 0 2px 8px rgba(0,0,0,0.04); /* softer shadow like station cards */
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12); /* strong shadow like Citymapper */
     display: flex;
     align-items: center;
     justify-content: space-between;
     cursor: pointer;
     transition: transform 0.2s;
+    pointer-events: auto; /* re-enable clicks on the card itself */
 }
 
 .station-selector-card:active {
