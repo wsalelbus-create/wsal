@@ -335,31 +335,30 @@ html, body {
    2. FLOATING CONTROLS (Between Map & Arrivals)
    ========================================= */
 .floating-controls {
-    position: absolute; /* float on map like Citymapper */
-    bottom: 16px; /* position from bottom of map */
-    left: 16px;
-    right: 16px;
-    z-index: 200; /* above map, below header */
+    position: relative;
+    /* In document flow, not overlapping */
+    width: 100%;
+    padding: 0 16px;
+    margin-top: -72px;   /* sit correctly between map and panel */
+    margin-bottom: -40px;/* slight overlap into panel */
+    /* Compensate for overlap into panel */
+    z-index: 200;
 }
 
-/* When the station selector is moved inside the bottom sheet, remove absolute positioning */
+/* When the station selector is moved inside the bottom sheet, remove outside-overlap margins */
 .arrivals-panel .floating-controls {
-    position: relative;
-    bottom: auto;
-    left: auto;
-    right: auto;
     margin-top: 0;
-    margin-bottom: 8px;
+    margin-bottom: 12px; /* more space like Citymapper */
     padding: 0 16px;
     z-index: 2; /* above skyline */
 }
 
 .station-selector-card {
     background: white;
-    border: 1px solid #f0f0f0; /* match station cards */
+    border: 1px solid #f0f0f0; /* subtle border like station cards */
     border-radius: 16px; /* match station cards */
-    padding: 14px 16px; /* match station cards */
-    box-shadow: 0 2px 8px rgba(0,0,0,0.04); /* match station cards - subtle shadow */
+    padding: 14px 16px; /* match station cards padding */
+    box-shadow: 0 2px 8px rgba(0,0,0,0.04); /* softer shadow like station cards */
     display: flex;
     align-items: center;
     justify-content: space-between;
