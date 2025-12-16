@@ -336,7 +336,7 @@ html, body {
    ========================================= */
 .floating-controls {
     position: absolute; /* absolute to move with panel */
-    top: -72px; /* sit above the panel top edge */
+    top: -22px; /* 30% above panel edge, 70% inside - like Citymapper */
     left: 16px;
     right: 16px;
     z-index: 1001; /* above arrivals panel (1000) */
