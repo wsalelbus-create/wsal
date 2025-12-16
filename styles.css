@@ -1067,7 +1067,7 @@ html, body {
   height: 100%; 
   display: block;
   object-fit: cover; /* ensure consistent scaling */
-  object-position: 65% bottom; /* shift right to show mosque minaret */
+  object-position: 35% bottom; /* shift left to show mosque minaret */
 }
 
 /* Force one uniform color across all skyline layers */
