@@ -335,8 +335,8 @@ html, body {
    2. FLOATING CONTROLS (Between Map & Arrivals)
    ========================================= */
 .floating-controls {
-    position: fixed; /* fixed positioning like Citymapper */
-    bottom: calc(40vh + 16px); /* sit above the collapsed panel with spacing */
+    position: absolute; /* absolute to move with panel */
+    top: -72px; /* sit above the panel top edge */
     left: 16px;
     right: 16px;
     z-index: 1001; /* above arrivals panel (1000) */

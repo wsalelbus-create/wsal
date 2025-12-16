@@ -97,22 +97,21 @@
             </button>
         </div>
 
-        <!-- Floating Station Control (Middle Overlap) -->
-        <div id="floating-controls" class="floating-controls">
-            <div class="station-selector-card" id="station-selector-trigger">
-                <div class="station-info-left">
-                    <span class="station-icon">🚏</span>
-                    <div class="station-text-group">
-                        <h2 id="station-name">Loading...</h2>
-                        <div class="station-subtext">Tap to change station</div>
-                    </div>
-                </div>
-                <div class="station-select-icon">⋮</div>
-            </div>
-        </div>
-
         <!-- Arrivals Panel (Bottom 40%) -->
         <div id="arrivals-panel" class="arrivals-panel panel-green">
+            <!-- Floating Station Control (sits above panel, moves with it) -->
+            <div id="floating-controls" class="floating-controls">
+                <div class="station-selector-card" id="station-selector-trigger">
+                    <div class="station-info-left">
+                        <span class="station-icon">🚏</span>
+                        <div class="station-text-group">
+                            <h2 id="station-name">Loading...</h2>
+                            <div class="station-subtext">Tap to change station</div>
+                        </div>
+                    </div>
+                    <div class="station-select-icon">⋮</div>
+                </div>
+            </div>
             <!-- Algiers Skyline Backdrop (bottom-anchored) -->
             <div id="skyline-inline" class="skyline-inline" aria-hidden="true">
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="-100 0 1200 140" preserveAspectRatio="xMidYMax slice">
