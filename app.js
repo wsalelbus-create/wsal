@@ -44,9 +44,20 @@ function applySkylineSizing() {
 function installViewportPolyfill() {
     const apply = () => {
         try {
-            let h = (window.visualViewport && typeof window.visualViewport.height === 'number')
-                ? window.visualViewport.height
-                : 0;
+            // In PWA standalone mode, prioritize window.innerHeight for consistency
+            const isPWA = (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) || !!window.navigator.standalone;
+            let h = 0;
+            
+            if (isPWA) {
+                // PWA: use innerHeight directly for stable measurements
+                h = window.innerHeight || document.documentElement?.clientHeight || 800;
+            } else {
+                // Safari browser: prefer visualViewport for dynamic toolbar handling
+                h = (window.visualViewport && typeof window.visualViewport.height === 'number')
+                    ? window.visualViewport.height
+                    : (window.innerHeight || document.documentElement?.clientHeight || 800);
+            }
+            
             if (!h || h < 200) {
                 h = window.innerHeight || document.documentElement?.clientHeight || screen?.height || 800;
             }
@@ -2040,6 +2051,8 @@ function setupPanelDrag() {
         // Keep skyline height consistent across Safari and PWA
         try { applySkylineSizing(); applyPWASkylineAnchoring(); } catch {}
     };
+    // Expose globally for recalculation after viewport polyfill
+    window._setPanelVisibleHeight = setPanelVisibleHeight;
     const getPanelVisibleHeight = () => {
         const v = parseFloat(arrivalsPanel?.dataset?.visibleH || '');
         if (!Number.isNaN(v)) return v;
@@ -2270,6 +2283,24 @@ function installBounceGuard() {
 installViewportPolyfill();
 setupPanelDrag();
 installBounceGuard();
+// Force recalculation after a brief delay to ensure polyfill has applied in PWA
+setTimeout(() => {
+    try {
+        installViewportPolyfill();
+        const minPx = vhToPx(PANEL_MIN_VH);
+        const panel = document.querySelector('.arrivals-panel');
+        if (panel && window._setPanelVisibleHeight) {
+            // Re-initialize panel position with corrected vh values
+            const currentVis = parseFloat(panel.dataset.visibleH || '0');
+            if (Math.abs(currentVis - minPx) > 5) {
+                // Only update if significantly different
+                panel.style.transition = 'none';
+                window._setPanelVisibleHeight(minPx);
+                setTimeout(() => { panel.style.transition = ''; }, 50);
+            }
+        }
+    } catch {}
+}, 100);
 // Keep skyline sizing/anchoring updated on viewport changes (Safari + PWA)
 window.addEventListener('resize', () => { try { applySkylineSizing(); applyPWASkylineAnchoring(); } catch {} });
 window.addEventListener('orientationchange', () => { try { applySkylineSizing(); applyPWASkylineAnchoring(); } catch {} });
