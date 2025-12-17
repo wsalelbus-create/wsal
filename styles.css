@@ -72,8 +72,8 @@ html, body {
    1. TOP MAP SECTION (60%)
    ========================================= */
 .map-view-container {
-    height: calc(var(--vh, 1vh) * 62);
-    /* 62% - extends 2vh behind panel so corners show against grey map, not blue background */
+    height: calc(var(--vh, 1vh) * 100);
+    /* 100vh - full viewport height so map always fills screen regardless of parallax */
     position: relative;
     width: 100%;
     z-index: 1;
@@ -81,9 +81,6 @@ html, body {
     background: #e8e8e8; /* light grey to prevent blue flash */
     padding-bottom: 0;
     margin-bottom: 0;
-    /* Add padding-top to create extra map content above that can be revealed when dragging down */
-    padding-top: 15vh; /* extra map content above viewport */
-    margin-top: -15vh; /* pull container back up so visible area stays same */
     transition: height 0.3s ease;
     /* Smooth expansion */
     cursor: pointer;
@@ -107,12 +104,6 @@ html, body {
     /* Force GPU acceleration */
     will-change: transform;
     /* Hint browser for optimization */
-    /* Ensure map fills the extended container including padding-top */
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
 }
 
 /* Header Floating on Map */
