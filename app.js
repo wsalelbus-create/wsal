@@ -2163,13 +2163,21 @@ function setupPanelDrag() {
         const next = clamp(startVisible + delta * scale, minPx, maxPx);
         setPanelVisibleHeight(next);
         
-        // Citymapper-style parallax: map moves slightly with panel (elastic effect)
-        // When panel drags up, map moves up a bit; when panel drags down, map moves down
+        // Citymapper-style parallax: map scales/expands with panel drag (elastic effect)
+        // When panel drags up, map expands slightly; when panel drags down, map shrinks
         if (mapViewContainer) {
-            const parallaxFactor = 0.15; // 15% of panel movement (subtle elastic effect)
+            const parallaxFactor = 0.5; // 50% of panel movement (more noticeable)
             const panelDelta = next - startVisible; // how much panel moved from start
-            const mapOffset = panelDelta * parallaxFactor; // map moves 15% of that
-            mapViewContainer.style.transform = `translateY(${-mapOffset}px)`; // negative because up is negative Y
+            const panelRange = maxPx - minPx; // total possible movement
+            const progress = panelDelta / panelRange; // normalized progress [0..1]
+            
+            // Scale map height: when panel goes up, map expands (grows taller)
+            // This prevents blue background from showing
+            const scaleAmount = 1 + (progress * 0.08); // up to 8% taller when fully dragged up
+            const translateAmount = -panelDelta * parallaxFactor; // also translate for smooth feel
+            
+            mapViewContainer.style.transform = `translateY(${translateAmount}px) scaleY(${scaleAmount})`;
+            mapViewContainer.style.transformOrigin = 'center top'; // scale from top
             mapViewContainer.style.transition = 'none'; // no transition during drag
         }
         
@@ -2189,7 +2197,7 @@ function setupPanelDrag() {
         // Reset map parallax with elastic bounce animation
         if (mapViewContainer) {
             mapViewContainer.style.transition = 'transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)'; // elastic bounce
-            mapViewContainer.style.transform = 'translateY(0)'; // return to original position
+            mapViewContainer.style.transform = 'translateY(0) scaleY(1)'; // return to original position and scale
         }
         
         // We'll handle inertia manually; disable CSS transition during the glide
