@@ -560,6 +560,11 @@ html, body {
 .arrivals-panel:not(.expanded) .routes-list { overflow: hidden; touch-action: none; }
 .arrivals-panel.expanded .routes-list { overflow-y: auto; touch-action: pan-y; }
 
+/* In Bus mode, reduce panel padding since selector bar is hidden */
+.arrivals-panel.bus-mode {
+    padding-top: 32px; /* reduced from 120px - no selector bar in bus mode */
+}
+
 /* In Bus mode, make the list non-scrollable and let it size to content.
    The sheet itself will expand up to the viewport to reveal items. */
 .arrivals-panel.bus-mode .routes-list {

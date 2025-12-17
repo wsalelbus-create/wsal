@@ -239,22 +239,39 @@ function renderBusStations(withDelay = false, fadeIn = false) {
         const badge = stationBadgeFor(station.name);
         const served = station.routes.map(r => r.number).join(', ');
         
-        // Calculate distance from USER GPS position (not crosshair)
-        const displayDistKm = getDistanceFromLatLonInKm(distanceLat, distanceLon, station.lat, station.lon);
-        const distanceText = `${displayDistKm.toFixed(1)} km`;
-
-        // Top header
-        const headerHtml = `
-            <div class="station-header">
-                <div class="station-badge" style="background:${badge.color}"><span>${badge.abbr}</span></div>
-                <div class="station-title">
-                    <div class="station-name">${station.name}</div>
-                    <div class="station-serves">${served}</div>
-                </div>
-                <div class="station-distance">${distanceText}</div>
-            </div>
-            <div class="station-divider"></div>
+        // Placeholder for walking time - will be fetched from OSRM
+        const distanceContainer = document.createElement('div');
+        distanceContainer.className = 'station-distance';
+        distanceContainer.innerHTML = `
+            <svg width="20" height="20" viewBox="0 0 128 128" fill="none" xmlns="http://www.w3.org/2000/svg" style="vertical-align: middle; margin-right: 4px;">
+                <path d="M67.9,22.6c5.7,0.4,10.8-3.8,11.3-9.7c0.4-5.7-3.8-10.8-9.7-11.3c-5.7-0.4-10.8,3.8-11.3,9.7C57.8,17.1,62.2,22.2,67.9,22.6" fill="currentColor"/>
+                <path d="M59,26.9c2-1.5,4.5-2.3,7.3-2.2c3.5,0.3,6.6,2.5,8.3,5.1l10.5,20.9l14.3,10c1.2,1,2,2.5,1.9,4.1c-0.1,2.6-2.5,4.5-5.1,4.2 c-0.7,0-1.5-0.3-2.2-0.7L78.6,57.8c-0.4-0.4-0.9-0.9-1.2-1.5l-4-7.8l-4.7,20.8l18.6,22c0.4,0.7,0.7,1.5,0.9,2.2l5,26.5 c0,0.6,0,1,0,1.5c-0.3,4-3.7,6.7-7.6,6.6c-3.2-0.3-5.6-2.6-6.4-5.6l-4.7-24.7L59.4,81l-3.5,16.1c-0.1,0.7-1.2,2.3-1.5,2.9L40,124.5 c-1.5,2.2-3.8,3.7-6.6,3.4c-4-0.3-6.9-3.7-6.6-7.6c0.1-1.2,0.6-2.2,1-3.1l13.5-22.5L52.5,45l-7.3,5.9l-4,17.7c-0.4,2.2-2.6,4.1-5,4 c-2.6-0.1-4.5-2.5-4.4-5.1c0-0.1,0-0.4,0.1-0.6l4.5-20.6c0.3-0.9,0.7-1.6,1.5-2.2L59,26.9z" fill="currentColor"/>
+            </svg>
+            <span style="vertical-align: middle;">...</span>
         `;
+        
+        // Fetch OSRM walking time asynchronously
+        getOsrmWalkingTime(distanceLat, distanceLon, station.lat, station.lon).then(minutes => {
+            const span = distanceContainer.querySelector('span');
+            if (span) {
+                span.textContent = minutes ? `${minutes} min` : '—';
+            }
+        });
+
+        // Top header (build without distance, will append it separately)
+        const headerDiv = document.createElement('div');
+        headerDiv.className = 'station-header';
+        headerDiv.innerHTML = `
+            <div class="station-badge" style="background:${badge.color}"><span>${badge.abbr}</span></div>
+            <div class="station-title">
+                <div class="station-name">${station.name}</div>
+                <div class="station-serves">${served}</div>
+            </div>
+        `;
+        headerDiv.appendChild(distanceContainer);
+        
+        const divider = document.createElement('div');
+        divider.className = 'station-divider';
 
         // Helper to build arrivals HTML for this station
         const buildArrivalsHtml = () => {
@@ -310,7 +327,8 @@ function renderBusStations(withDelay = false, fadeIn = false) {
         };
 
         // Build card and optionally show a brief loading state for arrivals
-        card.innerHTML = headerHtml;
+        card.appendChild(headerDiv);
+        card.appendChild(divider);
     // Add overlay station badge icon + name ABOVE THE CARDS in the panel ONLY on detailed (3rd) screen
     try {
         if ((typeof uiMode !== 'undefined' && uiMode === 'walk') && (typeof busDetailActive !== 'undefined' && busDetailActive)) {
@@ -1711,6 +1729,22 @@ function updateMap() {
     }
 }
 
+// Fetch OSRM walking duration without drawing route (for bus station cards)
+async function getOsrmWalkingTime(fromLat, fromLon, toLat, toLon) {
+    const url = `https://routing.openstreetmap.de/routed-foot/route/v1/foot/${fromLon},${fromLat};${toLon},${toLat}?overview=false`;
+    try {
+        const res = await fetch(url);
+        if (!res.ok) return null;
+        const data = await res.json();
+        if (!data || data.code !== 'Ok' || !data.routes || !data.routes[0]) return null;
+        const route = data.routes[0];
+        // Return duration in minutes
+        return route.duration ? Math.round(route.duration / 60) : null;
+    } catch (e) {
+        return null;
+    }
+}
+
 // Fetch a street route from user -> station using OSRM and draw it on the map
 async function renderOsrmRoute(fromLat, fromLon, toLat, toLon) {
     // Sequence guard to avoid stale routes drawing over the current one
@@ -1859,17 +1893,16 @@ function setUIMode(mode) {
         else routesHeaderEl.classList.add('hidden');
     }
 
-    // Hide the station selector bar ONLY on detailed (3rd) screen
+    // Hide the station selector bar in bus mode AND on detailed (3rd) screen
     if (floatingControlsEl) {
-        if (mode === 'walk' && busDetailActive) floatingControlsEl.classList.add('hidden');
+        if (mode === 'bus' || (mode === 'walk' && busDetailActive)) floatingControlsEl.classList.add('hidden');
         else floatingControlsEl.classList.remove('hidden');
     }
 
-    // Crosshair: show in bus mode, hide in other modes
+    // Crosshair: hide on mode change, will show when user starts moving map
     const crosshair = document.getElementById('map-crosshair');
     if (crosshair) {
-        if (mode === 'bus' && !busDetailActive) crosshair.classList.add('visible');
-        else crosshair.classList.remove('visible');
+        crosshair.classList.remove('visible');
     }
 
     // Basemap policy: always use clean no-labels + labels overlay in ALL modes
