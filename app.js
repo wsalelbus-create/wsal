@@ -2197,7 +2197,7 @@ function setupPanelDrag() {
         // Citymapper-style parallax: VISUAL effect only, don't actually move map tiles
         // Apply transform to map-container (the visual layer), not map-view-container
         if (mapViewContainer) {
-            const parallaxFactor = 0.3; // 30% of panel movement (subtle but noticeable)
+            const parallaxFactor = 0.5; // 50% of panel movement (more aggressive, follows closely)
             const panelDelta = next - startVisible; // how much panel moved from start
             const panelRange = maxPx - minPx; // total possible movement
             const progress = panelDelta / panelRange; // normalized progress [-1..1]
@@ -2205,12 +2205,12 @@ function setupPanelDrag() {
             // Only apply VISUAL transform to the inner map container
             const mapInner = document.getElementById('map-container');
             if (mapInner) {
-                // Subtle scale and translate - purely visual, doesn't trigger tile reloading
-                const scaleAmount = 1 + (progress * 0.05); // subtle 5% scale
-                const translateAmount = -panelDelta * parallaxFactor; // subtle translate
+                // More noticeable scale and translate for better parallax feel
+                const scaleAmount = 1 + (progress * 0.08); // 8% scale for more dramatic effect
+                const translateAmount = -panelDelta * parallaxFactor; // more aggressive translate
                 
-                // Clamp translate to prevent revealing edges (increased since map is now 200% height)
-                const maxTranslate = 250; // max 250px movement in either direction (we have 60% buffer above = ~360px at typical viewport)
+                // Clamp translate to prevent revealing edges (map is now 180% height with 40% buffer)
+                const maxTranslate = 200; // max 200px movement in either direction (we have 40% buffer = ~240px at typical viewport)
                 const clampedTranslate = Math.max(-maxTranslate, Math.min(maxTranslate, translateAmount));
                 
                 mapInner.style.transform = `translateY(${clampedTranslate}px) scale(${scaleAmount})`;
