@@ -2163,20 +2163,23 @@ function setupPanelDrag() {
         const next = clamp(startVisible + delta * scale, minPx, maxPx);
         setPanelVisibleHeight(next);
         
-        // Citymapper-style parallax: map scales/expands with panel drag (elastic effect)
-        // When panel drags up, map expands slightly; when panel drags down, map shrinks
+        // Citymapper-style parallax: map follows panel drag in both directions
+        // Map container has extra padding-top so there's always map content visible
         if (mapViewContainer) {
             const parallaxFactor = 0.5; // 50% of panel movement (more noticeable)
             const panelDelta = next - startVisible; // how much panel moved from start
             const panelRange = maxPx - minPx; // total possible movement
             const progress = panelDelta / panelRange; // normalized progress [0..1]
             
-            // Scale map height: when panel goes up, map expands (grows taller)
-            // This prevents blue background from showing
+            // Map follows panel in both directions (up and down)
             const scaleAmount = 1 + (progress * 0.08); // up to 8% taller when fully dragged up
-            const translateAmount = -panelDelta * parallaxFactor; // also translate for smooth feel
+            const translateAmount = -panelDelta * parallaxFactor; // translate with panel
             
-            mapViewContainer.style.transform = `translateY(${translateAmount}px) scaleY(${scaleAmount})`;
+            // Clamp translate to prevent showing too much extra content
+            const maxTranslate = 40; // max 40px down (half of padding-top)
+            const clampedTranslate = Math.max(-maxTranslate, Math.min(maxTranslate, translateAmount));
+            
+            mapViewContainer.style.transform = `translateY(${clampedTranslate}px) scaleY(${scaleAmount})`;
             mapViewContainer.style.transformOrigin = 'center top'; // scale from top
             mapViewContainer.style.transition = 'none'; // no transition during drag
         }

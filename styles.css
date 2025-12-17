@@ -81,6 +81,9 @@ html, body {
     background: #e8e8e8; /* light grey to prevent blue flash */
     padding-bottom: 0;
     margin-bottom: 0;
+    /* Add padding-top to create extra map content above viewport for parallax */
+    padding-top: 80px; /* extra map content above that can be revealed when dragging down */
+    margin-top: -80px; /* pull container back up so visible area stays same */
     transition: height 0.3s ease;
     /* Smooth expansion */
     cursor: pointer;
