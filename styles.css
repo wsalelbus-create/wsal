@@ -93,14 +93,14 @@ html, body {
 }
 
 #map-container {
-    width: 110%; /* 10% wider to provide horizontal buffer */
-    height: 130%; /* 30% taller to provide vertical buffer for parallax */
+    width: 120%; /* 20% wider to provide horizontal buffer */
+    height: 150%; /* 50% taller to provide large vertical buffer for parallax */
     min-height: 360px;
     /* Leaflet needs explicit height */
     background: #e8e8e8; /* light grey to avoid blue flash during tile loading */
     position: absolute;
-    top: -15%; /* center the oversized map vertically */
-    left: -5%; /* center the oversized map horizontally */
+    top: -25%; /* center the oversized map vertically - 25% buffer above and below */
+    left: -10%; /* center the oversized map horizontally - 10% buffer left and right */
     /* Performance optimizations */
     transform: translate3d(0, 0, 0);
     /* Force GPU acceleration */
