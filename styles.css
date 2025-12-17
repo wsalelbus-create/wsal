@@ -72,7 +72,7 @@ html, body {
    1. TOP MAP SECTION (60%)
    ========================================= */
 .map-view-container {
-    height: calc(var(--vh, 1vh) * 62); /* 62% visible area */
+    height: calc(var(--vh, 1vh) * 100); /* full viewport height - extends behind panel */
     position: relative;
     width: 100%;
     z-index: 1;
