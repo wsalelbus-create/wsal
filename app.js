@@ -1745,7 +1745,7 @@ function setUIMode(mode) {
     uiMode = mode;
     
     // Preserve current panel position when switching modes (especially important for PWA)
-    const currentPanelHeight = getPanelVisibleHeight ? getPanelVisibleHeight() : null;
+    const currentPanelHeight = window._getPanelVisibleHeight ? window._getPanelVisibleHeight() : null;
 
     // Toggle map walking badge and calorie badge visibility
     if (walkingBadgeEl) {
@@ -2094,14 +2094,15 @@ function setupPanelDrag() {
         // Keep skyline height consistent across Safari and PWA
         try { applySkylineSizing(); applyPWASkylineAnchoring(); } catch {}
     };
-    // Expose globally for recalculation after viewport polyfill
-    window._setPanelVisibleHeight = setPanelVisibleHeight;
     const getPanelVisibleHeight = () => {
         const v = parseFloat(arrivalsPanel?.dataset?.visibleH || '');
         if (!Number.isNaN(v)) return v;
         // Fallback to collapsed on first run
         return vhToPx(PANEL_MIN_VH);
     };
+    // Expose globally for recalculation after viewport polyfill and mode switching
+    window._setPanelVisibleHeight = setPanelVisibleHeight;
+    window._getPanelVisibleHeight = getPanelVisibleHeight;
 
     const handleStart = (y, target) => {
         const list = arrivalsPanel.querySelector('.routes-list');
