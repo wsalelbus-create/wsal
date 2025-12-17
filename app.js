@@ -194,12 +194,24 @@ function nearestStations(fromLat, fromLon, count = 5) {
     return withDist.slice(0, count);
 }
 
-function renderBusStations(withDelay = false) {
+function renderBusStations(withDelay = false, fadeIn = false) {
+    if (!routesListEl) return;
+    
+    // Show loading spinner if fading in (reordering)
+    if (fadeIn) {
+        routesListEl.innerHTML = '<div style="display:flex;justify-content:center;padding:40px;"><div class="loader"></div></div>';
+        // Wait briefly to show spinner
+        setTimeout(() => renderBusStationsContent(withDelay, fadeIn), 200);
+        return;
+    }
+    
+    renderBusStationsContent(withDelay, fadeIn);
+}
+
+function renderBusStationsContent(withDelay = false, fadeIn = false) {
     if (!routesListEl) return;
     routesListEl.innerHTML = '';
     // Reset detail state when showing the Bus list
-    busDetailActive = false;
-    // Entering Bus mode list resets any detail drill-down state
     busDetailActive = false;
 
     // Anchor position: use MAP CENTER if map exists, otherwise user location
@@ -220,9 +232,15 @@ function renderBusStations(withDelay = false) {
 
     const nearby = nearestStations(anchorLat, anchorLon, 5);
 
-    nearby.forEach(({ station, distKm }) => {
+    nearby.forEach(({ station, distKm }, index) => {
         const card = document.createElement('div');
         card.className = 'station-card';
+        
+        // Add fade-in animation if reordering
+        if (fadeIn) {
+            card.style.opacity = '0';
+            card.style.animation = `fadeInUp 0.4s ease forwards ${index * 0.1}s`;
+        }
 
         const badge = stationBadgeFor(station.name);
         const served = station.routes.map(r => r.number).join(', ');
@@ -1504,11 +1522,31 @@ function initMap() {
     }, 200);
     
     // Auto-reorder stations when map is moved in bus mode
+    let reorderTimeout;
+    map.on('movestart', () => {
+        try {
+            if (uiMode === 'bus' && !busDetailActive) {
+                // Show crosshair when map starts moving
+                const crosshair = document.getElementById('map-crosshair');
+                if (crosshair) crosshair.classList.add('visible');
+            }
+        } catch {}
+    });
+    
     map.on('moveend', () => {
         try {
             if (uiMode === 'bus' && !busDetailActive) {
-                // Reorder stations based on new map center
-                renderBusStations();
+                // Hide crosshair after map stops
+                const crosshair = document.getElementById('map-crosshair');
+                if (crosshair) {
+                    setTimeout(() => crosshair.classList.remove('visible'), 300);
+                }
+                
+                // Debounce reordering - wait 300ms after map stops moving
+                clearTimeout(reorderTimeout);
+                reorderTimeout = setTimeout(() => {
+                    renderBusStations(false, true); // true = show fade animation
+                }, 300);
             }
         } catch {}
     });
