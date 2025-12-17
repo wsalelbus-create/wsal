@@ -2162,6 +2162,17 @@ function setupPanelDrag() {
         const scale = getDragScale();
         const next = clamp(startVisible + delta * scale, minPx, maxPx);
         setPanelVisibleHeight(next);
+        
+        // Citymapper-style parallax: map moves slightly with panel (elastic effect)
+        // When panel drags up, map moves up a bit; when panel drags down, map moves down
+        if (mapViewContainer) {
+            const parallaxFactor = 0.15; // 15% of panel movement (subtle elastic effect)
+            const panelDelta = next - startVisible; // how much panel moved from start
+            const mapOffset = panelDelta * parallaxFactor; // map moves 15% of that
+            mapViewContainer.style.transform = `translateY(${-mapOffset}px)`; // negative because up is negative Y
+            mapViewContainer.style.transition = 'none'; // no transition during drag
+        }
+        
         // record movement for velocity calculation
         const now = performance.now();
         lastMoves.push({ t: now, h: next });
@@ -2174,6 +2185,13 @@ function setupPanelDrag() {
         dragging = false;
         pendingDrag = false;
         panelDragging = false;
+        
+        // Reset map parallax with elastic bounce animation
+        if (mapViewContainer) {
+            mapViewContainer.style.transition = 'transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)'; // elastic bounce
+            mapViewContainer.style.transform = 'translateY(0)'; // return to original position
+        }
+        
         // We'll handle inertia manually; disable CSS transition during the glide
         arrivalsPanel.style.transition = 'none';
         const minPx = vhToPx(PANEL_MIN_VH);
