@@ -1927,7 +1927,14 @@ let pendingDrag = false;   // waiting to see if movement exceeds threshold
 let startTarget = null;
 
 function vhToPx(vh) {
-    // Use innerHeight for stable Safari behavior
+    // Use polyfilled --vh for consistent Safari/PWA behavior
+    try {
+        const vhValue = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--vh'));
+        if (vhValue && vhValue > 0) {
+            return Math.round(vhValue * vh);
+        }
+    } catch {}
+    // Fallback to innerHeight
     const h = window.innerHeight || document.documentElement?.clientHeight || 800;
     return Math.round(h * (vh / 100));
 }
