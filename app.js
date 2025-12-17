@@ -2175,7 +2175,20 @@ function setupPanelDrag() {
         const minPx = vhToPx(PANEL_MIN_VH);
         const maxPx = getPanelMaxPx();
         const scale = getDragScale();
-        const next = clamp(startVisible + delta * scale, minPx, maxPx);
+        let next = startVisible + delta * scale;
+        
+        // Elastic bounce: allow pulling below minimum with resistance (rubber band effect)
+        if (next < minPx) {
+            const overPull = minPx - next; // how much below minimum
+            const resistance = 0.3; // 30% resistance - harder to pull down
+            next = minPx - (overPull * resistance); // apply resistance
+        } else if (next > maxPx) {
+            // Also apply resistance when pulling above maximum
+            const overPull = next - maxPx;
+            const resistance = 0.3;
+            next = maxPx + (overPull * resistance);
+        }
+        
         setPanelVisibleHeight(next);
         
         // Citymapper-style parallax: VISUAL effect only, don't actually move map tiles
@@ -2277,15 +2290,32 @@ function setupPanelDrag() {
             inertiaFrame = requestAnimationFrame(step);
         } else {
             // No meaningful velocity: snap to nearest stop
-            const projected = clamp(getPanelVisibleHeight() + velocity * 140, minPx, maxPx);
-            const target = pickSnapTarget(projected, velocity);
-            arrivalsPanel.style.transition = 'transform 0.24s cubic-bezier(.2,.7,.2,1)';
+            const currentH = getPanelVisibleHeight();
+            
+            // If panel is below minimum or above maximum, bounce back with elastic easing
+            let target;
+            if (currentH < minPx) {
+                target = minPx; // bounce back to minimum
+            } else if (currentH > maxPx) {
+                target = maxPx; // bounce back to maximum
+            } else {
+                const projected = clamp(currentH + velocity * 140, minPx, maxPx);
+                target = pickSnapTarget(projected, velocity);
+            }
+            
+            // Use elastic bounce easing if bouncing back from over-pull
+            const isBouncingBack = (currentH < minPx || currentH > maxPx);
+            const easing = isBouncingBack 
+                ? 'transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)' // elastic bounce with overshoot
+                : 'transform 0.24s cubic-bezier(.2,.7,.2,1)'; // normal snap
+            
+            arrivalsPanel.style.transition = easing;
             setPanelVisibleHeight(target);
             
             // Reset map parallax synchronized with panel snap
             const mapInner = document.getElementById('map-container');
             if (mapInner) {
-                mapInner.style.transition = 'transform 0.24s cubic-bezier(.2,.7,.2,1)';
+                mapInner.style.transition = easing; // use same easing as panel
                 mapInner.style.transform = 'translateY(0) scale(1)';
             }
             
