@@ -2458,7 +2458,18 @@ function installBounceGuard() {
 // Install viewport polyfill FIRST before any layout calculations
 installViewportPolyfill();
 
-// Wait for polyfill to fully apply before initializing panel
+// IMMEDIATELY position panel to prevent flash - don't wait for requestAnimationFrame
+const arrivalsPanel = document.querySelector('.arrivals-panel');
+if (arrivalsPanel) {
+    const minPx = vhToPx(PANEL_MIN_VH);
+    const maxPx = vhToPx(PANEL_MAX_VH);
+    const offset = Math.max(0, maxPx - minPx);
+    arrivalsPanel.style.transform = `translateY(${offset}px)`;
+    arrivalsPanel.style.height = `${maxPx}px`;
+    arrivalsPanel.style.transition = 'none'; // no transition on initial load
+}
+
+// Wait for polyfill to fully apply before initializing panel drag handlers
 requestAnimationFrame(() => {
     requestAnimationFrame(() => {
         setupPanelDrag();
