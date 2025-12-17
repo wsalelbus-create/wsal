@@ -34,7 +34,7 @@
 
 body {
     font-family: 'Outfit', sans-serif;
-    background: rgb(64, 115, 148); /* match arrivals panel blue behind rounded corners */
+    background: #e8e8e8; /* match map grey - no blue background to reveal */
     color: var(--text-main);
     width: 100vw;
     min-height: 100vh;
@@ -60,7 +60,7 @@ html, body {
     min-height: 100vh;
     /* Allow container to grow */
     position: relative;
-    background: rgb(64, 115, 148); /* match arrivals panel blue so rounded corners don't show grey */
+    background: #e8e8e8; /* match map grey - seamless with map */
     /* Extend behind status bar */
     margin-top: 0;
 }
@@ -72,15 +72,12 @@ html, body {
    1. TOP MAP SECTION (60%)
    ========================================= */
 .map-view-container {
-    height: calc(var(--vh, 1vh) * 62);
-    /* 62% - extends 2vh behind panel so corners show against grey map, not blue background */
+    height: calc(var(--vh, 1vh) * 100); /* full viewport height - extends behind panel */
     position: relative;
     width: 100%;
     z-index: 1;
     overflow: hidden;
     background: #e8e8e8; /* light grey to prevent blue flash */
-    padding-top: 80px; /* extra padding at top so map can move down without revealing blue */
-    margin-top: -80px; /* negative margin to compensate, keeping visual position same */
     padding-bottom: 0;
     margin-bottom: 0;
     transition: height 0.3s ease;
