@@ -2169,20 +2169,24 @@ function setupPanelDrag() {
         const next = clamp(startVisible + delta * scale, minPx, maxPx);
         setPanelVisibleHeight(next);
         
-        // Citymapper-style parallax: map follows panel both up and down (elastic effect)
-        // Map container has extra padding-top so it can move down without revealing blue
+        // Citymapper-style parallax: map follows panel with LIMITED movement
+        // Keep movement small to stay within pre-loaded tile buffer
         if (mapViewContainer) {
-            const parallaxFactor = 0.5; // 50% of panel movement (more noticeable)
+            const parallaxFactor = 0.15; // REDUCED to 15% - subtle but stays within loaded tiles
             const panelDelta = next - startVisible; // how much panel moved from start
             const panelRange = maxPx - minPx; // total possible movement
             const progress = panelDelta / panelRange; // normalized progress [-1..1]
             
-            // Apply parallax in BOTH directions for smooth, pleasurable experience
-            const scaleAmount = 1 + (progress * 0.08); // scale up when dragging up, down when dragging down
-            const translateAmount = -panelDelta * parallaxFactor; // translate follows panel movement
+            // Limit maximum parallax movement to 40px in either direction
+            // This ensures we stay within the 100px buffer of pre-loaded tiles
+            const maxParallax = 40; // maximum pixels map can move
+            const translateAmount = Math.max(-maxParallax, Math.min(maxParallax, -panelDelta * parallaxFactor));
+            
+            // Very subtle scale (2% max) to add depth without revealing edges
+            const scaleAmount = 1 + (progress * 0.02);
             
             mapViewContainer.style.transform = `translateY(${translateAmount}px) scaleY(${scaleAmount})`;
-            mapViewContainer.style.transformOrigin = 'center top'; // scale from top
+            mapViewContainer.style.transformOrigin = 'center center'; // scale from center for balance
             mapViewContainer.style.transition = 'none'; // no transition during drag
         }
         
