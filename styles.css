@@ -572,6 +572,12 @@ html, body {
     padding-bottom: 185px; /* tight spacing - identical in Safari and PWA */
 }
 
+/* Walking screen (detailed mode) with single card - ensure enough space below */
+.arrivals-panel.no-selector .routes-list {
+    padding-bottom: 220px !important; /* extra space for single card to sit above skyline */
+    min-height: 300px; /* ensure list has minimum height even with one card */
+}
+
 /* Hide scrollbars for bottom-sheet feel */
 .routes-list::-webkit-scrollbar { display: none; }
 .arrivals-panel::-webkit-scrollbar { display: none; }
