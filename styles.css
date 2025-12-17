@@ -970,6 +970,37 @@ html, body {
     }
 }
 
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Map Crosshair (Citymapper style) */
+.map-crosshair {
+    position: fixed; /* fixed to viewport, not map-view */
+    top: 30vh; /* center in visible map area (not oversized map) */
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 1001; /* above map (1), below panel (1003) */
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+}
+
+.map-crosshair.visible {
+    opacity: 1;
+}
+
+.map-crosshair svg {
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
+}
+
 .loading-spinner {
     width: 30px;
     height: 30px;

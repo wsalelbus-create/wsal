@@ -196,22 +196,10 @@ function nearestStations(fromLat, fromLon, count = 5) {
 
 function renderBusStations(withDelay = false, fadeIn = false) {
     if (!routesListEl) return;
-    
-    // Show loading spinner if fading in (reordering)
-    if (fadeIn) {
-        routesListEl.innerHTML = '<div style="display:flex;justify-content:center;padding:40px;"><div class="loader"></div></div>';
-        // Wait briefly to show spinner
-        setTimeout(() => renderBusStationsContent(withDelay, fadeIn), 200);
-        return;
-    }
-    
-    renderBusStationsContent(withDelay, fadeIn);
-}
-
-function renderBusStationsContent(withDelay = false, fadeIn = false) {
-    if (!routesListEl) return;
     routesListEl.innerHTML = '';
     // Reset detail state when showing the Bus list
+    busDetailActive = false;
+    // Entering Bus mode list resets any detail drill-down state
     busDetailActive = false;
 
     // Anchor position: use MAP CENTER if map exists, otherwise user location
@@ -232,15 +220,9 @@ function renderBusStationsContent(withDelay = false, fadeIn = false) {
 
     const nearby = nearestStations(anchorLat, anchorLon, 5);
 
-    nearby.forEach(({ station, distKm }, index) => {
+    nearby.forEach(({ station, distKm }) => {
         const card = document.createElement('div');
         card.className = 'station-card';
-        
-        // Add fade-in animation if reordering
-        if (fadeIn) {
-            card.style.opacity = '0';
-            card.style.animation = `fadeInUp 0.4s ease forwards ${index * 0.1}s`;
-        }
 
         const badge = stationBadgeFor(station.name);
         const served = station.routes.map(r => r.number).join(', ');
@@ -1545,7 +1527,7 @@ function initMap() {
                 // Debounce reordering - wait 300ms after map stops moving
                 clearTimeout(reorderTimeout);
                 reorderTimeout = setTimeout(() => {
-                    renderBusStations(false, true); // true = show fade animation
+                    renderBusStations(); // reorder stations
                 }, 300);
             }
         } catch {}
