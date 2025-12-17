@@ -250,11 +250,17 @@ function renderBusStations(withDelay = false, fadeIn = false) {
             <span style="vertical-align: middle;">...</span>
         `;
         
-        // Fetch OSRM walking time asynchronously
+        // Fetch OSRM walking time asynchronously with smooth transition
         getOsrmWalkingTime(distanceLat, distanceLon, station.lat, station.lon).then(minutes => {
             const span = distanceContainer.querySelector('span');
             if (span) {
-                span.textContent = minutes ? `${minutes} min` : '—';
+                // Fade out, update, fade in (like countdown)
+                span.style.transition = 'opacity 0.2s ease';
+                span.style.opacity = '0';
+                setTimeout(() => {
+                    span.textContent = minutes ? `${minutes} min` : '—';
+                    span.style.opacity = '1';
+                }, 200);
             }
         });
 
@@ -1553,23 +1559,11 @@ function initMap() {
             if (uiMode === 'bus' && !busDetailActive) {
                 // Keep crosshair visible (don't hide it)
                 
-                // Fade out existing cards before reordering
-                if (routesListEl && routesListEl.children.length > 0) {
-                    routesListEl.style.opacity = '0';
-                    routesListEl.style.transition = 'opacity 0.15s ease';
-                }
-                
-                // Debounce reordering - wait for fade out to complete
+                // Debounce reordering - wait 300ms after map stops moving
                 clearTimeout(reorderTimeout);
                 reorderTimeout = setTimeout(() => {
                     renderBusStations(true); // reorder with loading spinner
-                    // Fade back in
-                    if (routesListEl) {
-                        setTimeout(() => {
-                            routesListEl.style.opacity = '1';
-                        }, 50);
-                    }
-                }, 200);
+                }, 300);
             }
         } catch {}
     });
@@ -2492,27 +2486,28 @@ function setupPanelDrag() {
     arrivalsPanel.addEventListener('touchstart', (e) => {
         const t = e.touches[0];
         handleStart(t.clientY, e.target);
-        // Stop propagation to prevent map from receiving touch events
-        e.stopPropagation();
         // do NOT preventDefault on touchstart; allow taps to become clicks
     }, { passive: false, capture: true });
     arrivalsPanel.addEventListener('touchmove', (e) => {
         const t = e.touches[0];
         handleMove(t.clientY);
-        // Always stop propagation to prevent map interaction
-        e.stopPropagation();
         if (dragging) e.preventDefault();
     }, { passive: false, capture: true });
-    arrivalsPanel.addEventListener('touchend', (e) => {
-        handleEnd();
-        // Stop propagation to prevent map from receiving touch events
-        e.stopPropagation();
-    });
+    arrivalsPanel.addEventListener('touchend', () => handleEnd());
 
     // Document-level capture to guarantee drag from anywhere inside the panel
     document.addEventListener('touchstart', (e) => {
         const inPanel = e.target && e.target.closest && e.target.closest('.arrivals-panel');
         if (!inPanel) return;
+        
+        // Don't capture if touch is on the map (even if map is behind panel)
+        const onMap = e.target && (
+            e.target.closest('.leaflet-container') || 
+            e.target.closest('#map-container') ||
+            e.target.closest('.map-view-container')
+        );
+        if (onMap) return;
+        
         const t = e.touches && e.touches[0];
         if (!t) return;
         handleStart(t.clientY, e.target);
