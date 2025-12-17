@@ -79,8 +79,8 @@ html, body {
     z-index: 1;
     overflow: hidden;
     background: #e8e8e8; /* light grey to prevent blue flash */
-    padding-bottom: 0; /* map reaches the container bottom so corners show map */
-    margin-bottom: -80px; /* overlap so panel corners sit over the map */
+    padding-bottom: 24px; /* extend map down so panel corners show against map, not blue background */
+    margin-bottom: 0; /* no negative margin - padding handles the overlap */
     /* Extend map down - bar will overlap this */
     transition: height 0.3s ease;
     /* Smooth expansion */
@@ -424,8 +424,8 @@ html, body {
     position: fixed;
     left: 0;
     right: 0;
-    bottom: 0;
-    height: calc(var(--vh, 1vh) * 85); /* use polyfilled vh for Safari/PWA consistency */
+    bottom: -16px; /* shift down slightly so corners show against map, not blue background */
+    height: calc(var(--vh, 1vh) * 85 + 16px); /* add 16px to compensate for bottom shift */
     max-height: none;
     background: white;
     border-radius: 16px 16px 0 0;   /* match selector bar radius */
@@ -435,7 +435,7 @@ html, body {
     --skyline-max-height: 180px; /* fixed smaller height - identical in Safari and PWA */
     padding: 16px;
     padding-top: 120px;             /* enough space for floating selector (70px) + spacing (32px) + first element */
-    --panel-pad-bottom: calc(6px + env(safe-area-inset-bottom));
+    --panel-pad-bottom: calc(22px + env(safe-area-inset-bottom)); /* increased to account for bottom shift */
     padding-bottom: var(--panel-pad-bottom); /* safe area */
     display: flex;
     flex-direction: column;         /* internal layout */
@@ -448,7 +448,7 @@ html, body {
 }
 
 /* Expanded sheet height (drag up) */
-.arrivals-panel.expanded { height: 85vh; /* explicit, same as base */ }
+.arrivals-panel.expanded { height: calc(var(--vh, 1vh) * 85 + 16px); /* use polyfilled vh + bottom shift compensation */ }
 
 /* Visible sheet grabber for better affordance and touch target */
 .sheet-grabber {
@@ -471,8 +471,8 @@ html, body {
 
 /* Collapsed arrivals when map expanded */
 .arrivals-panel.collapsed {
-    min-height: 20vh;
-    /* 20% when map expanded */
+    min-height: calc(var(--vh, 1vh) * 20);
+    /* 20% when map expanded - use polyfilled vh for Safari/PWA consistency */
 }
 
 /* Walking Time Card */
