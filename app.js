@@ -195,38 +195,56 @@ function nearestStations(fromLat, fromLon, count = 5) {
 }
 
 function renderBusStations(withDelay = false, fadeIn = false) {
-    if (!routesListEl) return;
-    routesListEl.innerHTML = '';
-    // Reset detail state when showing the Bus list
-    busDetailActive = false;
-    // Entering Bus mode list resets any detail drill-down state
-    busDetailActive = false;
-
-    // Anchor position for ORDERING: use MAP CENTER if map exists, otherwise user location
-    // This allows stations to reorder when user pans the map
-    let anchorLat, anchorLon;
-    if (map && mapInitialized) {
-        const center = map.getCenter();
-        anchorLat = center.lat;
-        anchorLon = center.lng;
-    } else if (userLat && userLon) {
-        anchorLat = userLat;
-        anchorLon = userLon;
-    } else {
-        const fallback = currentStation || STATIONS[0];
-        anchorLat = fallback.lat;
-        anchorLon = fallback.lon;
+    console.log('renderBusStations called - withDelay:', withDelay, 'fadeIn:', fadeIn);
+    if (!routesListEl) {
+        console.log('No routesListEl found!');
+        return;
     }
-
-    const nearby = nearestStations(anchorLat, anchorLon, 5);
     
-    // For DISTANCE display: always use user GPS position if available
-    const distanceFromLat = userLat || anchorLat;
-    const distanceFromLon = userLon || anchorLon;
+    // Fade out existing cards
+    const existingCards = routesListEl.querySelectorAll('.station-card');
+    existingCards.forEach(card => {
+        card.style.opacity = '0';
+        card.style.transition = 'opacity 0.15s ease';
+    });
+    
+    // Wait for fade out, then clear and rebuild
+    setTimeout(() => {
+        routesListEl.innerHTML = '';
+        // Reset detail state when showing the Bus list
+        busDetailActive = false;
 
-    nearby.forEach(({ station, distKm }, index) => {
-        const card = document.createElement('div');
-        card.className = 'station-card';
+        // Anchor position for ORDERING: use MAP CENTER if map exists, otherwise user location
+        // This allows stations to reorder when user pans the map
+        let anchorLat, anchorLon;
+        if (map && mapInitialized) {
+            const center = map.getCenter();
+            anchorLat = center.lat;
+            anchorLon = center.lng;
+            console.log('Using map center for ordering:', anchorLat, anchorLon);
+        } else if (userLat && userLon) {
+            anchorLat = userLat;
+            anchorLon = userLon;
+            console.log('Using user location for ordering:', anchorLat, anchorLon);
+        } else {
+            const fallback = currentStation || STATIONS[0];
+            anchorLat = fallback.lat;
+            anchorLon = fallback.lon;
+            console.log('Using fallback for ordering:', anchorLat, anchorLon);
+        }
+
+        const nearby = nearestStations(anchorLat, anchorLon, 5);
+        console.log('Found nearby stations:', nearby.length);
+        
+        // For DISTANCE display: always use user GPS position if available
+        const distanceFromLat = userLat || anchorLat;
+        const distanceFromLon = userLon || anchorLon;
+
+        nearby.forEach(({ station, distKm }, index) => {
+            const card = document.createElement('div');
+            card.className = 'station-card';
+            card.style.opacity = '0';
+            card.style.transition = 'opacity 0.2s ease';
         
         // Add fade-in animation with staggered delay
         card.style.opacity = '0';
@@ -389,7 +407,13 @@ function renderBusStations(withDelay = false, fadeIn = false) {
             }
         });
         routesListEl.appendChild(card);
+        
+        // Fade in card after a brief delay
+        setTimeout(() => {
+            card.style.opacity = '1';
+        }, index * 30); // stagger by 30ms per card
     });
+    }, 150); // wait for fade out
 }
  
 // Render a single station using the exact Bus screen card design (header + arrivals)
@@ -1529,7 +1553,9 @@ function initMap() {
     
     map.on('moveend', () => {
         try {
+            console.log('Map moveend - uiMode:', uiMode, 'busDetailActive:', busDetailActive);
             if (uiMode === 'bus' && !busDetailActive) {
+                console.log('Triggering reorder...');
                 // Keep crosshair visible (don't hide it)
                 
                 // Show loading spinner
@@ -1538,11 +1564,14 @@ function initMap() {
                 // Debounce reordering - wait 300ms after map stops moving
                 clearTimeout(reorderTimeout);
                 reorderTimeout = setTimeout(() => {
+                    console.log('Executing renderBusStations...');
                     renderBusStations(); // reorder stations
                     hideLoadingSpinner();
                 }, 300);
             }
-        } catch {}
+        } catch (e) {
+            console.error('Error in moveend:', e);
+        }
     });
 
     // Initialize heading sensors (permission will be requested on first gesture if needed)
