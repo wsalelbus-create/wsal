@@ -428,7 +428,7 @@ html, body {
     left: 0;
     right: 0;
     bottom: 0;
-    height: auto; /* JS sets this dynamically to PANEL_MAX_VH (85vh) */
+    height: calc(var(--vh, 1vh) * 85); /* start at max height, JS will position via transform */
     max-height: none;
     background: white;
     border-radius: 16px 16px 0 0;   /* match selector bar radius */
@@ -445,7 +445,8 @@ html, body {
     align-items: stretch;
     overflow: visible;              /* allow floating controls to show above panel */
     touch-action: none;             /* gestures handled by JS for sheet drag */
-    transform: translateY(0);       /* JS controls position via translateY() */
+    /* Initial position: collapsed (40vh visible) - prevents flash at bottom on load */
+    transform: translateY(calc(var(--vh, 1vh) * 45)); /* start pushed down (85vh - 40vh = 45vh offset) */
     transition: transform 0.25s ease;  /* smooth translate change */
     will-change: transform;
 }
