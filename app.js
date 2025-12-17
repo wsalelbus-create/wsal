@@ -680,6 +680,7 @@ let uiMode = 'idle'; // 'idle' | 'walk' | 'bus'
 let previousMode = 'idle'; // track previous mode for Back button
 let busDetailActive = false; // true when showing Bus card design in Walk mode (drill-down)
 let osrmSeq = 0; // sequence guard for OSRM requests
+let reorderTimeout = null; // timeout for debouncing station reordering on map move
 // Base/walk tile layers
 let baseTileLayer = null;      // Standard OSM
 let walkTileLayer = null;      // Simplified, no labels (Citymapper-like)
@@ -1540,7 +1541,6 @@ function initMap() {
     }, 200);
     
     // Auto-reorder stations when map is moved in bus mode
-    let reorderTimeout;
     map.on('movestart', () => {
         try {
             if (uiMode === 'bus' && !busDetailActive) {
