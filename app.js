@@ -1638,9 +1638,21 @@ function updateMap() {
             // Fit map to show both markers
             // Account for oversized map (160% height at -50% top) - adjust padding to fit visible area
             const bounds = L.latLngBounds([[userLat, userLon], [station.lat, station.lon]]);
+            
+            // Calculate dynamic padding based on distance
+            const distance = getDistanceFromLatLonInKm(userLat, userLon, station.lat, station.lon);
+            
+            // Base padding for oversized map
+            const basePaddingTop = 280;
+            const basePaddingBottom = 200;
+            
+            // Add extra padding for longer distances (scale with distance)
+            const extraPadding = Math.min(distance * 30, 150); // max 150px extra
+            
             map.fitBounds(bounds, { 
-                paddingTopLeft: [50, 280],  // top padding for hidden area above (50% of 160vh)
-                paddingBottomRight: [50, 200] // bottom padding for hidden area below and panel
+                paddingTopLeft: [50, basePaddingTop + extraPadding],
+                paddingBottomRight: [50, basePaddingBottom + extraPadding],
+                maxZoom: 16 // don't zoom in too close even for short routes
             });
         } else if (uiMode === 'idle') {
             map.setView([userLat, userLon], 16);
@@ -1742,10 +1754,23 @@ async function renderOsrmRoute(fromLat, fromLon, toLat, toLon) {
         map.on('zoomend', applyWalkRouteStyle);
         try {
             const bounds = routeLayer.getBounds();
-            // Account for oversized map (160% height at -50% top) - adjust padding to fit visible area
+            // Calculate dynamic padding based on route distance
+            const routeDistance = getDistanceFromLatLonInKm(
+                bounds.getNorth(), bounds.getWest(),
+                bounds.getSouth(), bounds.getEast()
+            );
+            
+            // Base padding for oversized map (160% height at -50% top)
+            const basePaddingTop = 280;
+            const basePaddingBottom = 200;
+            
+            // Add extra padding for longer routes (scale with distance)
+            const extraPadding = Math.min(routeDistance * 30, 150); // max 150px extra
+            
             map.fitBounds(bounds, { 
-                paddingTopLeft: [50, 280],  // top padding for hidden area above (50% of 160vh)
-                paddingBottomRight: [50, 200] // bottom padding for hidden area below and panel
+                paddingTopLeft: [50, basePaddingTop + extraPadding],
+                paddingBottomRight: [50, basePaddingBottom + extraPadding],
+                maxZoom: 16 // don't zoom in too close even for short routes
             });
         } catch {}
     }
