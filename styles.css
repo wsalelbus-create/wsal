@@ -1047,17 +1047,19 @@ html, body {
 
 /* Skyline: pinned to the panel bottom, always flush to blue edge */
 .arrivals-panel .skyline-inline {
-  position: absolute; /* take out of flow so content above doesn't move it */
-  bottom: 0; /* sit flush at panel bottom - no safe area offset */
-  left: -16px;  /* cancel panel side padding */
-  right: -16px; /* cancel panel side padding */
-  height: 180px; /* fixed smaller height - identical in Safari and PWA */
-  max-height: 180px;
-  opacity: 1;
-  margin: 0;
-  pointer-events: none;
-  z-index: 0; /* behind all content */
-  overflow: hidden; /* clip any overflow */
+  position: absolute !important; /* absolute to panel - stays with panel */
+  bottom: 0 !important; /* sit flush at panel bottom - no safe area offset */
+  left: -16px !important;  /* cancel panel side padding */
+  right: -16px !important; /* cancel panel side padding */
+  height: 180px !important; /* fixed smaller height - identical in Safari and PWA */
+  max-height: 180px !important;
+  opacity: 1 !important;
+  margin: 0 !important;
+  pointer-events: none !important;
+  z-index: 0 !important; /* behind all content */
+  overflow: hidden !important; /* clip any overflow */
+  transform: translateZ(0) !important; /* force GPU layer to prevent repaints */
+  will-change: auto !important;
 }
 
 /* Ensure SVG scales to container height */
