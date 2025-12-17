@@ -1781,8 +1781,17 @@ function setUIMode(mode) {
     previousMode = uiMode;
     uiMode = mode;
     
-    // Preserve current panel position when switching modes (especially important for PWA)
-    const currentPanelHeight = window._getPanelVisibleHeight ? window._getPanelVisibleHeight() : null;
+    // ALWAYS reset panel to minimum position when changing screens
+    // This ensures consistent UX - panel always starts at bottom on every screen
+    const minPx = vhToPx(PANEL_MIN_VH);
+    if (window._setPanelVisibleHeight) {
+        const panel = document.querySelector('.arrivals-panel');
+        if (panel) {
+            panel.style.transition = 'none'; // no animation on mode change
+            window._setPanelVisibleHeight(minPx);
+            setTimeout(() => { panel.style.transition = ''; }, 50);
+        }
+    }
 
     // Toggle map walking badge and calorie badge visibility
     if (walkingBadgeEl) {
@@ -1901,25 +1910,8 @@ function setUIMode(mode) {
         else arabicTitleEl.classList.add('hidden');
     }
     
-    // Restore panel position after mode switch (fixes PWA back button expanding panel to top)
-    if (currentPanelHeight && window._setPanelVisibleHeight) {
-        // Use requestAnimationFrame to ensure DOM updates are complete
-        requestAnimationFrame(() => {
-            requestAnimationFrame(() => {
-                try {
-                    const panel = document.querySelector('.arrivals-panel');
-                    if (panel) {
-                        panel.style.transition = 'none';
-                        window._setPanelVisibleHeight(currentPanelHeight);
-                        setTimeout(() => { panel.style.transition = ''; }, 50);
-                        console.log(`[setUIMode] Restored panel to ${currentPanelHeight}px`);
-                    }
-                } catch (e) {
-                    console.error('[setUIMode] Panel restore error:', e);
-                }
-            });
-        });
-    }
+    // Panel is already reset to minimum at the start of this function
+    // No need to restore previous position - always start fresh at minimum
 }
 
 // --- Event Listeners ---
