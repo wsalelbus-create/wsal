@@ -72,8 +72,8 @@ html, body {
    1. TOP MAP SECTION (60%)
    ========================================= */
 .map-view-container {
-    height: calc(var(--vh, 1vh) * 60);
-    /* 60% visible map - use polyfilled vh for Safari/PWA consistency */
+    height: calc(var(--vh, 1vh) * 62);
+    /* 62% - extends 2vh behind panel so corners show against grey map, not blue background */
     position: relative;
     width: 100%;
     z-index: 1;
@@ -89,8 +89,8 @@ html, body {
 
 /* Expanded map state - 80% */
 .map-view-container.expanded {
-    height: calc(var(--vh, 1vh) * 80);
-    /* Expands to 80% when panel collapses - use polyfilled vh for Safari/PWA consistency */
+    height: calc(var(--vh, 1vh) * 82);
+    /* Expands to 82% - extends 2vh behind panel so corners always show against grey map */
 }
 
 #map-container {
@@ -419,12 +419,12 @@ html, body {
    3. ARRIVALS PANEL (Bottom 40%)
    ========================================= */
 .arrivals-panel {
-    /* Fixed bottom sheet - starts at 42vh from bottom so corners overlap map by 2vh */
+    /* Fixed bottom sheet - JS controls height/position via setPanelVisibleHeight() */
     position: fixed;
     left: 0;
     right: 0;
     bottom: 0;
-    height: calc(var(--vh, 1vh) * 42); /* 42% height - panel overlaps map to show corners against grey */
+    height: auto; /* JS sets this dynamically to PANEL_MAX_VH (85vh) */
     max-height: none;
     background: white;
     border-radius: 16px 16px 0 0;   /* match selector bar radius */
@@ -441,7 +441,7 @@ html, body {
     align-items: stretch;
     overflow: visible;              /* allow floating controls to show above panel */
     touch-action: none;             /* gestures handled by JS for sheet drag */
-    transform: translateY(0);       /* base: whole sheet moves, not just top */
+    transform: translateY(0);       /* JS controls position via translateY() */
     transition: transform 0.25s ease;  /* smooth translate change */
     will-change: transform;
 }
