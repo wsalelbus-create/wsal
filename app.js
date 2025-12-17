@@ -2163,20 +2163,27 @@ function setupPanelDrag() {
         const next = clamp(startVisible + delta * scale, minPx, maxPx);
         setPanelVisibleHeight(next);
         
-        // Citymapper-style parallax: map follows panel in both directions
-        // Map STAYS in new position (doesn't bounce back) to avoid showing blue background
+        // Citymapper-style parallax: map scales/expands with panel drag (elastic effect)
+        // When panel drags up, map expands; when panel drags down, map stays in place
         if (mapViewContainer) {
-            const parallaxFactor = 0.5; // 50% of panel movement
+            const parallaxFactor = 0.5; // 50% of panel movement (more noticeable)
             const panelDelta = next - startVisible; // how much panel moved from start
             const panelRange = maxPx - minPx; // total possible movement
             const progress = panelDelta / panelRange; // normalized progress [0..1]
             
-            // Map follows panel in BOTH directions (up and down)
-            const scaleAmount = 1 + (progress * 0.08); // scale based on position
-            const translateAmount = -panelDelta * parallaxFactor; // translate with panel
-            
-            mapViewContainer.style.transform = `translateY(${translateAmount}px) scaleY(${scaleAmount})`;
-            mapViewContainer.style.transformOrigin = 'center top'; // scale from top
+            // Only apply parallax when dragging UP (positive panelDelta)
+            // When dragging DOWN, keep map in place to avoid showing blue background
+            if (panelDelta > 0) {
+                // Dragging UP: map expands and moves up
+                const scaleAmount = 1 + (progress * 0.08); // up to 8% taller when fully dragged up
+                const translateAmount = -panelDelta * parallaxFactor; // translate up
+                
+                mapViewContainer.style.transform = `translateY(${translateAmount}px) scaleY(${scaleAmount})`;
+                mapViewContainer.style.transformOrigin = 'center top'; // scale from top
+            } else {
+                // Dragging DOWN: keep map in original position (no parallax)
+                mapViewContainer.style.transform = 'translateY(0) scaleY(1)';
+            }
             mapViewContainer.style.transition = 'none'; // no transition during drag
         }
         
@@ -2193,13 +2200,10 @@ function setupPanelDrag() {
         pendingDrag = false;
         panelDragging = false;
         
-        // Citymapper style: map STAYS in position (doesn't return to 0)
-        // This prevents blue background from showing during elastic return
-        // The map position is now tied to panel position permanently
+        // Reset map parallax with smooth ease-out (no bounce to avoid blue background)
         if (mapViewContainer) {
-            // Keep current transform, just enable smooth transitions for future snapping
-            mapViewContainer.style.transition = 'transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
-            // DON'T reset to translateY(0) - keep the map where it is!
+            mapViewContainer.style.transition = 'transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94)'; // smooth ease-out, no overshoot
+            mapViewContainer.style.transform = 'translateY(0) scaleY(1)'; // return to original position and scale
         }
         
         // We'll handle inertia manually; disable CSS transition during the glide

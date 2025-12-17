@@ -72,8 +72,8 @@ html, body {
    1. TOP MAP SECTION (60%)
    ========================================= */
 .map-view-container {
-    height: calc(var(--vh, 1vh) * 100);
-    /* 100vh - full viewport height so map always fills screen regardless of parallax */
+    height: calc(var(--vh, 1vh) * 62);
+    /* 62% - extends 2vh behind panel so corners show against grey map, not blue background */
     position: relative;
     width: 100%;
     z-index: 1;
