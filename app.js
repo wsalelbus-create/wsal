@@ -1441,7 +1441,10 @@ function initMap() {
     walkTileLayer = L.tileLayer.cached('https://{s}.basemaps.cartocdn.com/rastertiles/voyager_nolabels/{z}/{x}/{y}{r}.png', {
         attribution: '&copy; OpenStreetMap contributors &copy; CARTO',
         maxZoom: 19,
-        subdomains: 'abcd'
+        subdomains: 'abcd',
+        keepBuffer: 8, // keep 8 tile rows/cols in buffer (default is 2) - prevents grey during parallax
+        updateWhenIdle: false, // update tiles during pan/zoom for smoother experience
+        updateWhenZooming: true
     });
     // Fallback to OSM base if Carto tiles fail to load
     try {
@@ -1464,7 +1467,10 @@ function initMap() {
         maxZoom: 19,
         subdomains: 'abcd',
         pane: 'labels',
-        opacity: 0.95
+        opacity: 0.95,
+        keepBuffer: 8, // keep 8 tile rows/cols in buffer - prevents grey during parallax
+        updateWhenIdle: false,
+        updateWhenZooming: true
     });
 
     // Use clean basemap by default in all modes

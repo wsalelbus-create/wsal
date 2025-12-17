@@ -94,12 +94,12 @@ html, body {
 
 #map-container {
     width: 100%;
-    height: calc(100% + 120px); /* taller than container - provides buffer above and below */
+    height: calc(100% + 200px); /* much taller - provides large buffer for parallax */
     min-height: 360px;
     /* Leaflet needs explicit height */
     background: #e8e8e8; /* light grey to avoid blue flash during tile loading */
     position: absolute;
-    top: -60px; /* shift up so extra height is hidden above - creates buffer for parallax */
+    top: -100px; /* shift up so extra height is hidden above - creates 100px buffer */
     left: 0;
     /* Performance optimizations */
     transform: translate3d(0, 0, 0);
