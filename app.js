@@ -1484,9 +1484,14 @@ function initMap() {
     mapInitialized = true;
     updateMap();
 
-    // Invalidate size to ensure it fills the 60% container correctly
+    // Invalidate size to ensure map renders at the oversized dimensions (130% height)
+    // This forces Leaflet to load more tiles to fill the larger area
     setTimeout(() => {
         map.invalidateSize();
+        // Force immediate tile load by panning slightly and back
+        const center = map.getCenter();
+        map.panBy([1, 1], {animate: false});
+        map.panBy([-1, -1], {animate: false});
     }, 200);
 
     // Initialize heading sensors (permission will be requested on first gesture if needed)
