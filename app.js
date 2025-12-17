@@ -224,15 +224,20 @@ function renderBusStations(withDelay = false, fadeIn = false) {
     const distanceFromLat = userLat || anchorLat;
     const distanceFromLon = userLon || anchorLon;
 
-    nearby.forEach(({ station, distKm }) => {
+    nearby.forEach(({ station, distKm }, index) => {
         const card = document.createElement('div');
         card.className = 'station-card';
+        
+        // Add fade-in animation with staggered delay
+        card.style.opacity = '0';
+        card.style.animation = `fadeInUp 0.4s ease forwards`;
+        card.style.animationDelay = `${index * 0.08}s`;
 
         const badge = stationBadgeFor(station.name);
         const served = station.routes.map(r => r.number).join(', ');
         
         // Calculate distance from USER GPS position (not map center)
-        const actualDistKm = haversine(distanceFromLat, distanceFromLon, station.lat, station.lon);
+        const actualDistKm = getDistanceFromLatLonInKm(distanceFromLat, distanceFromLon, station.lat, station.lon);
         const distanceText = `${actualDistKm.toFixed(1)} km`;
 
         // Top header
