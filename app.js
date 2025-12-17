@@ -1636,8 +1636,14 @@ function updateMap() {
 
         if (uiMode === 'walk' && station) {
             // Fit map to show both markers
+            // Account for oversized map (180% height at -65% top) - adjust padding to fit visible area
             const bounds = L.latLngBounds([[userLat, userLon], [station.lat, station.lon]]);
-            map.fitBounds(bounds, { padding: [50, 50] });
+            // Map is 180% height, visible area is ~55% of map height (from -65% to -10%)
+            // Need much larger top padding to account for hidden area above
+            map.fitBounds(bounds, { 
+                paddingTopLeft: [50, 350],  // large top padding for hidden area above
+                paddingBottomRight: [50, 100] // smaller bottom padding
+            });
         } else if (uiMode === 'idle') {
             map.setView([userLat, userLon], 16);
         }
@@ -1738,7 +1744,12 @@ async function renderOsrmRoute(fromLat, fromLon, toLat, toLon) {
         map.on('zoomend', applyWalkRouteStyle);
         try {
             const bounds = routeLayer.getBounds();
-            map.fitBounds(bounds, { padding: [50, 50] });
+            // Account for oversized map (180% height at -65% top) - adjust padding to fit visible area
+            // Map is 180% height, visible area is ~55% of map height (from -65% to -10%)
+            map.fitBounds(bounds, { 
+                paddingTopLeft: [50, 350],  // large top padding for hidden area above
+                paddingBottomRight: [50, 100] // smaller bottom padding
+            });
         } catch {}
     }
     if (typeof route.duration === 'number' && walkTimeText) {
