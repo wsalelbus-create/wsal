@@ -99,7 +99,9 @@ html, body {
     /* Leaflet needs explicit height */
     background: #e8e8e8; /* light grey to avoid blue flash during tile loading */
     position: absolute;
-    top: -30%; /* shift up - balanced buffer above and below for better centering */
+    /* Calculation: visible area center is ~30vh, map is 160vh tall
+       To center map at 30vh: top = 30vh - (160vh / 2) = 30vh - 80vh = -50vh = -50% */
+    top: -50%; /* shift up so map center aligns with visible area center (~30vh from viewport top) */
     left: -10%; /* center the oversized map horizontally - 10% buffer left and right */
     /* Performance optimizations */
     transform: translate3d(0, 0, 0);
