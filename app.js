@@ -202,8 +202,8 @@ function renderBusStations(withDelay = false, fadeIn = false) {
     // Entering Bus mode list resets any detail drill-down state
     busDetailActive = false;
 
-    // Anchor position: use MAP CENTER if map exists, otherwise user location
-    // This allows stations to reorder when user pans the map
+    // Anchor position for ORDERING: use MAP CENTER if map exists, otherwise user location
+    // This allows stations to reorder when user pans the map (crosshair position)
     let anchorLat, anchorLon;
     if (map && mapInitialized) {
         const center = map.getCenter();
@@ -218,7 +218,19 @@ function renderBusStations(withDelay = false, fadeIn = false) {
         anchorLon = fallback.lon;
     }
 
+    // Get stations ordered by crosshair position
     const nearby = nearestStations(anchorLat, anchorLon, 5);
+    
+    // Distance position for DISPLAY: always use USER GPS position
+    let distanceLat, distanceLon;
+    if (userLat && userLon) {
+        distanceLat = userLat;
+        distanceLon = userLon;
+    } else {
+        // Fallback to anchor if no GPS
+        distanceLat = anchorLat;
+        distanceLon = anchorLon;
+    }
 
     nearby.forEach(({ station, distKm }) => {
         const card = document.createElement('div');
@@ -226,7 +238,10 @@ function renderBusStations(withDelay = false, fadeIn = false) {
 
         const badge = stationBadgeFor(station.name);
         const served = station.routes.map(r => r.number).join(', ');
-        const distanceText = `${distKm.toFixed(1)} km`;
+        
+        // Calculate distance from USER GPS position (not crosshair)
+        const displayDistKm = getDistanceFromLatLonInKm(distanceLat, distanceLon, station.lat, station.lon);
+        const distanceText = `${displayDistKm.toFixed(1)} km`;
 
         // Top header
         const headerHtml = `
@@ -1518,16 +1533,12 @@ function initMap() {
     map.on('moveend', () => {
         try {
             if (uiMode === 'bus' && !busDetailActive) {
-                // Hide crosshair after map stops
-                const crosshair = document.getElementById('map-crosshair');
-                if (crosshair) {
-                    setTimeout(() => crosshair.classList.remove('visible'), 300);
-                }
+                // Keep crosshair visible (don't hide it)
                 
                 // Debounce reordering - wait 300ms after map stops moving
                 clearTimeout(reorderTimeout);
                 reorderTimeout = setTimeout(() => {
-                    renderBusStations(); // reorder stations
+                    renderBusStations(true); // reorder with loading spinner
                 }, 300);
             }
         } catch {}
@@ -1852,6 +1863,13 @@ function setUIMode(mode) {
     if (floatingControlsEl) {
         if (mode === 'walk' && busDetailActive) floatingControlsEl.classList.add('hidden');
         else floatingControlsEl.classList.remove('hidden');
+    }
+
+    // Crosshair: show in bus mode, hide in other modes
+    const crosshair = document.getElementById('map-crosshair');
+    if (crosshair) {
+        if (mode === 'bus' && !busDetailActive) crosshair.classList.add('visible');
+        else crosshair.classList.remove('visible');
     }
 
     // Basemap policy: always use clean no-labels + labels overlay in ALL modes
