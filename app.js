@@ -49,13 +49,17 @@ function installViewportPolyfill() {
             let h = 0;
             
             if (isPWA) {
-                // PWA: use innerHeight directly for stable measurements
+                // PWA: use innerHeight directly, but account for any UI chrome
+                // In PWA, innerHeight is the full viewport without browser UI
                 h = window.innerHeight || document.documentElement?.clientHeight || 800;
             } else {
-                // Safari browser: prefer visualViewport for dynamic toolbar handling
-                h = (window.visualViewport && typeof window.visualViewport.height === 'number')
-                    ? window.visualViewport.height
-                    : (window.innerHeight || document.documentElement?.clientHeight || 800);
+                // Safari browser: use visualViewport which accounts for dynamic toolbar
+                // When toolbar is visible, visualViewport.height is smaller
+                if (window.visualViewport && typeof window.visualViewport.height === 'number') {
+                    h = window.visualViewport.height;
+                } else {
+                    h = window.innerHeight || document.documentElement?.clientHeight || 800;
+                }
             }
             
             if (!h || h < 200) {
@@ -63,7 +67,8 @@ function installViewportPolyfill() {
             }
             const vh = h * 0.01;
             document.documentElement.style.setProperty('--vh', `${vh}px`);
-            console.log(`[VH Polyfill] ${isPWA ? 'PWA' : 'Safari'} mode: ${h}px viewport, --vh = ${vh}px`);
+            document.documentElement.style.setProperty('--viewport-height', `${h}px`);
+            console.log(`[VH Polyfill] ${isPWA ? 'PWA' : 'Safari'} mode: ${h}px viewport, --vh = ${vh}px, innerHeight=${window.innerHeight}, visualViewport=${window.visualViewport?.height || 'N/A'}`);
         } catch {}
     };
     apply();
@@ -2292,15 +2297,15 @@ requestAnimationFrame(() => {
         setupPanelDrag();
         installBounceGuard();
         
-        // Force recalculation after additional delay for PWA
-        setTimeout(() => {
+        // Force multiple recalculations to ensure correct positioning in both Safari and PWA
+        const recalculate = () => {
             try {
                 installViewportPolyfill();
                 const minPx = vhToPx(PANEL_MIN_VH);
                 const panel = document.querySelector('.arrivals-panel');
                 if (panel && window._setPanelVisibleHeight) {
                     const currentVis = parseFloat(panel.dataset.visibleH || '0');
-                    console.log(`[Panel Init] Current: ${currentVis}px, Target: ${minPx}px`);
+                    console.log(`[Panel Init] Current: ${currentVis}px, Target: ${minPx}px, PANEL_MIN_VH: ${PANEL_MIN_VH}vh`);
                     if (Math.abs(currentVis - minPx) > 5) {
                         panel.style.transition = 'none';
                         window._setPanelVisibleHeight(minPx);
@@ -2311,7 +2316,12 @@ requestAnimationFrame(() => {
             } catch (e) {
                 console.error('[Panel Init] Error:', e);
             }
-        }, 150);
+        };
+        
+        // Recalculate at multiple intervals to catch PWA viewport changes
+        setTimeout(recalculate, 100);
+        setTimeout(recalculate, 250);
+        setTimeout(recalculate, 500);
     });
 });
 // Keep skyline sizing/anchoring updated on viewport changes (Safari + PWA)
