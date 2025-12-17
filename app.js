@@ -63,9 +63,12 @@ function installViewportPolyfill() {
             }
             const vh = h * 0.01;
             document.documentElement.style.setProperty('--vh', `${vh}px`);
+            console.log(`[VH Polyfill] ${isPWA ? 'PWA' : 'Safari'} mode: ${h}px viewport, --vh = ${vh}px`);
         } catch {}
     };
     apply();
+    // Apply immediately on next frame to ensure DOM is ready
+    requestAnimationFrame(apply);
     window.addEventListener('resize', apply);
     window.addEventListener('orientationchange', apply);
     try { if (window.visualViewport) window.visualViewport.addEventListener('resize', apply); } catch {}
@@ -2280,27 +2283,37 @@ function installBounceGuard() {
     }, { passive: false });
 }
 
+// Install viewport polyfill FIRST before any layout calculations
 installViewportPolyfill();
-setupPanelDrag();
-installBounceGuard();
-// Force recalculation after a brief delay to ensure polyfill has applied in PWA
-setTimeout(() => {
-    try {
-        installViewportPolyfill();
-        const minPx = vhToPx(PANEL_MIN_VH);
-        const panel = document.querySelector('.arrivals-panel');
-        if (panel && window._setPanelVisibleHeight) {
-            // Re-initialize panel position with corrected vh values
-            const currentVis = parseFloat(panel.dataset.visibleH || '0');
-            if (Math.abs(currentVis - minPx) > 5) {
-                // Only update if significantly different
-                panel.style.transition = 'none';
-                window._setPanelVisibleHeight(minPx);
-                setTimeout(() => { panel.style.transition = ''; }, 50);
+
+// Wait for polyfill to fully apply before initializing panel
+requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+        setupPanelDrag();
+        installBounceGuard();
+        
+        // Force recalculation after additional delay for PWA
+        setTimeout(() => {
+            try {
+                installViewportPolyfill();
+                const minPx = vhToPx(PANEL_MIN_VH);
+                const panel = document.querySelector('.arrivals-panel');
+                if (panel && window._setPanelVisibleHeight) {
+                    const currentVis = parseFloat(panel.dataset.visibleH || '0');
+                    console.log(`[Panel Init] Current: ${currentVis}px, Target: ${minPx}px`);
+                    if (Math.abs(currentVis - minPx) > 5) {
+                        panel.style.transition = 'none';
+                        window._setPanelVisibleHeight(minPx);
+                        console.log(`[Panel Init] Corrected to ${minPx}px`);
+                        setTimeout(() => { panel.style.transition = ''; }, 50);
+                    }
+                }
+            } catch (e) {
+                console.error('[Panel Init] Error:', e);
             }
-        }
-    } catch {}
-}, 100);
+        }, 150);
+    });
+});
 // Keep skyline sizing/anchoring updated on viewport changes (Safari + PWA)
 window.addEventListener('resize', () => { try { applySkylineSizing(); applyPWASkylineAnchoring(); } catch {} });
 window.addEventListener('orientationchange', () => { try { applySkylineSizing(); applyPWASkylineAnchoring(); } catch {} });
