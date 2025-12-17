@@ -565,6 +565,11 @@ html, body {
     padding-top: 32px; /* reduced from 120px - no selector bar in bus mode */
 }
 
+/* Walking detailed screen: both bus-mode and no-selector - need more space for badge overlay */
+.arrivals-panel.bus-mode.no-selector {
+    padding-top: 80px; /* enough space for badge overlay (44px) + spacing */
+}
+
 /* In Bus mode, make the list non-scrollable and let it size to content.
    The sheet itself will expand up to the viewport to reveal items. */
 .arrivals-panel.bus-mode .routes-list {
@@ -598,6 +603,18 @@ html, body {
     padding: 14px 16px 10px;
     box-shadow: 0 2px 8px rgba(0,0,0,0.04);
     position: relative; /* anchor overlay icon */
+    animation: fadeInCard 0.2s ease;
+}
+
+@keyframes fadeInCard {
+    from {
+        opacity: 0;
+        transform: translateY(-4px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 /* Overlay bus icon placed outside the card, aligned above the badge */
