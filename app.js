@@ -1553,11 +1553,23 @@ function initMap() {
             if (uiMode === 'bus' && !busDetailActive) {
                 // Keep crosshair visible (don't hide it)
                 
-                // Debounce reordering - wait 300ms after map stops moving
+                // Fade out existing cards before reordering
+                if (routesListEl && routesListEl.children.length > 0) {
+                    routesListEl.style.opacity = '0';
+                    routesListEl.style.transition = 'opacity 0.15s ease';
+                }
+                
+                // Debounce reordering - wait for fade out to complete
                 clearTimeout(reorderTimeout);
                 reorderTimeout = setTimeout(() => {
                     renderBusStations(true); // reorder with loading spinner
-                }, 300);
+                    // Fade back in
+                    if (routesListEl) {
+                        setTimeout(() => {
+                            routesListEl.style.opacity = '1';
+                        }, 50);
+                    }
+                }, 200);
             }
         } catch {}
     });
@@ -2480,14 +2492,22 @@ function setupPanelDrag() {
     arrivalsPanel.addEventListener('touchstart', (e) => {
         const t = e.touches[0];
         handleStart(t.clientY, e.target);
+        // Stop propagation to prevent map from receiving touch events
+        e.stopPropagation();
         // do NOT preventDefault on touchstart; allow taps to become clicks
     }, { passive: false, capture: true });
     arrivalsPanel.addEventListener('touchmove', (e) => {
         const t = e.touches[0];
         handleMove(t.clientY);
+        // Always stop propagation to prevent map interaction
+        e.stopPropagation();
         if (dragging) e.preventDefault();
     }, { passive: false, capture: true });
-    arrivalsPanel.addEventListener('touchend', () => handleEnd());
+    arrivalsPanel.addEventListener('touchend', (e) => {
+        handleEnd();
+        // Stop propagation to prevent map from receiving touch events
+        e.stopPropagation();
+    });
 
     // Document-level capture to guarantee drag from anywhere inside the panel
     document.addEventListener('touchstart', (e) => {

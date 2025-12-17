@@ -445,6 +445,7 @@ html, body {
     align-items: stretch;
     overflow: visible;              /* allow floating controls to show above panel */
     touch-action: none;             /* gestures handled by JS for sheet drag */
+    pointer-events: auto;           /* block touches from reaching map below */
     /* Initial position: collapsed (40vh visible) - prevents flash at bottom on load */
     transform: translateY(calc(var(--vh, 1vh) * 45)); /* start pushed down (85vh - 40vh = 45vh offset) */
     transition: transform 0.25s ease;  /* smooth translate change */
