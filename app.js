@@ -2459,7 +2459,6 @@ function installBounceGuard() {
 installViewportPolyfill();
 
 // IMMEDIATELY position panel to prevent flash - don't wait for requestAnimationFrame
-const arrivalsPanel = document.querySelector('.arrivals-panel');
 if (arrivalsPanel) {
     const minPx = vhToPx(PANEL_MIN_VH);
     const maxPx = vhToPx(PANEL_MAX_VH);
