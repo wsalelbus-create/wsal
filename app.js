@@ -2248,6 +2248,18 @@ function setupPanelDrag() {
     window._getPanelVisibleHeight = getPanelVisibleHeight;
 
     const handleStart = (y, target) => {
+        // Reject touches on map elements
+        const onMap = target && (
+            target.closest('.leaflet-container') || 
+            target.closest('#map-container') ||
+            target.closest('.map-view-container')
+        );
+        if (onMap) return false;
+        
+        // Reject touches outside the visible panel area
+        const panelRect = arrivalsPanel.getBoundingClientRect();
+        if (y < panelRect.top) return false;
+        
         const list = arrivalsPanel.querySelector('.routes-list');
         const inList = !!(target && target.closest && target.closest('.routes-list'));
         const isExpanded = arrivalsPanel.classList.contains('expanded');
@@ -2484,7 +2496,22 @@ function setupPanelDrag() {
     });
 
     arrivalsPanel.addEventListener('touchstart', (e) => {
+        // Don't capture touches on the map area (even if panel element extends there)
+        const onMap = e.target && (
+            e.target.closest('.leaflet-container') || 
+            e.target.closest('#map-container') ||
+            e.target.closest('.map-view-container')
+        );
+        if (onMap) return;
+        
+        // Also check if touch is in the visible panel area (not the translated-out part)
         const t = e.touches[0];
+        const panelRect = arrivalsPanel.getBoundingClientRect();
+        const touchY = t.clientY;
+        
+        // Only handle touches in the visible part of the panel
+        if (touchY < panelRect.top) return;
+        
         handleStart(t.clientY, e.target);
         // do NOT preventDefault on touchstart; allow taps to become clicks
     }, { passive: false, capture: true });
