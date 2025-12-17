@@ -2209,8 +2209,8 @@ function setupPanelDrag() {
                 const scaleAmount = 1 + (progress * 0.05); // subtle 5% scale
                 const translateAmount = -panelDelta * parallaxFactor; // subtle translate
                 
-                // Clamp translate to prevent revealing edges (increased since map is now 150% height)
-                const maxTranslate = 120; // max 120px movement in either direction (we have 25% buffer = ~150px at typical viewport)
+                // Clamp translate to prevent revealing edges (increased since map is now 170% height)
+                const maxTranslate = 180; // max 180px movement in either direction (we have 35% buffer = ~210px at typical viewport)
                 const clampedTranslate = Math.max(-maxTranslate, Math.min(maxTranslate, translateAmount));
                 
                 mapInner.style.transform = `translateY(${clampedTranslate}px) scale(${scaleAmount})`;
