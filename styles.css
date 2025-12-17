@@ -445,10 +445,16 @@ html, body {
     align-items: stretch;
     overflow: visible;              /* allow floating controls to show above panel */
     touch-action: none;             /* gestures handled by JS for sheet drag */
+    pointer-events: none;           /* CRITICAL: don't capture touches in translated-out area */
     /* Initial position: collapsed (40vh visible) - prevents flash at bottom on load */
     transform: translateY(calc(var(--vh, 1vh) * 45)); /* start pushed down (85vh - 40vh = 45vh offset) */
     transition: transform 0.25s ease;  /* smooth translate change */
     will-change: transform;
+}
+
+/* Re-enable pointer events for visible panel content */
+.arrivals-panel > * {
+    pointer-events: auto;
 }
 
 /* Expanded sheet height (drag up) */
