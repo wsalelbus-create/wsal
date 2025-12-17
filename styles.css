@@ -72,11 +72,11 @@ html, body {
    1. TOP MAP SECTION (60%)
    ========================================= */
 .map-view-container {
-    height: calc(var(--vh, 1vh) * 100); /* full viewport height - extends behind panel */
+    height: calc(var(--vh, 1vh) * 62); /* 62% visible area */
     position: relative;
     width: 100%;
     z-index: 1;
-    overflow: hidden;
+    overflow: hidden; /* clip map to visible area */
     background: #e8e8e8; /* light grey to prevent blue flash */
     padding-bottom: 0;
     margin-bottom: 0;
@@ -94,10 +94,13 @@ html, body {
 
 #map-container {
     width: 100%;
-    height: 100%;
+    height: calc(100% + 120px); /* taller than container - provides buffer above and below */
     min-height: 360px;
     /* Leaflet needs explicit height */
     background: #e8e8e8; /* light grey to avoid blue flash during tile loading */
+    position: absolute;
+    top: -60px; /* shift up so extra height is hidden above - creates buffer for parallax */
+    left: 0;
     /* Performance optimizations */
     transform: translate3d(0, 0, 0);
     /* Force GPU acceleration */
