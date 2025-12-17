@@ -2216,13 +2216,8 @@ function setupPanelDrag() {
         pendingDrag = false;
         panelDragging = false;
         
-        // Reset map parallax synchronized with panel transition for smooth UX
-        const mapInner = document.getElementById('map-container');
-        if (mapInner) {
-            // Use SAME timing as panel snap: 0.24s cubic-bezier(.2,.7,.2,1)
-            mapInner.style.transition = 'transform 0.24s cubic-bezier(.2,.7,.2,1)';
-            mapInner.style.transform = 'translateY(0) scale(1)'; // return to original position and scale
-        }
+        // DON'T reset map immediately - let it animate together with panel snap
+        // Map will be reset after we determine the snap target
         
         // We'll handle inertia manually; disable CSS transition during the glide
         arrivalsPanel.style.transition = 'none';
@@ -2263,6 +2258,14 @@ function setupPanelDrag() {
                     const target = pickSnapTarget(h, dir * vNow);
                     arrivalsPanel.style.transition = 'transform 0.24s cubic-bezier(.2,.7,.2,1)';
                     setPanelVisibleHeight(target);
+                    
+                    // Reset map parallax synchronized with panel snap
+                    const mapInner = document.getElementById('map-container');
+                    if (mapInner) {
+                        mapInner.style.transition = 'transform 0.24s cubic-bezier(.2,.7,.2,1)';
+                        mapInner.style.transform = 'translateY(0) scale(1)';
+                    }
+                    
                     if (target >= (minPx + maxPx) / 2) arrivalsPanel.classList.add('expanded');
                     else arrivalsPanel.classList.remove('expanded');
                     lastMoves = [];
@@ -2278,6 +2281,14 @@ function setupPanelDrag() {
             const target = pickSnapTarget(projected, velocity);
             arrivalsPanel.style.transition = 'transform 0.24s cubic-bezier(.2,.7,.2,1)';
             setPanelVisibleHeight(target);
+            
+            // Reset map parallax synchronized with panel snap
+            const mapInner = document.getElementById('map-container');
+            if (mapInner) {
+                mapInner.style.transition = 'transform 0.24s cubic-bezier(.2,.7,.2,1)';
+                mapInner.style.transform = 'translateY(0) scale(1)';
+            }
+            
             if (target >= (minPx + maxPx) / 2) arrivalsPanel.classList.add('expanded');
             else arrivalsPanel.classList.remove('expanded');
             lastMoves = [];
