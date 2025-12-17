@@ -2188,31 +2188,17 @@ function setupPanelDrag() {
         while (lastMoves.length > 2 && (now - lastMoves[0].t) > 140) lastMoves.shift();
     };
 
-    // Helper to update map parallax based on panel position
-    const updateMapParallax = (currentHeight, transition = 'none') => {
-        if (!mapViewContainer) return;
-        const minPx = vhToPx(PANEL_MIN_VH);
-        const maxPx = getPanelMaxPx();
-        const panelDelta = currentHeight - minPx; // how much above minimum
-        const panelRange = maxPx - minPx;
-        const progress = panelDelta / panelRange; // normalized [0..1]
-        
-        const parallaxFactor = 0.5;
-        const scaleAmount = 1 + (progress * 0.08); // up to 8% taller
-        const translateAmount = -panelDelta * parallaxFactor;
-        
-        mapViewContainer.style.transition = transition;
-        mapViewContainer.style.transform = `translateY(${translateAmount}px) scaleY(${scaleAmount})`;
-        mapViewContainer.style.transformOrigin = 'center top';
-    };
-
     const handleEnd = () => {
         if (!dragging) return;
         dragging = false;
         pendingDrag = false;
         panelDragging = false;
         
-        // DON'T reset map immediately - let it animate with panel during inertia/snap
+        // Reset map parallax with smooth ease-out (no bounce to avoid blue background)
+        if (mapViewContainer) {
+            mapViewContainer.style.transition = 'transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94)'; // smooth ease-out, no overshoot
+            mapViewContainer.style.transform = 'translateY(0) scaleY(1)'; // return to original position and scale
+        }
         
         // We'll handle inertia manually; disable CSS transition during the glide
         arrivalsPanel.style.transition = 'none';
@@ -2245,7 +2231,6 @@ function setupPanelDrag() {
                 const vNow = Math.max(0, absV - DECEL * elapsed);
                 h = clamp(h + dir * vNow * dt, minPx, maxPx);
                 setPanelVisibleHeight(h);
-                updateMapParallax(h, 'none'); // update map during inertia glide
                 // Stop if speed nearly zero or bounds reached
                 const nearBound = (h <= minPx + 0.5) || (h >= maxPx - 0.5);
                 if ((elapsed >= MIN_GLIDE_MS && vNow <= 0.009) || nearBound) {
@@ -2254,7 +2239,6 @@ function setupPanelDrag() {
                     const target = pickSnapTarget(h, dir * vNow);
                     arrivalsPanel.style.transition = 'transform 0.24s cubic-bezier(.2,.7,.2,1)';
                     setPanelVisibleHeight(target);
-                    updateMapParallax(target, 'transform 0.24s cubic-bezier(.2,.7,.2,1)'); // animate map to final position
                     if (target >= (minPx + maxPx) / 2) arrivalsPanel.classList.add('expanded');
                     else arrivalsPanel.classList.remove('expanded');
                     lastMoves = [];
@@ -2270,7 +2254,6 @@ function setupPanelDrag() {
             const target = pickSnapTarget(projected, velocity);
             arrivalsPanel.style.transition = 'transform 0.24s cubic-bezier(.2,.7,.2,1)';
             setPanelVisibleHeight(target);
-            updateMapParallax(target, 'transform 0.24s cubic-bezier(.2,.7,.2,1)'); // animate map to final position
             if (target >= (minPx + maxPx) / 2) arrivalsPanel.classList.add('expanded');
             else arrivalsPanel.classList.remove('expanded');
             lastMoves = [];
