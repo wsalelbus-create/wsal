@@ -1413,10 +1413,19 @@ stationModal.addEventListener('click', (e) => {
 function initMap() {
     const mapContainer = document.getElementById('map-container');
 
-    // Initialize Leaflet map
+    // Initialize Leaflet map with performance optimizations
     map = L.map(mapContainer, {
         zoomControl: false,
-        attributionControl: false
+        attributionControl: false,
+        preferCanvas: true, // use Canvas renderer for better performance
+        renderer: L.canvas({ padding: 0.5 }), // add padding to canvas for smoother panning
+        zoomAnimation: true,
+        fadeAnimation: true,
+        markerZoomAnimation: true,
+        // Aggressive tile loading
+        wheelPxPerZoomLevel: 120,
+        zoomSnap: 0.5, // allow half-zoom levels for smoother experience
+        zoomDelta: 0.5
     }).setView([36.7700, 3.0553], 14); // Slightly closer zoom
 
     // Pane for labels overlay (above routes but does not block interactions)
@@ -1438,13 +1447,21 @@ function initMap() {
     });
 
     // Clean basemap with clearer landcover (Carto Voyager No Labels)
+    // Using Carto CDN which is faster than standard OSM
     walkTileLayer = L.tileLayer.cached('https://{s}.basemaps.cartocdn.com/rastertiles/voyager_nolabels/{z}/{x}/{y}{r}.png', {
         attribution: '&copy; OpenStreetMap contributors &copy; CARTO',
         maxZoom: 19,
+        minZoom: 10,
         subdomains: 'abcd',
-        keepBuffer: 8, // keep 8 tile rows/cols in buffer (default is 2) - prevents grey during parallax
+        keepBuffer: 10, // increased buffer - keep more tiles loaded
         updateWhenIdle: false, // update tiles during pan/zoom for smoother experience
-        updateWhenZooming: true
+        updateWhenZooming: true,
+        updateInterval: 50, // update more frequently (default 200ms)
+        crossOrigin: true, // enable CORS for better caching
+        // Performance optimizations
+        detectRetina: false, // disable retina to load faster (smaller tiles)
+        tileSize: 256, // standard tile size for faster loading
+        zoomOffset: 0
     });
     // Fallback to OSM base if Carto tiles fail to load
     try {
@@ -1465,12 +1482,18 @@ function initMap() {
     walkLabelsLayer = L.tileLayer.cached('https://{s}.basemaps.cartocdn.com/rastertiles/voyager_only_labels/{z}/{x}/{y}{r}.png', {
         attribution: '&copy; OpenStreetMap contributors &copy; CARTO',
         maxZoom: 19,
+        minZoom: 10,
         subdomains: 'abcd',
         pane: 'labels',
         opacity: 0.95,
-        keepBuffer: 8, // keep 8 tile rows/cols in buffer - prevents grey during parallax
+        keepBuffer: 10, // increased buffer
         updateWhenIdle: false,
-        updateWhenZooming: true
+        updateWhenZooming: true,
+        updateInterval: 50,
+        crossOrigin: true,
+        detectRetina: false,
+        tileSize: 256,
+        zoomOffset: 0
     });
 
     // Use clean basemap by default in all modes
@@ -1480,9 +1503,33 @@ function initMap() {
     mapInitialized = true;
     updateMap();
 
-    // Invalidate size to ensure it fills the 60% container correctly
+    // Invalidate size to ensure it fills the container correctly
     setTimeout(() => {
         map.invalidateSize();
+        
+        // Aggressively preload tiles in all directions after initial load
+        // This ensures tiles are ready when user drags panel
+        try {
+            const center = map.getCenter();
+            const zoom = map.getZoom();
+            // Pan slightly in all directions to trigger tile loading, then return
+            const offset = 0.002; // small offset to trigger adjacent tile loading
+            setTimeout(() => {
+                map.panTo([center.lat + offset, center.lng], { animate: false, duration: 0 });
+                setTimeout(() => {
+                    map.panTo([center.lat - offset, center.lng], { animate: false, duration: 0 });
+                    setTimeout(() => {
+                        map.panTo([center.lat, center.lng + offset], { animate: false, duration: 0 });
+                        setTimeout(() => {
+                            map.panTo([center.lat, center.lng - offset], { animate: false, duration: 0 });
+                            setTimeout(() => {
+                                map.panTo(center, { animate: false, duration: 0 }); // return to center
+                            }, 50);
+                        }, 50);
+                    }, 50);
+                }, 50);
+            }, 300);
+        } catch {}
     }, 200);
 
     // Initialize heading sensors (permission will be requested on first gesture if needed)
