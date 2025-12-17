@@ -2097,7 +2097,8 @@ function setupPanelDrag() {
     const setPanelVisibleHeight = (visiblePx) => {
         const minPx = vhToPx(PANEL_MIN_VH);
         const maxPx = getPanelMaxPx();
-        const vis = clamp(visiblePx, minPx, maxPx);
+        // Allow elastic bounce: don't clamp during drag, only clamp offset calculation
+        const vis = visiblePx; // use raw value to allow over-pull
         const offset = Math.max(0, maxPx - vis); // how far to push the panel down
         arrivalsPanel.style.transform = `translateY(${offset}px)`;
         arrivalsPanel.style.height = `${maxPx}px`; // keep the panel sized to its max
@@ -2105,7 +2106,9 @@ function setupPanelDrag() {
         arrivalsPanel.style.setProperty('--panel-visible', `${vis}px`);
         arrivalsPanel.style.setProperty('--panel-max', `${maxPx}px`);
         arrivalsPanel.dataset.visibleH = String(vis);
-        updateSheetProgress(vis, minPx, maxPx);
+        // Clamp progress calculation for visual effects
+        const clampedVis = clamp(vis, minPx, maxPx);
+        updateSheetProgress(clampedVis, minPx, maxPx);
         // Keep skyline height consistent across Safari and PWA
         try { applySkylineSizing(); applyPWASkylineAnchoring(); } catch {}
     };
