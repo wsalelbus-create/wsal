@@ -1743,6 +1743,9 @@ function setUIMode(mode) {
     // Track prior mode for Back navigation
     previousMode = uiMode;
     uiMode = mode;
+    
+    // Preserve current panel position when switching modes (especially important for PWA)
+    const currentPanelHeight = getPanelVisibleHeight ? getPanelVisibleHeight() : null;
 
     // Toggle map walking badge and calorie badge visibility
     if (walkingBadgeEl) {
@@ -1844,6 +1847,26 @@ function setUIMode(mode) {
     if (arabicTitleEl) {
         if (mode === 'idle') arabicTitleEl.classList.remove('hidden');
         else arabicTitleEl.classList.add('hidden');
+    }
+    
+    // Restore panel position after mode switch (fixes PWA back button expanding panel to top)
+    if (currentPanelHeight && window._setPanelVisibleHeight) {
+        // Use requestAnimationFrame to ensure DOM updates are complete
+        requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
+                try {
+                    const panel = document.querySelector('.arrivals-panel');
+                    if (panel) {
+                        panel.style.transition = 'none';
+                        window._setPanelVisibleHeight(currentPanelHeight);
+                        setTimeout(() => { panel.style.transition = ''; }, 50);
+                        console.log(`[setUIMode] Restored panel to ${currentPanelHeight}px`);
+                    }
+                } catch (e) {
+                    console.error('[setUIMode] Panel restore error:', e);
+                }
+            });
+        });
     }
 }
 
