@@ -2259,6 +2259,17 @@ function setupPanelDrag() {
             return false;
         }
         
+        // Reject touches on skyline SVG (it extends over the map area)
+        const onSkyline = target && (
+            target.closest('#skyline-inline') ||
+            target.closest('.skyline-inline') ||
+            (target.tagName && (target.tagName.toLowerCase() === 'svg' || target.tagName.toLowerCase() === 'rect' || target.tagName.toLowerCase() === 'path') && target.closest('.arrivals-panel'))
+        );
+        if (onSkyline) {
+            console.log('[handleStart] REJECTED: touch on skyline SVG', target);
+            return false;
+        }
+        
         // Reject touches outside the visible panel area
         const panelRect = arrivalsPanel.getBoundingClientRect();
         if (y < panelRect.top) {
