@@ -1939,7 +1939,7 @@ if (compassBtn) {
 // Bottom Sheet: drag the arrivals panel up/down, no page bounce
 const mapViewContainer = document.querySelector('.map-view-container');
 const arrivalsPanel = document.querySelector('.arrivals-panel');
-const PANEL_MIN_VH = 40; // visible height when collapsed
+const PANEL_MIN_VH = 40; // visible height when collapsed (Safari reference)
 const PANEL_MAX_VH = 85; // visible height when expanded
 let panelDragging = false; // global flag to coordinate with bounce guard
 let pendingDrag = false;   // waiting to see if movement exceeds threshold
@@ -1950,7 +1950,19 @@ function vhToPx(vh) {
     try {
         const vhValue = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--vh'));
         if (vhValue && vhValue > 0) {
-            return Math.round(vhValue * vh);
+            let result = vhValue * vh;
+            
+            // PWA compensation: PWA has taller viewport (no browser UI ~100px)
+            // So 40vh in PWA = more pixels than 40vh in Safari
+            // We need to ADD pixels in PWA to make panel sit HIGHER (match Safari visual position)
+            const isPWA = (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) || !!window.navigator.standalone;
+            if (isPWA && vh === PANEL_MIN_VH) {
+                // Add ~50px to make panel sit higher in PWA (compensate for missing browser UI)
+                result += 50;
+                console.log(`[vhToPx] PWA compensation: ${vh}vh = ${Math.round(result)}px (added 50px)`);
+            }
+            
+            return Math.round(result);
         }
     } catch {}
     // Fallback to innerHeight
