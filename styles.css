@@ -79,6 +79,8 @@ html, body {
     z-index: 1;
     overflow: hidden;
     background: #e8e8e8; /* light grey to prevent blue flash */
+    padding-top: 80px; /* extra padding at top so map can move down without revealing blue */
+    margin-top: -80px; /* negative margin to compensate, keeping visual position same */
     padding-bottom: 0;
     margin-bottom: 0;
     transition: height 0.3s ease;

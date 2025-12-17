@@ -2163,27 +2163,20 @@ function setupPanelDrag() {
         const next = clamp(startVisible + delta * scale, minPx, maxPx);
         setPanelVisibleHeight(next);
         
-        // Citymapper-style parallax: map scales/expands with panel drag (elastic effect)
-        // When panel drags up, map expands; when panel drags down, map stays in place
+        // Citymapper-style parallax: map follows panel both up and down (elastic effect)
+        // Map container has extra padding-top so it can move down without revealing blue
         if (mapViewContainer) {
             const parallaxFactor = 0.5; // 50% of panel movement (more noticeable)
             const panelDelta = next - startVisible; // how much panel moved from start
             const panelRange = maxPx - minPx; // total possible movement
-            const progress = panelDelta / panelRange; // normalized progress [0..1]
+            const progress = panelDelta / panelRange; // normalized progress [-1..1]
             
-            // Only apply parallax when dragging UP (positive panelDelta)
-            // When dragging DOWN, keep map in place to avoid showing blue background
-            if (panelDelta > 0) {
-                // Dragging UP: map expands and moves up
-                const scaleAmount = 1 + (progress * 0.08); // up to 8% taller when fully dragged up
-                const translateAmount = -panelDelta * parallaxFactor; // translate up
-                
-                mapViewContainer.style.transform = `translateY(${translateAmount}px) scaleY(${scaleAmount})`;
-                mapViewContainer.style.transformOrigin = 'center top'; // scale from top
-            } else {
-                // Dragging DOWN: keep map in original position (no parallax)
-                mapViewContainer.style.transform = 'translateY(0) scaleY(1)';
-            }
+            // Apply parallax in BOTH directions for smooth, pleasurable experience
+            const scaleAmount = 1 + (progress * 0.08); // scale up when dragging up, down when dragging down
+            const translateAmount = -panelDelta * parallaxFactor; // translate follows panel movement
+            
+            mapViewContainer.style.transform = `translateY(${translateAmount}px) scaleY(${scaleAmount})`;
+            mapViewContainer.style.transformOrigin = 'center top'; // scale from top
             mapViewContainer.style.transition = 'none'; // no transition during drag
         }
         
