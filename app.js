@@ -202,11 +202,20 @@ function renderBusStations(withDelay = false) {
     // Entering Bus mode list resets any detail drill-down state
     busDetailActive = false;
 
-    // Anchor position: prefer user location
-    let anchorLat = userLat, anchorLon = userLon;
-    if (!anchorLat || !anchorLon) {
+    // Anchor position: use MAP CENTER if map exists, otherwise user location
+    // This allows stations to reorder when user pans the map
+    let anchorLat, anchorLon;
+    if (map && mapInitialized) {
+        const center = map.getCenter();
+        anchorLat = center.lat;
+        anchorLon = center.lng;
+    } else if (userLat && userLon) {
+        anchorLat = userLat;
+        anchorLon = userLon;
+    } else {
         const fallback = currentStation || STATIONS[0];
-        anchorLat = fallback.lat; anchorLon = fallback.lon;
+        anchorLat = fallback.lat;
+        anchorLon = fallback.lon;
     }
 
     const nearby = nearestStations(anchorLat, anchorLon, 5);
@@ -1493,6 +1502,16 @@ function initMap() {
         map.panBy([1, 1], {animate: false});
         map.panBy([-1, -1], {animate: false});
     }, 200);
+    
+    // Auto-reorder stations when map is moved in bus mode
+    map.on('moveend', () => {
+        try {
+            if (uiMode === 'bus' && !busDetailActive) {
+                // Reorder stations based on new map center
+                renderBusStations();
+            }
+        } catch {}
+    });
 
     // Initialize heading sensors (permission will be requested on first gesture if needed)
     initHeadingSensors();
