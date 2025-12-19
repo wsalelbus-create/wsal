@@ -2282,8 +2282,18 @@ function setupPanelDrag() {
         
         // Reject touches outside the visible panel area
         const panelRect = arrivalsPanel.getBoundingClientRect();
+        console.log('[handleStart] Panel rect check', { y, panelTop: panelRect.top, panelHeight: panelRect.height, panelBottom: panelRect.bottom });
         if (y < panelRect.top) {
             console.log('[handleStart] REJECTED: touch above panel', { y, panelTop: panelRect.top });
+            return false;
+        }
+        
+        // Additional check: reject if touching the map area (even if technically inside panel bounds)
+        // Check if the touch Y position is in the upper part of the viewport (map area)
+        const viewportHeight = window.innerHeight;
+        const mapAreaThreshold = viewportHeight * 0.6; // top 60% is map area
+        if (y < mapAreaThreshold && uiMode === 'bus') {
+            console.log('[handleStart] REJECTED: touch in map area (top 60% of viewport)', { y, threshold: mapAreaThreshold });
             return false;
         }
         
