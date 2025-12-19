@@ -2248,16 +2248,6 @@ function setupPanelDrag() {
     window._getPanelVisibleHeight = getPanelVisibleHeight;
 
     const handleStart = (y, target) => {
-        console.log('[handleStart] Touch detected', { 
-            y, 
-            target, 
-            tagName: target?.tagName, 
-            className: target?.className,
-            id: target?.id,
-            uiMode,
-            busDetailActive
-        });
-        
         // Reject touches on map elements
         const onMap = target && (
             target.closest('.leaflet-container') || 
@@ -2269,13 +2259,11 @@ function setupPanelDrag() {
             return false;
         }
         
-        // Reject touches on skyline SVG ONLY (it extends over the map area)
-        // The skyline is a large SVG with viewBox="0 0 1200 140" - check for that
+        // Reject touches on skyline SVG (it extends over the map area)
         const onSkyline = target && (
             target.closest('#skyline-inline') ||
             target.closest('.skyline-inline') ||
-            // Check if it's an SVG element with the skyline's viewBox
-            (target.ownerSVGElement && target.ownerSVGElement.getAttribute('viewBox') === '0 0 1200 140')
+            (target.tagName && (target.tagName.toLowerCase() === 'svg' || target.tagName.toLowerCase() === 'rect' || target.tagName.toLowerCase() === 'path') && target.closest('.arrivals-panel'))
         );
         if (onSkyline) {
             console.log('[handleStart] REJECTED: touch on skyline SVG', target);
@@ -2284,18 +2272,8 @@ function setupPanelDrag() {
         
         // Reject touches outside the visible panel area
         const panelRect = arrivalsPanel.getBoundingClientRect();
-        console.log('[handleStart] Panel rect check', { y, panelTop: panelRect.top, panelHeight: panelRect.height, panelBottom: panelRect.bottom });
         if (y < panelRect.top) {
             console.log('[handleStart] REJECTED: touch above panel', { y, panelTop: panelRect.top });
-            return false;
-        }
-        
-        // Additional check: reject if touching the map area (even if technically inside panel bounds)
-        // Check if the touch Y position is in the upper part of the viewport (map area)
-        const viewportHeight = window.innerHeight;
-        const mapAreaThreshold = viewportHeight * 0.6; // top 60% is map area
-        if (y < mapAreaThreshold && uiMode === 'bus') {
-            console.log('[handleStart] REJECTED: touch in map area (top 60% of viewport)', { y, threshold: mapAreaThreshold });
             return false;
         }
         

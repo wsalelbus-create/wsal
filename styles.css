@@ -1108,11 +1108,10 @@ html, body {
   opacity: 1 !important;
   margin: 0 !important;
   pointer-events: none !important;
-  z-index: -1 !important; /* BEHIND everything - negative z-index */
+  z-index: 0 !important; /* behind all content */
   overflow: hidden !important; /* clip any overflow */
   transform: translateZ(0) !important; /* force GPU layer to prevent repaints */
   will-change: auto !important;
-  touch-action: none !important; /* CRITICAL: no touch events */
 }
 
 /* Ensure SVG scales to container height */
