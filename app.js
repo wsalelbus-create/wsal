@@ -2485,6 +2485,11 @@ function setupPanelDrag() {
 
     arrivalsPanel.addEventListener('touchstart', (e) => {
         const t = e.touches[0];
+        // Only capture if touch is in the VISIBLE part of the panel
+        // Panel is positioned with transform, so check if touch Y is below panel's visual top
+        const panelRect = arrivalsPanel.getBoundingClientRect();
+        if (t.clientY < panelRect.top) return; // touch is above visible panel (on map)
+        
         handleStart(t.clientY, e.target);
         // do NOT preventDefault on touchstart; allow taps to become clicks
     }, { passive: false, capture: true });
@@ -2500,16 +2505,14 @@ function setupPanelDrag() {
         const inPanel = e.target && e.target.closest && e.target.closest('.arrivals-panel');
         if (!inPanel) return;
         
-        // Don't capture if touch is on the map (even if map is behind panel)
-        const onMap = e.target && (
-            e.target.closest('.leaflet-container') || 
-            e.target.closest('#map-container') ||
-            e.target.closest('.map-view-container')
-        );
-        if (onMap) return;
-        
         const t = e.touches && e.touches[0];
         if (!t) return;
+        
+        // Only capture if touch is in the VISIBLE part of the panel
+        // Panel is positioned with transform, so check if touch Y is below panel's visual top
+        const panelRect = arrivalsPanel.getBoundingClientRect();
+        if (t.clientY < panelRect.top) return; // touch is above visible panel (on map)
+        
         handleStart(t.clientY, e.target);
     }, { passive: false, capture: true });
     document.addEventListener('touchmove', (e) => {
