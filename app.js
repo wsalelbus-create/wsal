@@ -2459,8 +2459,15 @@ function setupPanelDrag() {
         // Only capture if touch is in the VISIBLE part of the panel
         // Panel is positioned with transform, so check if touch Y is below panel's visual top
         const panelRect = arrivalsPanel.getBoundingClientRect();
-        if (t.clientY < panelRect.top) return; // touch is above visible panel (on map)
         
+        console.log('[Panel Touch] touchY:', t.clientY, 'panelTop:', panelRect.top, 'target:', e.target.className, 'mode:', uiMode);
+        
+        if (t.clientY < panelRect.top) {
+            console.log('[Panel Touch] BLOCKED - touch above panel');
+            return; // touch is above visible panel (on map)
+        }
+        
+        console.log('[Panel Touch] CAPTURED - starting drag');
         handleStart(t.clientY, e.target);
         // do NOT preventDefault on touchstart; allow taps to become clicks
     }, { passive: false, capture: true });
