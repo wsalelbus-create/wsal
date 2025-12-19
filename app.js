@@ -2247,61 +2247,7 @@ function setupPanelDrag() {
     window._setPanelVisibleHeight = setPanelVisibleHeight;
     window._getPanelVisibleHeight = getPanelVisibleHeight;
 
-    // Only allow drags starting from valid panel surfaces (avoid map/floating controls)
-    const isDragStartAllowed = (target) => {
-        try {
-            if (!target || !target.closest) return false;
-            // Never start from the map or skyline
-            if (target.closest('.leaflet-container') || target.closest('#map-container') || target.closest('.map-view-container')) return false;
-            if (target.id === 'skyline-inline' || target.closest('#skyline-inline') || target.closest('.skyline-inline')) return false;
-            // Do not start from floating controls / station selector / quick actions / map controls / back badge
-            const rejectSelectors = [
-                '.floating-controls',
-                '.station-selector-card',
-                '#station-selector-trigger',
-                '.selector-row',
-                '.quick-actions-panel',
-                '.map-controls-stack',
-                '.map-control-btn',
-                '.install-prompt',
-                '.back-badge'
-            ];
-            for (const sel of rejectSelectors) {
-                if (target.closest(sel)) return false;
-            }
-            // Explicitly allow the grabber and the panel skin
-            if (target.closest('.sheet-grabber')) return true;
-            if (target.closest('.arrivals-panel')) return true;
-        } catch {}
-        return false;
-    };
-
     const handleStart = (y, target) => {
-        // Reject touches on map elements
-        const onMap = target && (
-            target.closest('.leaflet-container') || 
-            target.closest('#map-container') ||
-            target.closest('.map-view-container')
-        );
-        if (onMap) return false;
-        // Reject starts from disallowed UI elements
-        if (!isDragStartAllowed(target)) return false;
-        
-        // Reject touches on skyline - walk up the DOM tree
-        if (target) {
-            let el = target;
-            while (el && el !== document.body) {
-                if (el.id === 'skyline-inline' || (el.classList && el.classList.contains('skyline-inline'))) {
-                    return false;
-                }
-                el = el.parentElement || el.parentNode;
-            }
-        }
-        
-        // Reject touches outside the visible panel area
-        const panelRect = arrivalsPanel.getBoundingClientRect();
-        if (y < panelRect.top) return false;
-        
         const list = arrivalsPanel.querySelector('.routes-list');
         const inList = !!(target && target.closest && target.closest('.routes-list'));
         const isExpanded = arrivalsPanel.classList.contains('expanded');
@@ -2344,7 +2290,7 @@ function setupPanelDrag() {
                 }
             }
             const dy = Math.abs(y - startY);
-            if (dy > 10) { // higher threshold to avoid accidental drags on simple taps
+            if (dy > 5) { // slightly lower threshold to start dragging sooner
                 dragging = true;
                 panelDragging = true;
                 arrivalsPanel.style.transition = 'none';
@@ -2538,63 +2484,33 @@ function setupPanelDrag() {
     });
 
     arrivalsPanel.addEventListener('touchstart', (e) => {
-        console.log('[Panel touchstart]', { target: e.target, className: e.target.className });
+        const t = e.touches[0];
+        handleStart(t.clientY, e.target);
+        // do NOT preventDefault on touchstart; allow taps to become clicks
+    }, { passive: false, capture: true });
+    arrivalsPanel.addEventListener('touchmove', (e) => {
+        const t = e.touches[0];
+        handleMove(t.clientY);
+        if (dragging) e.preventDefault();
+    }, { passive: false, capture: true });
+    arrivalsPanel.addEventListener('touchend', () => handleEnd());
+
+    // Document-level capture to guarantee drag from anywhere inside the panel
+    document.addEventListener('touchstart', (e) => {
+        const inPanel = e.target && e.target.closest && e.target.closest('.arrivals-panel');
+        if (!inPanel) return;
         
-        // Don't capture touches on the map area (even if panel element extends there)
+        // Don't capture if touch is on the map (even if map is behind panel)
         const onMap = e.target && (
             e.target.closest('.leaflet-container') || 
             e.target.closest('#map-container') ||
             e.target.closest('.map-view-container')
         );
-        if (onMap) {
-            console.log('[Panel touchstart] REJECTED: on map');
-            return;
-        }
+        if (onMap) return;
         
-        // Also check if touch is in the visible panel area (not the translated-out part)
-        const t = e.touches[0];
-        const panelRect = arrivalsPanel.getBoundingClientRect();
-        const touchY = t.clientY;
-        const touchX = t.clientX;
-        const topEl = document.elementFromPoint(touchX, touchY);
-        if (!topEl || !topEl.closest || !topEl.closest('.arrivals-panel')) {
-            console.log('[Panel touchstart] REJECTED: topEl not panel');
-            return;
-        }
-        
-        console.log('[Panel touchstart] Check visible area', { touchY, panelTop: panelRect.top });
-        
-        // Only handle touches in the visible part of the panel
-        if (touchY < panelRect.top) {
-            console.log('[Panel touchstart] REJECTED: above visible area');
-            return;
-        }
-
-        // In bus-mode, restrict drags to grabber only
-        const isBusMode = arrivalsPanel.classList.contains('bus-mode');
-        if (isBusMode) {
-            const inGrabber = !!(e.target && e.target.closest && e.target.closest('.sheet-grabber'));
-            if (!inGrabber) {
-                console.log('[Panel touchstart] REJECTED (bus-mode): not in grabber');
-                return;
-            }
-        }
-        
-        console.log('[Panel touchstart] CALLING handleStart');
+        const t = e.touches && e.touches[0];
+        if (!t) return;
         handleStart(t.clientY, e.target);
-        // do NOT preventDefault on touchstart; allow taps to become clicks
-    }, { passive: false });
-    arrivalsPanel.addEventListener('touchmove', (e) => {
-        const t = e.touches[0];
-        handleMove(t.clientY);
-        if (dragging) e.preventDefault();
-    }, { passive: false });
-    arrivalsPanel.addEventListener('touchend', () => handleEnd());
-
-    // Document-level capture to guarantee drag from anywhere inside the panel
-    document.addEventListener('touchstart', (e) => {
-        // Disabled doc-level capture to avoid false drags from map taps
-        return;
     }, { passive: false, capture: true });
     document.addEventListener('touchmove', (e) => {
         if (!panelDragging) return;
@@ -2606,37 +2522,9 @@ function setupPanelDrag() {
     document.addEventListener('touchend', () => { if (panelDragging) handleEnd(); }, { capture: true });
 
     // Pointer events (desktop/testing)
-    arrivalsPanel.addEventListener('pointerdown', (e) => {
-        // Don't capture pointer events on the map
-        const onMap = e.target && (
-            e.target.closest('.leaflet-container') || 
-            e.target.closest('#map-container') ||
-            e.target.closest('.map-view-container')
-        );
-        if (onMap) return;
-        // Only start from allowed surfaces
-        if (!isDragStartAllowed(e.target)) return;
-        // In bus-mode, restrict to grabber only for pointer devices too
-        if (arrivalsPanel.classList.contains('bus-mode')) {
-            const inGrabber = !!(e.target && e.target.closest && e.target.closest('.sheet-grabber'));
-            if (!inGrabber) return;
-        }
-        
-        // Only handle pointers in the visible panel area
-        const panelRect = arrivalsPanel.getBoundingClientRect();
-        if (e.clientY < panelRect.top) return;
-        
-        handleStart(e.clientY, e.target);
-    });
-    window.addEventListener('pointermove', (e) => {
-        // Only react to pointer moves when a drag is starting or active
-        if (!panelDragging && !pendingDrag) return;
-        handleMove(e.clientY);
-    });
-    window.addEventListener('pointerup', () => {
-        if (!panelDragging && !pendingDrag) return;
-        handleEnd();
-    });
+    arrivalsPanel.addEventListener('pointerdown', (e) => { handleStart(e.clientY, e.target); });
+    window.addEventListener('pointermove', (e) => { handleMove(e.clientY); });
+    window.addEventListener('pointerup', () => handleEnd());
 
     // Initialize to collapsed height using translateY (panel moves as a whole)
     const minPx = vhToPx(PANEL_MIN_VH);
