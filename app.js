@@ -2307,6 +2307,21 @@ function setupPanelDrag() {
             return false;
         }
         
+        // In bus/walk modes, only allow dragging from specific elements (grabber, cards, list)
+        // This prevents the invisible panel area from capturing map touches
+        const currentMode = typeof uiMode !== 'undefined' ? uiMode : 'idle';
+        if (currentMode === 'bus' || currentMode === 'walk') {
+            const isGrabber = target && target.closest && target.closest('.sheet-grabber');
+            const isCard = target && target.closest && target.closest('.station-card');
+            const isList = target && target.closest && target.closest('.routes-list');
+            const isFloatingControls = target && target.closest && target.closest('.floating-controls');
+            
+            if (!isGrabber && !isCard && !isList && !isFloatingControls) {
+                console.log('[handleStart] REJECTED: not on draggable element in bus/walk mode', target);
+                return false;
+            }
+        }
+        
         console.log('[handleStart] ACCEPTED: starting panel drag', { y, target });
         
         const list = arrivalsPanel.querySelector('.routes-list');
