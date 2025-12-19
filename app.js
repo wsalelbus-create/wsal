@@ -2248,81 +2248,11 @@ function setupPanelDrag() {
     window._getPanelVisibleHeight = getPanelVisibleHeight;
 
     const handleStart = (y, target) => {
-        // Reject touches on map elements
-        const onMap = target && (
-            target.closest('.leaflet-container') || 
-            target.closest('#map-container') ||
-            target.closest('.map-view-container')
-        );
-        if (onMap) {
-            console.log('[handleStart] REJECTED: touch on map element', target);
+        // ONLY allow dragging from the sheet grabber - nothing else
+        const isGrabber = target && target.closest && target.closest('.sheet-grabber');
+        if (!isGrabber) {
             return false;
         }
-        
-        // Reject touches on skyline SVG (it extends over the map area)
-        // Check multiple ways because SVG elements can be tricky
-        let onSkyline = false;
-        
-        // Method 1: Check if target or any parent is the skyline container
-        if (target) {
-            let el = target;
-            while (el && el !== document.body) {
-                if (el.id === 'skyline-inline' || (el.classList && el.classList.contains('skyline-inline'))) {
-                    onSkyline = true;
-                    break;
-                }
-                el = el.parentElement || el.parentNode;
-            }
-        }
-        
-        // Method 2: Check if it's an SVG element type commonly in skyline
-        if (!onSkyline && target && target.tagName) {
-            const tagName = target.tagName.toLowerCase();
-            const isSVGElement = (tagName === 'svg' || tagName === 'rect' || tagName === 'path' || 
-                                 tagName === 'g' || tagName === 'line' || tagName === 'circle' || 
-                                 tagName === 'polygon' || tagName === 'polyline');
-            
-            // If it's an SVG element, check if skyline is in the tree
-            if (isSVGElement) {
-                let el = target;
-                while (el && el !== document.body) {
-                    if (el.id === 'skyline-inline' || (el.classList && el.classList.contains('skyline-inline'))) {
-                        onSkyline = true;
-                        break;
-                    }
-                    el = el.parentElement || el.parentNode;
-                }
-            }
-        }
-        
-        if (onSkyline) {
-            console.log('[handleStart] REJECTED: touch on skyline SVG', target);
-            return false;
-        }
-        
-        // Reject touches outside the visible panel area
-        const panelRect = arrivalsPanel.getBoundingClientRect();
-        if (y < panelRect.top) {
-            console.log('[handleStart] REJECTED: touch above panel', { y, panelTop: panelRect.top });
-            return false;
-        }
-        
-        // In bus/walk modes, only allow dragging from specific elements (grabber, cards, list)
-        // This prevents the invisible panel area from capturing map touches
-        const currentMode = typeof uiMode !== 'undefined' ? uiMode : 'idle';
-        if (currentMode === 'bus' || currentMode === 'walk') {
-            const isGrabber = target && target.closest && target.closest('.sheet-grabber');
-            const isCard = target && target.closest && target.closest('.station-card');
-            const isList = target && target.closest && target.closest('.routes-list');
-            const isFloatingControls = target && target.closest && target.closest('.floating-controls');
-            
-            if (!isGrabber && !isCard && !isList && !isFloatingControls) {
-                console.log('[handleStart] REJECTED: not on draggable element in bus/walk mode', target);
-                return false;
-            }
-        }
-        
-        console.log('[handleStart] ACCEPTED: starting panel drag', { y, target });
         
         const list = arrivalsPanel.querySelector('.routes-list');
         const inList = !!(target && target.closest && target.closest('.routes-list'));
