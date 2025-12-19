@@ -2548,17 +2548,23 @@ function setupPanelDrag() {
     document.addEventListener('touchstart', (e) => {
         const inPanel = e.target && e.target.closest && e.target.closest('.arrivals-panel');
         if (!inPanel) return;
-        
-        // Don't capture if touch is on the map (even if map is behind panel)
+
+        // Only start a drag when the touch is inside the panel's visible area
+        // (The panel element is tall and translated; without this, the hidden part
+        // can still overlay the map and capture taps.)
+        const t = e.touches && e.touches[0];
+        if (!t) return;
+        const panelRect = arrivalsPanel.getBoundingClientRect();
+        if (t.clientY < panelRect.top) return; // tap is above the visible panel -> ignore
+
+        // Don't capture if touch is on the map (defensive; target may be panel overlay)
         const onMap = e.target && (
-            e.target.closest('.leaflet-container') || 
+            e.target.closest('.leaflet-container') ||
             e.target.closest('#map-container') ||
             e.target.closest('.map-view-container')
         );
         if (onMap) return;
-        
-        const t = e.touches && e.touches[0];
-        if (!t) return;
+
         handleStart(t.clientY, e.target);
     }, { passive: false, capture: true });
     document.addEventListener('touchmove', (e) => {
