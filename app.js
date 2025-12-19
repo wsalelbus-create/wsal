@@ -2262,12 +2262,21 @@ function setupPanelDrag() {
         // Reject touches on skyline SVG (it extends over the map area)
         const onSkyline = target && (
             target.closest('#skyline-inline') ||
-            target.closest('.skyline-inline') ||
-            (target.tagName && (target.tagName.toLowerCase() === 'svg' || target.tagName.toLowerCase() === 'rect' || target.tagName.toLowerCase() === 'path') && target.closest('.arrivals-panel'))
+            target.closest('.skyline-inline')
         );
         if (onSkyline) {
             console.log('[handleStart] REJECTED: touch on skyline SVG', target);
             return false;
+        }
+        
+        // Additional check: if it's an SVG element and its parent is skyline
+        if (target && target.tagName) {
+            const tagName = target.tagName.toLowerCase();
+            if ((tagName === 'svg' || tagName === 'rect' || tagName === 'path' || tagName === 'g' || tagName === 'line' || tagName === 'circle') && 
+                (target.closest('#skyline-inline') || target.closest('.skyline-inline'))) {
+                console.log('[handleStart] REJECTED: SVG child of skyline', target);
+                return false;
+            }
         }
         
         // Reject touches outside the visible panel area
