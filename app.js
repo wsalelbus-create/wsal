@@ -335,29 +335,7 @@ function renderBusStations(withDelay = false, fadeIn = false) {
         // Build card and optionally show a brief loading state for arrivals
         card.appendChild(headerDiv);
         card.appendChild(divider);
-    // Add overlay station badge icon + name ABOVE THE CARDS in the panel ONLY on detailed (3rd) screen
-    try {
-        if ((typeof uiMode !== 'undefined' && uiMode === 'walk') && (typeof busDetailActive !== 'undefined' && busDetailActive)) {
-            const panel = document.querySelector('.arrivals-panel');
-            if (panel) {
-                // Ensure only one overlay in the panel
-                const old = panel.querySelector('.detail-bus-overlay-panel');
-                if (old) old.remove();
-                const overlay = document.createElement('div');
-                overlay.className = 'detail-bus-overlay-panel';
-                overlay.setAttribute('role', 'presentation');
-                overlay.innerHTML = `
-                    <div class="detail-bus-overlay-row">
-                        <svg width="44" height="44" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-                            <rect x="1.5" y="1.5" width="25" height="25" rx="6" fill="${badge.color}" stroke="#FFFFFF" stroke-width="3"/>
-                            <text x="14" y="14" dominant-baseline="middle" text-anchor="middle" font-family="Outfit, sans-serif" font-size="12" font-weight="900" fill="#FFFFFF">${badge.abbr}</text>
-                        </svg>
-                        <div class="detail-bus-overlay-name">${station.name}</div>
-                    </div>`;
-                panel.appendChild(overlay);
-            }
-        }
-    } catch {}
+        
         const arrivalsDiv = document.createElement('div');
         arrivalsDiv.className = 'station-arrivals';
         if (withDelay) {
@@ -376,14 +354,7 @@ function renderBusStations(withDelay = false, fadeIn = false) {
             arrivalsDiv.innerHTML = buildArrivalsHtml();
         }
         card.appendChild(arrivalsDiv);
-    // Ensure the panel expands to show content and enable list scroll on detailed screen
-    try {
-        const minPx = vhToPx(PANEL_MIN_VH);
-        const maxPx = getPanelMaxPx();
-        arrivalsPanel.classList.add('expanded');
-        arrivalsPanel.style.transition = 'transform 0.24s cubic-bezier(.2,.7,.2,1)';
-        setPanelVisibleHeight(Math.max(minPx, maxPx));
-    } catch {}
+        
         // Drill-down: tapping a station card switches to Walk mode focused on this station
         card.addEventListener('click', (e) => {
             try {
@@ -2525,7 +2496,12 @@ function setupPanelDrag() {
     document.addEventListener('touchend', () => { if (panelDragging) handleEnd(); }, { capture: true });
 
     // Pointer events (desktop/testing)
-    arrivalsPanel.addEventListener('pointerdown', (e) => { handleStart(e.clientY, e.target); });
+    arrivalsPanel.addEventListener('pointerdown', (e) => {
+        // Only capture if pointer is in the VISIBLE part of the panel
+        const panelRect = arrivalsPanel.getBoundingClientRect();
+        if (e.clientY < panelRect.top) return; // pointer is above visible panel (on map)
+        handleStart(e.clientY, e.target);
+    });
     window.addEventListener('pointermove', (e) => { handleMove(e.clientY); });
     window.addEventListener('pointerup', () => handleEnd());
 
