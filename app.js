@@ -2270,10 +2270,12 @@ function setupPanelDrag() {
         }
         
         // Reject touches on skyline SVG ONLY (it extends over the map area)
-        // Don't reject other SVGs like icons in cards
+        // The skyline is a large SVG with viewBox="0 0 1200 140" - check for that
         const onSkyline = target && (
             target.closest('#skyline-inline') ||
-            target.closest('.skyline-inline')
+            target.closest('.skyline-inline') ||
+            // Check if it's an SVG element with the skyline's viewBox
+            (target.ownerSVGElement && target.ownerSVGElement.getAttribute('viewBox') === '0 0 1200 140')
         );
         if (onSkyline) {
             console.log('[handleStart] REJECTED: touch on skyline SVG', target);
