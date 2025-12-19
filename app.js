@@ -2520,6 +2520,18 @@ function setupPanelDrag() {
             return;
         }
         
+        // CRITICAL: Reject touches on skyline (even though it's inside arrivals-panel)
+        if (e.target) {
+            let el = e.target;
+            while (el && el !== document.body) {
+                if (el.id === 'skyline-inline' || (el.classList && el.classList.contains('skyline-inline'))) {
+                    console.log('[Panel touchstart] REJECTED: on skyline');
+                    return;
+                }
+                el = el.parentElement || el.parentNode;
+            }
+        }
+        
         // Also check if touch is in the visible panel area (not the translated-out part)
         const t = e.touches[0];
         const panelRect = arrivalsPanel.getBoundingClientRect();
