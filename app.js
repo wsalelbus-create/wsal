@@ -2461,16 +2461,31 @@ function setupPanelDrag() {
         const panelRect = arrivalsPanel.getBoundingClientRect();
         
         // Also check if the actual touch target is on the map (even if event bubbles to panel)
+        // Include Leaflet markers, panes, and SVG elements that are part of the map
         const touchOnMap = e.target && (
             e.target.closest('.leaflet-container') ||
+            e.target.closest('.leaflet-pane') ||
+            e.target.closest('.leaflet-marker-pane') ||
+            e.target.closest('.leaflet-overlay-pane') ||
+            e.target.closest('.leaflet-marker-icon') ||
             e.target.closest('#map-container') ||
             e.target.closest('.map-view-container') ||
-            e.target.closest('#map-crosshair')
+            e.target.closest('#map-crosshair') ||
+            // SVG elements that are map markers (circle, path inside map)
+            (e.target.tagName && ['circle', 'path', 'svg', 'line'].includes(e.target.tagName.toLowerCase()) && 
+             e.target.closest('.leaflet-pane'))
         );
         
-        console.log('[Panel Touch] touchY:', t.clientY, 'panelTop:', panelRect.top, 'target:', e.target.tagName, 'onMap:', !!touchOnMap, 'mode:', uiMode);
+        // Extra check: if touch Y is above the visible panel top, it's on the map
+        const touchAbovePanel = t.clientY < panelRect.top;
         
-        if (t.clientY < panelRect.top || touchOnMap) {
+        // Check if target is an SVG element (likely a map marker)
+        const isSvgElement = e.target && e.target.tagName && 
+            ['circle', 'path', 'svg', 'line', 'g', 'rect', 'ellipse', 'polygon', 'polyline'].includes(e.target.tagName.toLowerCase());
+        
+        console.log('[Panel Touch] touchY:', t.clientY, 'panelTop:', panelRect.top, 'target:', e.target.tagName, 'onMap:', !!touchOnMap, 'abovePanel:', touchAbovePanel, 'isSvg:', isSvgElement, 'parent:', e.target.parentElement?.className, 'mode:', uiMode);
+        
+        if (touchAbovePanel || touchOnMap) {
             console.log('[Panel Touch] BLOCKED - touch above panel or on map');
             return; // touch is above visible panel (on map)
         }
