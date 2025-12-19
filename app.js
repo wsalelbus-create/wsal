@@ -376,38 +376,40 @@ function renderBusStations(withDelay = false, fadeIn = false) {
             arrivalsDiv.innerHTML = buildArrivalsHtml();
         }
         card.appendChild(arrivalsDiv);
-    // Ensure the panel expands to show content and enable list scroll on detailed screen
+    // Preserve current sheet state; do not auto-expand on list render
     try {
+        const wasExpanded = arrivalsPanel.classList.contains('expanded');
         const minPx = vhToPx(PANEL_MIN_VH);
-        const maxPx = getPanelMaxPx();
-        arrivalsPanel.classList.add('expanded');
-        arrivalsPanel.style.transition = 'transform 0.24s cubic-bezier(.2,.7,.2,1)';
-        setPanelVisibleHeight(Math.max(minPx, maxPx));
+        if (wasExpanded) {
+            const maxPx = getPanelMaxPx();
+            arrivalsPanel.style.transition = 'transform 0.24s cubic-bezier(.2,.7,.2,1)';
+            setPanelVisibleHeight(Math.max(minPx, maxPx));
+            arrivalsPanel.classList.add('expanded');
+        } else {
+            setPanelVisibleHeight(minPx);
+            arrivalsPanel.classList.remove('expanded');
+        }
     } catch {}
-        // Drill-down: tapping a station card switches to Walk mode focused on this station
+        // Drill-down: tapping a station card
+        // If the sheet is collapsed, ignore the tap (no expansion). Only when expanded should tap drill down.
         card.addEventListener('click', (e) => {
+            try { e.preventDefault(); e.stopPropagation(); } catch {}
             try {
-                e.preventDefault();
-                e.stopPropagation();
-            } catch {}
-            try {
-                // Lock focus on this station for walking map (OSRM route + pole/shadow)
+                const isExpanded = arrivalsPanel && arrivalsPanel.classList.contains('expanded');
+                if (!isExpanded) return; // ignore taps when collapsed
+
+                // Already expanded: proceed to Walk mode focused on this station
                 currentStation = station;
-                // Persist Bus-style arrivals while in Walk mode
-                busDetailActive = true;
-                // Switch to Walk mode (prefer function if present, else set flag)
+                busDetailActive = true; // persist Bus-style arrivals while in Walk mode
                 if (typeof setUIMode === 'function') {
                     setUIMode('walk');
                 } else {
                     previousMode = uiMode;
                     uiMode = 'walk';
                 }
-                // Re-render map for this station
                 if (typeof updateMap === 'function') updateMap();
-                // Show only this station using the exact Bus screen card design (no other cards)
                 if (routesListEl) {
                     routesListEl.classList.remove('hidden');
-                    // Show brief loading animation like Bus screen, then arrivals
                     renderBusStationDetail(currentStation, true);
                     applyDetailOverlay();
                 }
@@ -2205,6 +2207,7 @@ function setupPanelDrag() {
     let startInList = false;
     let startListEl = null;
     let startListScrollTop = 0;
+    let dragStartAllowed = false;   // only allow when touch begins in handle zone
     // Inertial glide state
     let inertiaActive = false;
     let inertiaFrame = 0;
@@ -2270,6 +2273,14 @@ function setupPanelDrag() {
         // Reject touches outside the visible panel area
         const panelRect = arrivalsPanel.getBoundingClientRect();
         if (y < panelRect.top) return false;
+
+        // Allow drag only if touch begins on the grabber (most reliable, avoids stray taps)
+        const onGrabber = !!(target && target.closest && target.closest('.sheet-grabber'));
+        dragStartAllowed = !!onGrabber;
+        if (!dragStartAllowed) {
+            // Not in a drag-eligible zone; treat as normal tap
+            return false;
+        }
         
         const list = arrivalsPanel.querySelector('.routes-list');
         const inList = !!(target && target.closest && target.closest('.routes-list'));
@@ -2298,6 +2309,7 @@ function setupPanelDrag() {
 
     const handleMove = (y) => {
         if (pendingDrag && !dragging) {
+            if (!dragStartAllowed) return; // ignore moves if we didn't approve drag at start
             // If gesture started inside the routes list and the sheet is expanded,
             // allow the list to handle its own scroll for upward drags or when the
             // list has scrollable content.
@@ -2313,7 +2325,7 @@ function setupPanelDrag() {
                 }
             }
             const dy = Math.abs(y - startY);
-            if (dy > 5) { // slightly lower threshold to start dragging sooner
+            if (dy > 16) { // stricter threshold to avoid accidental drags from light taps
                 dragging = true;
                 panelDragging = true;
                 arrivalsPanel.style.transition = 'none';
@@ -2396,6 +2408,19 @@ function setupPanelDrag() {
             velocity = (b.h - a.h) / dt; // px/ms (positive = upward growth)
         }
         const absV = Math.abs(velocity);
+        // If the total movement was tiny, treat this as a tap (no snap change)
+        const movedPx = Math.abs(getPanelVisibleHeight() - startVisible);
+        if (movedPx < 14 && absV < 0.08) {
+            lastMoves = [];
+            // Reset any transient map transform if present
+            const mapInner = document.getElementById('map-container');
+            if (mapInner) {
+                mapInner.style.transition = '';
+                mapInner.style.transform = 'translateY(0) scale(1)';
+            }
+            return;
+        }
+
         // Start an inertial glide if velocity is meaningful; else snap immediately
         if (absV > 0.04) { // ~40 px/s threshold
             inertiaActive = true;
@@ -2490,21 +2515,8 @@ function setupPanelDrag() {
         if (pendingDrag || panelDragging) e.preventDefault();
     }, { passive: false, capture: true });
     grabber.addEventListener('touchend', () => handleEnd(), { capture: true });
-    // Tap-to-toggle for reliability on iOS
-    grabber.addEventListener('click', (e) => {
-        e.preventDefault();
-        const minPx = vhToPx(PANEL_MIN_VH);
-        const maxPx = getPanelMaxPx();
-        const mid = (minPx + maxPx) / 2;
-        arrivalsPanel.style.transition = 'transform 0.25s ease';
-        if (getPanelVisibleHeight() < mid) {
-            setPanelVisibleHeight(maxPx);
-            arrivalsPanel.classList.add('expanded');
-        } else {
-            setPanelVisibleHeight(minPx);
-            arrivalsPanel.classList.remove('expanded');
-        }
-    });
+    // Disable click-to-toggle on the grabber; drag-only for expansion/collapse
+    grabber.addEventListener('click', (e) => { e.preventDefault(); e.stopPropagation(); }, { capture: true });
 
     arrivalsPanel.addEventListener('touchstart', (e) => {
         console.log('[Panel touchstart]', { target: e.target, className: e.target.className });
@@ -2543,6 +2555,29 @@ function setupPanelDrag() {
         if (dragging) e.preventDefault();
     }, { passive: false, capture: true });
     arrivalsPanel.addEventListener('touchend', () => handleEnd());
+
+    // Click guard: when collapsed, ignore clicks that are not on the handle/controls.
+    // This prevents accidental snap-ups from taps on the panel body or loading rows
+    arrivalsPanel.addEventListener('click', (e) => {
+        try {
+            const isExpanded = arrivalsPanel.classList.contains('expanded');
+            if (isExpanded) return;
+            const t = e.target;
+            const allowed = (
+                (t.closest && (
+                    t.closest('.sheet-grabber') ||
+                    t.closest('#station-selector-trigger') ||
+                    t.closest('.station-selector-card') ||
+                    t.closest('.floating-controls') ||
+                    t.closest('.qa-btn')
+                ))
+            );
+            if (!allowed) {
+                e.preventDefault();
+                e.stopPropagation();
+            }
+        } catch {}
+    }, { capture: true });
 
     // Document-level capture to guarantee drag from anywhere inside the panel
     document.addEventListener('touchstart', (e) => {
