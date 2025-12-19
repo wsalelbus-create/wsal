@@ -2248,11 +2248,28 @@ function setupPanelDrag() {
     window._getPanelVisibleHeight = getPanelVisibleHeight;
 
     const handleStart = (y, target) => {
-        // ONLY allow dragging from the sheet grabber - nothing else
-        const isGrabber = target && target.closest && target.closest('.sheet-grabber');
-        if (!isGrabber) {
-            return false;
+        // Reject touches on map elements
+        const onMap = target && (
+            target.closest('.leaflet-container') || 
+            target.closest('#map-container') ||
+            target.closest('.map-view-container')
+        );
+        if (onMap) return false;
+        
+        // Reject touches on skyline - walk up the DOM tree
+        if (target) {
+            let el = target;
+            while (el && el !== document.body) {
+                if (el.id === 'skyline-inline' || (el.classList && el.classList.contains('skyline-inline'))) {
+                    return false;
+                }
+                el = el.parentElement || el.parentNode;
+            }
         }
+        
+        // Reject touches outside the visible panel area
+        const panelRect = arrivalsPanel.getBoundingClientRect();
+        if (y < panelRect.top) return false;
         
         const list = arrivalsPanel.querySelector('.routes-list');
         const inList = !!(target && target.closest && target.closest('.routes-list'));
