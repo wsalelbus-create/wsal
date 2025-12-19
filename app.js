@@ -2528,6 +2528,17 @@ function setupPanelDrag() {
             return;
         }
         
+        // Don't capture touches on skyline SVG
+        const onSkyline = e.target && (
+            e.target.closest('#skyline-inline') ||
+            e.target.closest('.skyline-inline') ||
+            (e.target.tagName && (e.target.tagName.toLowerCase() === 'svg' || e.target.tagName.toLowerCase() === 'rect' || e.target.tagName.toLowerCase() === 'path') && e.target.closest('.arrivals-panel'))
+        );
+        if (onSkyline) {
+            console.log('[Panel touchstart] REJECTED: on skyline');
+            return;
+        }
+        
         // Also check if touch is in the visible panel area (not the translated-out part)
         const t = e.touches[0];
         const panelRect = arrivalsPanel.getBoundingClientRect();
@@ -2565,6 +2576,14 @@ function setupPanelDrag() {
         );
         if (onMap) return;
         
+        // Don't capture if touch is on skyline SVG
+        const onSkyline = e.target && (
+            e.target.closest('#skyline-inline') ||
+            e.target.closest('.skyline-inline') ||
+            (e.target.tagName && (e.target.tagName.toLowerCase() === 'svg' || e.target.tagName.toLowerCase() === 'rect' || e.target.tagName.toLowerCase() === 'path') && e.target.closest('.arrivals-panel'))
+        );
+        if (onSkyline) return;
+        
         const t = e.touches && e.touches[0];
         if (!t) return;
         handleStart(t.clientY, e.target);
@@ -2587,6 +2606,14 @@ function setupPanelDrag() {
             e.target.closest('.map-view-container')
         );
         if (onMap) return;
+        
+        // Don't capture pointer events on skyline SVG
+        const onSkyline = e.target && (
+            e.target.closest('#skyline-inline') ||
+            e.target.closest('.skyline-inline') ||
+            (e.target.tagName && (e.target.tagName.toLowerCase() === 'svg' || e.target.tagName.toLowerCase() === 'rect' || e.target.tagName.toLowerCase() === 'path') && e.target.closest('.arrivals-panel'))
+        );
+        if (onSkyline) return;
         
         // Only handle pointers in the visible panel area
         const panelRect = arrivalsPanel.getBoundingClientRect();
