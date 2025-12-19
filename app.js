@@ -2260,23 +2260,44 @@ function setupPanelDrag() {
         }
         
         // Reject touches on skyline SVG (it extends over the map area)
-        const onSkyline = target && (
-            target.closest('#skyline-inline') ||
-            target.closest('.skyline-inline')
-        );
+        // Check multiple ways because SVG elements can be tricky
+        let onSkyline = false;
+        
+        // Method 1: Check if target or any parent is the skyline container
+        if (target) {
+            let el = target;
+            while (el && el !== document.body) {
+                if (el.id === 'skyline-inline' || (el.classList && el.classList.contains('skyline-inline'))) {
+                    onSkyline = true;
+                    break;
+                }
+                el = el.parentElement || el.parentNode;
+            }
+        }
+        
+        // Method 2: Check if it's an SVG element type commonly in skyline
+        if (!onSkyline && target && target.tagName) {
+            const tagName = target.tagName.toLowerCase();
+            const isSVGElement = (tagName === 'svg' || tagName === 'rect' || tagName === 'path' || 
+                                 tagName === 'g' || tagName === 'line' || tagName === 'circle' || 
+                                 tagName === 'polygon' || tagName === 'polyline');
+            
+            // If it's an SVG element, check if skyline is in the tree
+            if (isSVGElement) {
+                let el = target;
+                while (el && el !== document.body) {
+                    if (el.id === 'skyline-inline' || (el.classList && el.classList.contains('skyline-inline'))) {
+                        onSkyline = true;
+                        break;
+                    }
+                    el = el.parentElement || el.parentNode;
+                }
+            }
+        }
+        
         if (onSkyline) {
             console.log('[handleStart] REJECTED: touch on skyline SVG', target);
             return false;
-        }
-        
-        // Additional check: if it's an SVG element and its parent is skyline
-        if (target && target.tagName) {
-            const tagName = target.tagName.toLowerCase();
-            if ((tagName === 'svg' || tagName === 'rect' || tagName === 'path' || tagName === 'g' || tagName === 'line' || tagName === 'circle') && 
-                (target.closest('#skyline-inline') || target.closest('.skyline-inline'))) {
-                console.log('[handleStart] REJECTED: SVG child of skyline', target);
-                return false;
-            }
         }
         
         // Reject touches outside the visible panel area
