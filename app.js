@@ -2460,10 +2460,18 @@ function setupPanelDrag() {
         // Panel is positioned with transform, so check if touch Y is below panel's visual top
         const panelRect = arrivalsPanel.getBoundingClientRect();
         
-        console.log('[Panel Touch] touchY:', t.clientY, 'panelTop:', panelRect.top, 'target:', e.target.className, 'mode:', uiMode);
+        // Also check if the actual touch target is on the map (even if event bubbles to panel)
+        const touchOnMap = e.target && (
+            e.target.closest('.leaflet-container') ||
+            e.target.closest('#map-container') ||
+            e.target.closest('.map-view-container') ||
+            e.target.closest('#map-crosshair')
+        );
         
-        if (t.clientY < panelRect.top) {
-            console.log('[Panel Touch] BLOCKED - touch above panel');
+        console.log('[Panel Touch] touchY:', t.clientY, 'panelTop:', panelRect.top, 'target:', e.target.tagName, 'onMap:', !!touchOnMap, 'mode:', uiMode);
+        
+        if (t.clientY < panelRect.top || touchOnMap) {
+            console.log('[Panel Touch] BLOCKED - touch above panel or on map');
             return; // touch is above visible panel (on map)
         }
         
@@ -2485,6 +2493,15 @@ function setupPanelDrag() {
         
         const t = e.touches && e.touches[0];
         if (!t) return;
+        
+        // Check if the actual touch target is on the map
+        const touchOnMap = e.target && (
+            e.target.closest('.leaflet-container') ||
+            e.target.closest('#map-container') ||
+            e.target.closest('.map-view-container') ||
+            e.target.closest('#map-crosshair')
+        );
+        if (touchOnMap) return;
         
         // Only capture if touch is in the VISIBLE part of the panel
         // Panel is positioned with transform, so check if touch Y is below panel's visual top
