@@ -2507,9 +2507,27 @@ function setupPanelDrag() {
     });
 
     arrivalsPanel.addEventListener('touchstart', (e) => {
-        console.log('[Panel touchstart]', { target: e.target, className: e.target.className });
+        // CRITICAL: In bus/walk modes, ONLY allow dragging from visible panel content
+        // Do NOT allow any touches on map or skyline to trigger panel dragging
+        const t = e.touches[0];
+        const panelRect = arrivalsPanel.getBoundingClientRect();
+        const touchY = t.clientY;
         
-        // Don't capture touches on the map area (even if panel element extends there)
+        console.log('[Panel touchstart]', { 
+            target: e.target.tagName, 
+            id: e.target.id,
+            className: e.target.className,
+            touchY: touchY,
+            panelTop: panelRect.top
+        });
+        
+        // FIRST: Reject touches above the visible panel area (map/skyline area)
+        if (touchY < panelRect.top) {
+            console.log('[Panel touchstart] REJECTED: above visible panel');
+            return;
+        }
+        
+        // SECOND: Don't capture touches on the map area
         const onMap = e.target && (
             e.target.closest('.leaflet-container') || 
             e.target.closest('#map-container') ||
@@ -2520,7 +2538,7 @@ function setupPanelDrag() {
             return;
         }
         
-        // CRITICAL: Reject touches on skyline (even though it's inside arrivals-panel)
+        // THIRD: Reject touches on skyline (even though it's inside arrivals-panel)
         if (e.target) {
             let el = e.target;
             while (el && el !== document.body) {
@@ -2530,19 +2548,6 @@ function setupPanelDrag() {
                 }
                 el = el.parentElement || el.parentNode;
             }
-        }
-        
-        // Also check if touch is in the visible panel area (not the translated-out part)
-        const t = e.touches[0];
-        const panelRect = arrivalsPanel.getBoundingClientRect();
-        const touchY = t.clientY;
-        
-        console.log('[Panel touchstart] Check visible area', { touchY, panelTop: panelRect.top });
-        
-        // Only handle touches in the visible part of the panel
-        if (touchY < panelRect.top) {
-            console.log('[Panel touchstart] REJECTED: above visible area');
-            return;
         }
         
         console.log('[Panel touchstart] CALLING handleStart');
@@ -2568,6 +2573,17 @@ function setupPanelDrag() {
             e.target.closest('.map-view-container')
         );
         if (onMap) return;
+        
+        // CRITICAL: Don't capture if touch is on skyline (even though it's inside panel)
+        if (e.target) {
+            let el = e.target;
+            while (el && el !== document.body) {
+                if (el.id === 'skyline-inline' || (el.classList && el.classList.contains('skyline-inline'))) {
+                    return;
+                }
+                el = el.parentElement || el.parentNode;
+            }
+        }
         
         const t = e.touches && e.touches[0];
         if (!t) return;
