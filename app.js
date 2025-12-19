@@ -2269,11 +2269,11 @@ function setupPanelDrag() {
             return false;
         }
         
-        // Reject touches on skyline SVG (it extends over the map area)
+        // Reject touches on skyline SVG ONLY (it extends over the map area)
+        // Don't reject other SVGs like icons in cards
         const onSkyline = target && (
             target.closest('#skyline-inline') ||
-            target.closest('.skyline-inline') ||
-            (target.tagName && (target.tagName.toLowerCase() === 'svg' || target.tagName.toLowerCase() === 'rect' || target.tagName.toLowerCase() === 'path') && target.closest('.arrivals-panel'))
+            target.closest('.skyline-inline')
         );
         if (onSkyline) {
             console.log('[handleStart] REJECTED: touch on skyline SVG', target);
