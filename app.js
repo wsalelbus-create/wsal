@@ -81,8 +81,8 @@ function installViewportPolyfill() {
 
 // Drag sensitivity: make bus mode feel heavier, like Citymapper
 function getDragScale() {
-    // Slightly heavier to avoid overshooting when flicking
-    return 1.0;
+    // Citymapper-like: very responsive, 1:1 tracking
+    return 1.2;
 }
 
 // Snap stops: collapsed (40vh), mid (50/60/70vh), high (85/92/96vh), and max content height
@@ -2264,17 +2264,14 @@ function setupPanelDrag() {
     const handleStart = (y, target) => {
         console.log('[handleStart] y:', y, 'target:', target?.className || target?.tagName);
         
-        // GLOBAL FIX: Exclude ALL interactive elements from panel drag handling
-        // This prevents panel snap when tapping buttons, cards, or other clickable elements
-        const isInteractiveElement = !!(target && target.closest && (
-            // Quick action buttons (Bus/Walk)
+        // GLOBAL FIX: Exclude ONLY truly non-draggable interactive elements
+        // Cards should be draggable but also clickable (like Citymapper)
+        const isNonDraggableElement = !!(target && target.closest && (
+            // Quick action buttons (Bus/Walk) - these should only click, not drag
             target.closest('.quick-actions-panel') || 
             target.closest('.qa-btn') ||
-            // Station cards (clickable in bus/walk screens)
-            target.closest('.station-card') ||
-            // Any button elements
+            // Buttons that should only click
             target.closest('button') ||
-            // Back badge, settings, map controls
             target.closest('.back-badge') ||
             target.closest('.settings-badge') ||
             target.closest('.map-control-btn') ||
@@ -2282,14 +2279,11 @@ function setupPanelDrag() {
             target.closest('.modal-content') ||
             target.closest('.close-btn') ||
             // Station selector
-            target.closest('.station-list') ||
-            // Any element with onclick or data-clickable attribute
-            target.onclick ||
-            target.dataset?.clickable
+            target.closest('.station-list')
         ));
         
-        if (isInteractiveElement) {
-            console.log('[handleStart] Touch on interactive element - ignoring for panel drag');
+        if (isNonDraggableElement) {
+            console.log('[handleStart] Touch on non-draggable element - ignoring for panel drag');
             return false;
         }
         
@@ -2337,7 +2331,7 @@ function setupPanelDrag() {
                 }
             }
             const dy = Math.abs(y - startY);
-            if (dy > 5) { // slightly lower threshold to start dragging sooner
+            if (dy > 3) { // lower threshold for more responsive drag (Citymapper-like)
                 dragging = true;
                 panelDragging = true;
                 arrivalsPanel.style.transition = 'none';
