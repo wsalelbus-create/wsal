@@ -2489,33 +2489,10 @@ function setupPanelDrag() {
         const t = e.touches[0];
         handleMove(t.clientY);
         if (dragging) e.preventDefault();
-    }, { passive: false, capture: true });
+    }, { passive: false });
     arrivalsPanel.addEventListener('touchend', () => handleEnd());
 
-    // Document-level capture to guarantee drag from anywhere inside the panel
-    document.addEventListener('touchstart', (e) => {
-        const inPanel = e.target && e.target.closest && e.target.closest('.arrivals-panel');
-        if (!inPanel) return;
-        
-        const t = e.touches && e.touches[0];
-        if (!t) return;
-        
-        // Check if the actual touch target is on the map
-        const touchOnMap = e.target && (
-            e.target.closest('.leaflet-container') ||
-            e.target.closest('#map-container') ||
-            e.target.closest('.map-view-container') ||
-            e.target.closest('#map-crosshair')
-        );
-        if (touchOnMap) return;
-        
-        // Only capture if touch is in the VISIBLE part of the panel
-        // Panel is positioned with transform, so check if touch Y is below panel's visual top
-        const panelRect = arrivalsPanel.getBoundingClientRect();
-        if (t.clientY < panelRect.top) return; // touch is above visible panel (on map)
-        
-        handleStart(t.clientY, e.target);
-    }, { passive: false, capture: true });
+    // Document-level touchmove and touchend to handle drags that go outside panel
     document.addEventListener('touchmove', (e) => {
         if (!panelDragging) return;
         const t = e.touches && e.touches[0];
