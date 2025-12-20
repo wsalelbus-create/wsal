@@ -2458,9 +2458,12 @@ function setupPanelDrag() {
         const t = e.touches[0];
         const panelRect = arrivalsPanel.getBoundingClientRect();
         
+        console.log('[Panel Touch Debug] mode:', uiMode, 'touchY:', t.clientY, 'panelTop:', panelRect.top, 'panelHeight:', panelRect.height, 'panelBottom:', panelRect.bottom, 'viewportHeight:', window.innerHeight);
+        
         // CRITICAL: Only capture touches that are BELOW the panel's visual top
         // If touch Y is above panel top, it's on the map - don't capture it
         if (t.clientY < panelRect.top) {
+            console.log('[Panel Touch] BLOCKED - touch above panel');
             return; // touch is on map area
         }
         
@@ -2473,9 +2476,11 @@ function setupPanelDrag() {
         );
         
         if (touchOnPanelUI) {
+            console.log('[Panel Touch] BLOCKED - touch on panel UI');
             return; // let the UI element handle the touch
         }
         
+        console.log('[Panel Touch] CAPTURED - starting drag');
         handleStart(t.clientY, e.target);
         // do NOT preventDefault on touchstart; allow taps to become clicks
     }, { passive: false, capture: true });
