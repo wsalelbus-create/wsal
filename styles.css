@@ -558,15 +558,16 @@ html, body {
     gap: 16px; /* slightly more space between cards */
     /* Reserve space so cards never overlap skyline backdrop */
     padding-bottom: 185px; /* tight spacing - identical in Safari and PWA */
-    flex: 1 1 auto;                 /* take remaining space in panel */
-    min-height: 0;                  /* allow flex child to shrink for scroll */
-    overflow-y: auto;               /* default, will be disabled when not expanded */
+    /* CRITICAL: Let list grow to natural height - don't constrain it */
+    flex: 0 0 auto;                 /* size to content, don't grow/shrink */
+    min-height: auto;               /* natural height */
+    overflow: visible;              /* show all content - no clipping */
     -webkit-overflow-scrolling: touch;
 }
 
 /* Disable list scroll when the sheet is collapsed; enable only when expanded */
 .arrivals-panel:not(.expanded) .routes-list { overflow: hidden; touch-action: none; }
-.arrivals-panel.expanded .routes-list { overflow-y: auto; touch-action: pan-y; }
+.arrivals-panel.expanded .routes-list { overflow: visible; touch-action: pan-y; }
 
 /* In Bus mode, reduce panel padding since selector bar is hidden */
 .arrivals-panel.bus-mode {
