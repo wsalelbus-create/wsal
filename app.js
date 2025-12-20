@@ -2262,6 +2262,7 @@ function setupPanelDrag() {
     window._getPanelVisibleHeight = getPanelVisibleHeight;
 
     const handleStart = (y, target) => {
+        console.log('[handleStart] y:', y, 'target:', target?.className || target?.tagName);
         const list = arrivalsPanel.querySelector('.routes-list');
         const inList = !!(target && target.closest && target.closest('.routes-list'));
         const isExpanded = arrivalsPanel.classList.contains('expanded');
@@ -2282,6 +2283,7 @@ function setupPanelDrag() {
         }
         startTarget = target || null;
         startY = y;
+        console.log('[handleStart] SET startY to:', startY);
         // read current visible height (px)
         startVisible = getPanelVisibleHeight();
         lastMoves = [{ t: performance.now(), h: startVisible }];
