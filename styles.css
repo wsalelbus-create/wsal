@@ -431,8 +431,8 @@ html, body {
     left: 0;
     right: 0;
     bottom: 0;
-    /* LARGE HEIGHT: Panel can expand up to 95vh to show all content */
-    height: calc(var(--vh, 1vh) * 95);
+    /* FULL HEIGHT: Panel can expand to 100vh to show all content */
+    height: calc(var(--vh, 1vh) * 100);
     max-height: none;
     background: white;
     border-radius: 16px 16px 0 0;

@@ -2134,7 +2134,7 @@ if (compassBtn) {
 const mapViewContainer = document.querySelector('.map-view-container');
 const arrivalsPanel = document.querySelector('.arrivals-panel');
 const PANEL_MIN_VH = 40; // visible height when collapsed (Safari reference)
-const PANEL_MAX_VH = 95; // visible height when expanded - 95% to show all content
+const PANEL_MAX_VH = 100; // visible height when expanded - FULL VIEWPORT to show all content
 let panelDragging = false; // global flag to coordinate with bounce guard
 let pendingDrag = false;   // waiting to see if movement exceeds threshold
 let startTarget = null;
@@ -2165,12 +2165,12 @@ function vhToPx(vh) {
 }
 function clamp(n, min, max) { return Math.max(min, Math.min(max, n)); }
 // Compute maximum height for the bottom sheet
-// SIMPLE: Just return a large fixed value - the content will determine how far up it goes
+// SIMPLE: Just return viewport height - the content will determine how far up it goes
 function getPanelMaxPx() {
     const viewportH = window.innerHeight || document.documentElement.clientHeight || 800;
-    // Panel can expand up to 95% of viewport - content will fill what it needs
-    const result = Math.round(viewportH * 0.95);
-    console.log('📏 [getPanelMaxPx] viewportH:', viewportH, '→ maxPx (95%):', result);
+    // Panel can expand to FULL viewport to show all content
+    const result = Math.round(viewportH);
+    console.log('📏 [getPanelMaxPx] viewportH:', viewportH, '→ maxPx (100%):', result);
     return result;
 }
 
