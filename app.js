@@ -2211,9 +2211,11 @@ function setupPanelDrag() {
     let startInList = false;
     let startListEl = null;
     let startListScrollTop = 0;
+    let startTarget = null; // track what element started the touch
     // Inertial glide state
     let inertiaActive = false;
     let inertiaFrame = 0;
+    let pendingDrag = false; // waiting for movement threshold
     
     // Update CSS variable to drive skyline size/opacity based on sheet progress [0..1]
     const updateSheetProgress = (h, minPx, maxPx) => {
@@ -2300,6 +2302,8 @@ function setupPanelDrag() {
     };
 
     const handleMove = (y) => {
+        if (!pendingDrag && !dragging) return; // not in a drag gesture at all
+        
         if (pendingDrag && !dragging) {
             // If gesture started inside the routes list and the sheet is expanded,
             // allow the list to handle its own scroll for upward drags or when the
@@ -2320,7 +2324,7 @@ function setupPanelDrag() {
                 dragging = true;
                 panelDragging = true;
                 arrivalsPanel.style.transition = 'none';
-                console.log('[DRAG START] uiMode:', uiMode, 'busDetailActive:', busDetailActive, 'expanded:', arrivalsPanel.classList.contains('expanded'), 'startVisible:', startVisible);
+                console.log('[DRAG START] dy:', dy, 'uiMode:', uiMode, 'busDetailActive:', busDetailActive, 'expanded:', arrivalsPanel.classList.contains('expanded'), 'startVisible:', startVisible, 'startY:', startY, 'currentY:', y);
             } else {
                 return; // not enough movement yet
             }
@@ -2380,10 +2384,19 @@ function setupPanelDrag() {
     };
 
     const handleEnd = () => {
-        if (!dragging) return;
+        if (!dragging && !pendingDrag) return;
+        
+        // If we never started actually dragging (just pending), reset and allow click
+        if (pendingDrag && !dragging) {
+            pendingDrag = false;
+            startTarget = null;
+            return;
+        }
+        
         dragging = false;
         pendingDrag = false;
         panelDragging = false;
+        startTarget = null;
         
         // DON'T reset map immediately - let it animate together with panel snap
         // Map will be reset after we determine the snap target
@@ -2517,7 +2530,9 @@ function setupPanelDrag() {
         // do NOT preventDefault on touchstart; allow taps to become clicks
     }, { passive: false, capture: true });
     arrivalsPanel.addEventListener('touchmove', (e) => {
+        if (!pendingDrag && !dragging) return; // safety: only handle move if we started a gesture
         const t = e.touches[0];
+        if (!t) return;
         handleMove(t.clientY);
         if (dragging) e.preventDefault();
     }, { passive: false, capture: true });
