@@ -376,17 +376,8 @@ function renderBusStations(withDelay = false, fadeIn = false) {
             arrivalsDiv.innerHTML = buildArrivalsHtml();
         }
         card.appendChild(arrivalsDiv);
-    // Ensure the panel expands to show content and enable list scroll on detailed screen
-    // ONLY do this in walking detailed mode, NOT in bus mode
-    try {
-        if ((typeof uiMode !== 'undefined' && uiMode === 'walk') && (typeof busDetailActive !== 'undefined' && busDetailActive)) {
-            const minPx = vhToPx(PANEL_MIN_VH);
-            const maxPx = getPanelMaxPx();
-            arrivalsPanel.classList.add('expanded');
-            arrivalsPanel.style.transition = 'transform 0.24s cubic-bezier(.2,.7,.2,1)';
-            setPanelVisibleHeight(Math.max(minPx, maxPx));
-        }
-    } catch {}
+    // NOTE: Do NOT auto-expand panel in walk mode - let user drag it manually
+    // The automatic expansion was causing panel snap when touching cards
         // Drill-down: tapping a station card switches to Walk mode focused on this station
         card.addEventListener('click', (e) => {
             try {
@@ -2264,12 +2255,13 @@ function setupPanelDrag() {
     const handleStart = (y, target) => {
         console.log('[handleStart] y:', y, 'target:', target?.className || target?.tagName);
         
-        // GLOBAL FIX: Exclude ONLY buttons and truly non-draggable elements
-        // Cards and panel areas should be fully draggable
+        // GLOBAL FIX: Exclude elements that should NOT trigger panel drag
         const isNonDraggableElement = !!(target && target.closest && (
             // Quick action buttons (Bus/Walk) - these should only click, not drag
             target.closest('.quick-actions-panel') || 
             target.closest('.qa-btn') ||
+            // Station cards - prevent panel snap when touching cards (CRITICAL FIX)
+            target.closest('.station-card') ||
             // Buttons that should only click
             target.closest('button') ||
             target.closest('.back-badge') ||
@@ -2279,7 +2271,9 @@ function setupPanelDrag() {
             target.closest('.modal-content') ||
             target.closest('.close-btn') ||
             // Station selector
-            target.closest('.station-list')
+            target.closest('.station-list') ||
+            // Detail overlay
+            target.closest('.detail-bus-overlay-panel')
         ));
         
         if (isNonDraggableElement) {
