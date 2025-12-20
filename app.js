@@ -81,8 +81,8 @@ function installViewportPolyfill() {
 
 // Drag sensitivity: make bus mode feel heavier, like Citymapper
 function getDragScale() {
-    // Citymapper-like: very responsive, smooth 1:1 tracking
-    return 1.5;
+    // Citymapper-like: very light and responsive, easy to flick
+    return 2.0;
 }
 
 // Snap stops: collapsed (40vh), mid (50/60/70vh), high (85/92/96vh), and max content height
@@ -2265,7 +2265,6 @@ function setupPanelDrag() {
         console.log('[handleStart] y:', y, 'target:', target?.className || target?.tagName);
         
         // GLOBAL FIX: Exclude ONLY truly non-draggable interactive elements
-        // Cards should be draggable but also clickable (like Citymapper)
         const isNonDraggableElement = !!(target && target.closest && (
             // Quick action buttons (Bus/Walk) - these should only click, not drag
             target.closest('.quick-actions-panel') || 
@@ -2280,7 +2279,7 @@ function setupPanelDrag() {
             target.closest('.close-btn') ||
             // Station selector
             target.closest('.station-list') ||
-            // Detail overlay (badge + name at top of walking screen) - should not trigger drag
+            // Detail overlay (badge + name at top of walking screen)
             target.closest('.detail-bus-overlay-panel')
         ));
         
@@ -2289,10 +2288,20 @@ function setupPanelDrag() {
             return false;
         }
         
+        // CRITICAL: In bus mode, station cards should be clickable but also draggable
+        // Only prevent drag start if the card has a click handler (bus list cards)
+        // Walking detail cards don't have click handlers, so they're fully draggable
+        const onCard = !!(target && target.closest && target.closest('.station-card'));
+        const isBusMode = arrivalsPanel.classList.contains('bus-mode');
+        const isWalkDetail = (typeof busDetailActive !== 'undefined' && busDetailActive);
+        
+        // In bus list mode (not walk detail), cards are clickable - allow both tap and drag
+        // In walk detail mode, the single card is just for display - fully draggable
+        // So we never block drag start on cards
+        
         const list = arrivalsPanel.querySelector('.routes-list');
         const inList = !!(target && target.closest && target.closest('.routes-list'));
         const isExpanded = arrivalsPanel.classList.contains('expanded');
-        const isBusMode = arrivalsPanel.classList.contains('bus-mode');
         
         // If starting inside the list while expanded and the list is scrolled, let it scroll instead of dragging
         if (!isBusMode && inList && isExpanded && list && list.scrollTop > 0) return false;
@@ -2333,7 +2342,7 @@ function setupPanelDrag() {
                 }
             }
             const dy = Math.abs(y - startY);
-            if (dy > 2) { // very low threshold for instant response (Citymapper-like)
+            if (dy > 1) { // extremely low threshold for instant response
                 dragging = true;
                 panelDragging = true;
                 arrivalsPanel.style.transition = 'none';
