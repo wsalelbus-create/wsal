@@ -2127,70 +2127,10 @@ function vhToPx(vh) {
     return Math.round(h * (vh / 100));
 }
 function clamp(n, min, max) { return Math.max(min, Math.min(max, n)); }
-// Compute dynamic maximum height for the bottom sheet
+// Compute maximum height for the bottom sheet - UNIFIED for all modes
 function getPanelMaxPx() {
-    try {
-        const panel = arrivalsPanel || document.querySelector('.arrivals-panel');
-        if (!panel) return vhToPx(PANEL_MAX_VH);
-        // In Bus mode (station list) OR Detailed (3rd) screen, allow expanding up to
-        // the viewport height or to fit all content if smaller.
-        if ((uiMode === 'bus' && !busDetailActive) || (uiMode === 'walk' && busDetailActive)) {
-            const minPx = vhToPx(PANEL_MIN_VH);
-            const panelRect = panel.getBoundingClientRect();
-            // Prefer the bottom of .routes-list (cards) as the content bottom
-            let inFlowBottom = panelRect.top;
-            const listEl = panel.querySelector('.routes-list');
-            if (listEl) {
-                try {
-                    const listRect = listEl.getBoundingClientRect();
-                    const csList = window.getComputedStyle(listEl);
-                    const pb = parseFloat(csList.paddingBottom) || 0;
-                    const listTopInPanel = listRect.top - panelRect.top;
-                    // Use scrollHeight to capture full content height (not clipped by container)
-                    const contentHeight = Math.max(listEl.scrollHeight || 0, listRect.height || 0);
-                    let bottom = panelRect.top + listTopInPanel + contentHeight - pb;
-                    inFlowBottom = Math.max(inFlowBottom, bottom);
-                } catch {}
-            } else {
-                // Fallback: scan all non-absolute children except the skyline
-                const children = Array.from(panel.children || []);
-                for (const el of children) {
-                    try {
-                        if (!el || el.id === 'skyline-inline') continue;
-                        const cs = window.getComputedStyle(el);
-                        if (cs.position === 'absolute') continue;
-                        const r = el.getBoundingClientRect();
-                        if (r.bottom > inFlowBottom) inFlowBottom = r.bottom;
-                    } catch {}
-                }
-            }
-            // Skyline visible height
-            let skylineH = 0;
-            try {
-                const sky = panel.querySelector('#skyline-inline');
-                if (sky) {
-                    const csSky = window.getComputedStyle(sky);
-                    skylineH = parseFloat(csSky.height) || sky.getBoundingClientRect().height || 0;
-                }
-            } catch {}
-            const contentH = Math.max(0, inFlowBottom - panelRect.top);
-            // Stop exactly when cards meet skyline (no growing blue gap)
-            const desired = Math.ceil(Math.max(minPx, contentH + skylineH));
-            
-            // IMPORTANT: Cap max height to prevent panel jump on first touch
-            // In both bus and walk modes, if panel is NOT expanded, cap to default PANEL_MAX_VH
-            const isExpanded = arrivalsPanel.classList.contains('expanded');
-            if (!isExpanded) {
-                const defaultMax = vhToPx(PANEL_MAX_VH);
-                console.log('[getPanelMaxPx] NOT EXPANDED - desired:', desired, 'defaultMax:', defaultMax, 'returning:', Math.min(desired, defaultMax));
-                return Math.min(desired, defaultMax);
-            }
-            
-            console.log('[getPanelMaxPx] EXPANDED - desired:', desired);
-            return desired;
-        }
-    } catch {}
-    // Default cap
+    // ALWAYS return the same max height for consistent, native-smooth dragging
+    // No dynamic calculations, no mode-specific logic - just pure CSS acceleration
     return vhToPx(PANEL_MAX_VH);
 }
 
@@ -2346,7 +2286,7 @@ function setupPanelDrag() {
             
             const delta = startY - currentY; // drag up -> positive delta
             const minPx = vhToPx(PANEL_MIN_VH);
-            const maxPx = getPanelMaxPx();
+            const maxPx = getPanelMaxPx(); // unified max for all modes
             const scale = getDragScale();
             let next = startVisible + delta * scale;
             
@@ -2436,7 +2376,7 @@ function setupPanelDrag() {
         // We'll handle inertia manually; disable CSS transition during the glide
         arrivalsPanel.style.transition = 'none';
         const minPx = vhToPx(PANEL_MIN_VH);
-        const maxPx = getPanelMaxPx();
+        const maxPx = getPanelMaxPx(); // unified max for all modes
         // compute velocity using recent samples (~120ms)
         let velocity = 0;
         if (lastMoves.length >= 2) {
