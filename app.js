@@ -81,8 +81,8 @@ function installViewportPolyfill() {
 
 // Drag sensitivity: make bus mode feel heavier, like Citymapper
 function getDragScale() {
-    // Citymapper-like: very responsive, 1:1 tracking
-    return 1.2;
+    // Citymapper-like: very responsive, smooth 1:1 tracking
+    return 1.5;
 }
 
 // Snap stops: collapsed (40vh), mid (50/60/70vh), high (85/92/96vh), and max content height
@@ -2279,7 +2279,9 @@ function setupPanelDrag() {
             target.closest('.modal-content') ||
             target.closest('.close-btn') ||
             // Station selector
-            target.closest('.station-list')
+            target.closest('.station-list') ||
+            // Detail overlay (badge + name at top of walking screen) - should not trigger drag
+            target.closest('.detail-bus-overlay-panel')
         ));
         
         if (isNonDraggableElement) {
@@ -2331,7 +2333,7 @@ function setupPanelDrag() {
                 }
             }
             const dy = Math.abs(y - startY);
-            if (dy > 3) { // lower threshold for more responsive drag (Citymapper-like)
+            if (dy > 2) { // very low threshold for instant response (Citymapper-like)
                 dragging = true;
                 panelDragging = true;
                 arrivalsPanel.style.transition = 'none';
