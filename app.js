@@ -377,12 +377,15 @@ function renderBusStations(withDelay = false, fadeIn = false) {
         }
         card.appendChild(arrivalsDiv);
     // Ensure the panel expands to show content and enable list scroll on detailed screen
+    // ONLY do this in walking detailed mode, NOT in bus mode
     try {
-        const minPx = vhToPx(PANEL_MIN_VH);
-        const maxPx = getPanelMaxPx();
-        arrivalsPanel.classList.add('expanded');
-        arrivalsPanel.style.transition = 'transform 0.24s cubic-bezier(.2,.7,.2,1)';
-        setPanelVisibleHeight(Math.max(minPx, maxPx));
+        if ((typeof uiMode !== 'undefined' && uiMode === 'walk') && (typeof busDetailActive !== 'undefined' && busDetailActive)) {
+            const minPx = vhToPx(PANEL_MIN_VH);
+            const maxPx = getPanelMaxPx();
+            arrivalsPanel.classList.add('expanded');
+            arrivalsPanel.style.transition = 'transform 0.24s cubic-bezier(.2,.7,.2,1)';
+            setPanelVisibleHeight(Math.max(minPx, maxPx));
+        }
     } catch {}
         // Drill-down: tapping a station card switches to Walk mode focused on this station
         card.addEventListener('click', (e) => {
