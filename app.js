@@ -98,7 +98,7 @@ function getSnapStopsPx() {
         if (s > minPx && s < maxPx && !stops.includes(s)) stops.push(s);
     });
     if (stops[stops.length - 1] !== maxPx) stops.push(maxPx);
-    console.log('[getSnapStopsPx] stops:', stops.map(s => Math.round(s)), 'maxPx:', Math.round(maxPx));
+    console.log('🎯 [getSnapStopsPx] SNAP STOPS:', stops.map(s => Math.round(s) + 'px'), 'maxPx:', Math.round(maxPx) + 'px');
     return stops;
 }
 
@@ -107,9 +107,17 @@ function pickSnapTarget(currentH, velocityPxPerMs) {
     const minPx = vhToPx(PANEL_MIN_VH);
     const maxPx = getPanelMaxPx();
     
+    console.log('🎯 [pickSnapTarget] currentH:', Math.round(currentH), 'velocity:', velocityPxPerMs.toFixed(3), 'stops:', stops.map(s => Math.round(s)));
+    
     // If we're beyond bounds, snap to the bound
-    if (currentH <= minPx) return minPx;
-    if (currentH >= maxPx) return maxPx;
+    if (currentH <= minPx) {
+        console.log('🎯 [pickSnapTarget] → SNAP TO MIN:', Math.round(minPx));
+        return minPx;
+    }
+    if (currentH >= maxPx) {
+        console.log('🎯 [pickSnapTarget] → SNAP TO MAX:', Math.round(maxPx));
+        return maxPx;
+    }
     
     // Very sensitive fling thresholds like Citymapper - tiny flicks advance stops
     const UP_FLING = 0.3;   // ~300 px/s
@@ -121,13 +129,18 @@ function pickSnapTarget(currentH, velocityPxPerMs) {
         for (let i = 0; i < stops.length; i++) {
             if (stops[i] > currentH + 1) { next = stops[i]; break; }
         }
+        console.log('🎯 [pickSnapTarget] UP FLING → SNAP TO:', Math.round(next));
         return next;
     }
     if (velocityPxPerMs < DOWN_FLING) {
         // previous stop below current
         for (let i = stops.length - 1; i >= 0; i--) {
-            if (stops[i] < currentH - 1) return stops[i];
+            if (stops[i] < currentH - 1) {
+                console.log('🎯 [pickSnapTarget] DOWN FLING → SNAP TO:', Math.round(stops[i]));
+                return stops[i];
+            }
         }
+        console.log('🎯 [pickSnapTarget] DOWN FLING → SNAP TO MIN:', Math.round(stops[0]));
         return stops[0];
     }
     // Nearest stop
@@ -137,6 +150,7 @@ function pickSnapTarget(currentH, velocityPxPerMs) {
         const d = Math.abs(currentH - stops[i]);
         if (d < bestDist) { best = stops[i]; bestDist = d; }
     }
+    console.log('🎯 [pickSnapTarget] NEAREST → SNAP TO:', Math.round(best));
     return best;
 }
 
@@ -410,6 +424,28 @@ function renderBusStations(withDelay = false, fadeIn = false) {
             }
         });
         routesListEl.appendChild(card);
+    });
+    
+    // DEBUG: Check what's actually rendered
+    requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+            console.log('🔍 [renderBusStations] DEBUG AFTER RENDER:');
+            console.log('  Cards rendered:', routesListEl.children.length);
+            console.log('  routesListEl.scrollHeight:', routesListEl.scrollHeight);
+            console.log('  routesListEl.clientHeight:', routesListEl.clientHeight);
+            console.log('  routesListEl.offsetHeight:', routesListEl.offsetHeight);
+            const listRect = routesListEl.getBoundingClientRect();
+            console.log('  routesListEl rect:', listRect);
+            const panelRect = arrivalsPanel.getBoundingClientRect();
+            console.log('  arrivalsPanel rect:', panelRect);
+            console.log('  arrivalsPanel.style.height:', arrivalsPanel.style.height);
+            console.log('  arrivalsPanel computed height:', panelRect.height);
+            
+            const computedList = window.getComputedStyle(routesListEl);
+            console.log('  routesListEl computed flex:', computedList.flex);
+            console.log('  routesListEl computed overflow:', computedList.overflow);
+            console.log('  routesListEl computed maxHeight:', computedList.maxHeight);
+        });
     });
 }
  
@@ -2133,7 +2169,9 @@ function clamp(n, min, max) { return Math.max(min, Math.min(max, n)); }
 function getPanelMaxPx() {
     const viewportH = window.innerHeight || document.documentElement.clientHeight || 800;
     // Panel can expand up to 95% of viewport - content will fill what it needs
-    return Math.round(viewportH * 0.95);
+    const result = Math.round(viewportH * 0.95);
+    console.log('📏 [getPanelMaxPx] viewportH:', viewportH, '→ maxPx (95%):', result);
+    return result;
 }
 
 function setupPanelDrag() {
@@ -2173,6 +2211,16 @@ function setupPanelDrag() {
         const maxPx = getPanelMaxPx();
         const vis = visiblePx;
         const offset = Math.max(0, maxPx - vis);
+        
+        console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+        console.log('[setPanelVisibleHeight] CALLED');
+        console.log('  visiblePx:', visiblePx);
+        console.log('  minPx:', minPx);
+        console.log('  maxPx:', maxPx);
+        console.log('  offset:', offset);
+        console.log('  panel.style.height will be:', maxPx + 'px');
+        console.log('  panel.style.transform will be: translate3d(0, ' + offset + 'px, 0)');
+        
         // ALWAYS use translate3d for GPU acceleration - NO FLICKERING
         arrivalsPanel.style.transform = `translate3d(0, ${offset}px, 0)`;
         arrivalsPanel.style.height = `${maxPx}px`;
@@ -2181,6 +2229,14 @@ function setupPanelDrag() {
         arrivalsPanel.dataset.visibleH = String(vis);
         const clampedVis = clamp(vis, minPx, maxPx);
         updateSheetProgress(clampedVis, minPx, maxPx);
+        
+        // DEBUG: Check actual computed styles
+        const computedHeight = arrivalsPanel.getBoundingClientRect().height;
+        const computedTransform = window.getComputedStyle(arrivalsPanel).transform;
+        console.log('  ACTUAL computed height:', computedHeight);
+        console.log('  ACTUAL computed transform:', computedTransform);
+        console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+        
         try { applySkylineSizing(); applyPWASkylineAnchoring(); } catch {}
     };
     const getPanelVisibleHeight = () => {
