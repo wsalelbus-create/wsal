@@ -2221,19 +2221,16 @@ function setupPanelDrag() {
     const setPanelVisibleHeight = (visiblePx) => {
         const minPx = vhToPx(PANEL_MIN_VH);
         const maxPx = getPanelMaxPx();
-        // Allow elastic bounce: don't clamp during drag, only clamp offset calculation
-        const vis = visiblePx; // use raw value to allow over-pull
-        const offset = Math.max(0, maxPx - vis); // how far to push the panel down
-        arrivalsPanel.style.transform = `translateY(${offset}px)`;
-        arrivalsPanel.style.height = `${maxPx}px`; // keep the panel sized to its max
-        // Expose sizes to CSS for consistent PWA/Safari proportions
+        const vis = visiblePx;
+        const offset = Math.max(0, maxPx - vis);
+        // ALWAYS use translate3d for GPU acceleration - NO FLICKERING
+        arrivalsPanel.style.transform = `translate3d(0, ${offset}px, 0)`;
+        arrivalsPanel.style.height = `${maxPx}px`;
         arrivalsPanel.style.setProperty('--panel-visible', `${vis}px`);
         arrivalsPanel.style.setProperty('--panel-max', `${maxPx}px`);
         arrivalsPanel.dataset.visibleH = String(vis);
-        // Clamp progress calculation for visual effects
         const clampedVis = clamp(vis, minPx, maxPx);
         updateSheetProgress(clampedVis, minPx, maxPx);
-        // Keep skyline height consistent across Safari and PWA
         try { applySkylineSizing(); applyPWASkylineAnchoring(); } catch {}
     };
     const getPanelVisibleHeight = () => {
@@ -2606,9 +2603,9 @@ if (arrivalsPanel) {
     const minPx = vhToPx(PANEL_MIN_VH);
     const maxPx = vhToPx(PANEL_MAX_VH);
     const offset = Math.max(0, maxPx - minPx);
-    arrivalsPanel.style.transform = `translateY(${offset}px)`;
+    arrivalsPanel.style.transform = `translate3d(0, ${offset}px, 0)`;
     arrivalsPanel.style.height = `${maxPx}px`;
-    arrivalsPanel.style.transition = 'none'; // no transition on initial load
+    arrivalsPanel.style.transition = 'none';
 }
 
 // Wait for polyfill to fully apply before initializing panel drag handlers
