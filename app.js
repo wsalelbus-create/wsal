@@ -2456,41 +2456,26 @@ function setupPanelDrag() {
 
     arrivalsPanel.addEventListener('touchstart', (e) => {
         const t = e.touches[0];
-        // Only capture if touch is in the VISIBLE part of the panel
-        // Panel is positioned with transform, so check if touch Y is below panel's visual top
         const panelRect = arrivalsPanel.getBoundingClientRect();
         
-        // Also check if the actual touch target is on the map (even if event bubbles to panel)
-        // Include Leaflet markers, panes, and SVG elements that are part of the map
-        const touchOnMap = e.target && (
-            e.target.closest('.leaflet-container') ||
-            e.target.closest('.leaflet-pane') ||
-            e.target.closest('.leaflet-marker-pane') ||
-            e.target.closest('.leaflet-overlay-pane') ||
-            e.target.closest('.leaflet-marker-icon') ||
-            e.target.closest('#map-container') ||
-            e.target.closest('.map-view-container') ||
-            e.target.closest('#map-crosshair') ||
-            // SVG elements that are map markers (circle, path inside map)
-            (e.target.tagName && ['circle', 'path', 'svg', 'line'].includes(e.target.tagName.toLowerCase()) && 
-             e.target.closest('.leaflet-pane'))
-        );
-        
-        // Extra check: if touch Y is above the visible panel top, it's on the map
-        const touchAbovePanel = t.clientY < panelRect.top;
-        
-        // Check if target is an SVG element (likely a map marker)
-        const isSvgElement = e.target && e.target.tagName && 
-            ['circle', 'path', 'svg', 'line', 'g', 'rect', 'ellipse', 'polygon', 'polyline'].includes(e.target.tagName.toLowerCase());
-        
-        console.log('[Panel Touch] touchY:', t.clientY, 'panelTop:', panelRect.top, 'target:', e.target.tagName, 'onMap:', !!touchOnMap, 'abovePanel:', touchAbovePanel, 'isSvg:', isSvgElement, 'parent:', e.target.parentElement?.className, 'mode:', uiMode);
-        
-        if (touchAbovePanel || touchOnMap) {
-            console.log('[Panel Touch] BLOCKED - touch above panel or on map');
-            return; // touch is above visible panel (on map)
+        // CRITICAL: Only capture touches that are BELOW the panel's visual top
+        // If touch Y is above panel top, it's on the map - don't capture it
+        if (t.clientY < panelRect.top) {
+            return; // touch is on map area
         }
         
-        console.log('[Panel Touch] CAPTURED - starting drag');
+        // Also exclude touches on panel UI elements that shouldn't trigger drag
+        const touchOnPanelUI = e.target && (
+            e.target.closest('.quick-actions-panel') ||
+            e.target.closest('.qa-btn') ||
+            e.target.closest('.station-card') ||
+            e.target.closest('.floating-controls')
+        );
+        
+        if (touchOnPanelUI) {
+            return; // let the UI element handle the touch
+        }
+        
         handleStart(t.clientY, e.target);
         // do NOT preventDefault on touchstart; allow taps to become clicks
     }, { passive: false, capture: true });
