@@ -81,8 +81,8 @@ function installViewportPolyfill() {
 
 // Drag sensitivity: make bus mode feel heavier, like Citymapper
 function getDragScale() {
-    // Citymapper-like: very smooth and responsive
-    return 1.8;
+    // Citymapper-like: responsive but not too sensitive
+    return 1.3;
 }
 
 // Snap stops: collapsed (40vh), mid (50/60/70vh), high (85/92/96vh), and max content height
@@ -2255,29 +2255,19 @@ function setupPanelDrag() {
     const handleStart = (y, target) => {
         console.log('[handleStart] y:', y, 'target:', target?.className || target?.tagName);
         
-        // GLOBAL FIX: Exclude elements that should NOT trigger panel drag
-        const isNonDraggableElement = !!(target && target.closest && (
-            // Quick action buttons (Bus/Walk) - these should only click, not drag
+        // ONLY exclude actual buttons - everything else in the panel should be draggable
+        const isButton = !!(target && target.closest && (
             target.closest('.quick-actions-panel') || 
             target.closest('.qa-btn') ||
-            // Station cards - prevent panel snap when touching cards (CRITICAL FIX)
-            target.closest('.station-card') ||
-            // Buttons that should only click
             target.closest('button') ||
             target.closest('.back-badge') ||
             target.closest('.settings-badge') ||
             target.closest('.map-control-btn') ||
-            // Modal elements
-            target.closest('.modal-content') ||
-            target.closest('.close-btn') ||
-            // Station selector
-            target.closest('.station-list') ||
-            // Detail overlay
-            target.closest('.detail-bus-overlay-panel')
+            target.closest('.close-btn')
         ));
         
-        if (isNonDraggableElement) {
-            console.log('[handleStart] Touch on non-draggable element - ignoring for panel drag');
+        if (isButton) {
+            console.log('[handleStart] Touch on button - ignoring for panel drag');
             return false;
         }
         
@@ -2325,7 +2315,7 @@ function setupPanelDrag() {
                 }
             }
             const dy = Math.abs(y - startY);
-            if (dy > 3) { // low threshold for responsive drag
+            if (dy > 5) { // reasonable threshold to distinguish tap from drag
                 dragging = true;
                 panelDragging = true;
                 arrivalsPanel.style.transition = 'none';
@@ -2345,12 +2335,12 @@ function setupPanelDrag() {
         // Elastic bounce: allow pulling below minimum with resistance (rubber band effect)
         if (next < minPx) {
             const overPull = minPx - next; // how much below minimum
-            const resistance = 0.4; // 40% resistance - easier to pull down
+            const resistance = 0.3; // 30% resistance - harder to pull down
             next = minPx - (overPull * resistance); // apply resistance
         } else if (next > maxPx) {
             // Also apply resistance when pulling above maximum
             const overPull = next - maxPx;
-            const resistance = 0.4;
+            const resistance = 0.3;
             next = maxPx + (overPull * resistance);
         }
         
