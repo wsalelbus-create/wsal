@@ -81,23 +81,20 @@ function installViewportPolyfill() {
 
 // Drag sensitivity: make bus mode feel heavier, like Citymapper
 function getDragScale() {
-    // Citymapper-like: responsive but not too sensitive
-    return 1.3;
+    // Smooth 1:1 tracking like native scrolling
+    return 1.0;
 }
 
-// Snap stops: collapsed (40vh), mid (50/60/70vh), high (85/92/96vh), and max content height
+// Snap stops: fewer stops for smoother, more scroll-like feel
 function getSnapStopsPx() {
     const minPx = vhToPx(PANEL_MIN_VH);
     const maxPx = getPanelMaxPx();
     const stops = [minPx];
-    const s50 = vhToPx(50);
+    // Only 2 mid stops for smoother feel
     const s60 = vhToPx(60);
-    const s70 = vhToPx(70);
     const s85 = vhToPx(85);
-    const s92 = vhToPx(92);
-    const s96 = vhToPx(96);
     // Add mid stops if within range
-    ;[s50, s60, s70, s85, s92, s96].forEach(s => {
+    ;[s60, s85].forEach(s => {
         if (s > minPx && s < maxPx && !stops.includes(s)) stops.push(s);
     });
     if (stops[stops.length - 1] !== maxPx) stops.push(maxPx);
@@ -2320,7 +2317,7 @@ function setupPanelDrag() {
                 }
             }
             const dy = Math.abs(y - startY);
-            if (dy > 5) { // reasonable threshold to distinguish tap from drag
+            if (dy > 3) { // lower threshold for more responsive feel
                 dragging = true;
                 panelDragging = true;
                 arrivalsPanel.style.transition = 'none';
