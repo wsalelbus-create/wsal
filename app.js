@@ -2178,15 +2178,16 @@ function getPanelMaxPx() {
             // Stop exactly when cards meet skyline (no growing blue gap)
             const desired = Math.ceil(Math.max(minPx, contentH + skylineH));
             
-            // IMPORTANT: In bus mode, if panel is NOT expanded, cap max to default PANEL_MAX_VH
-            // This prevents the panel from jumping up on first touch
-            if (uiMode === 'bus' && !busDetailActive && !arrivalsPanel.classList.contains('expanded')) {
+            // IMPORTANT: Cap max height to prevent panel jump on first touch
+            // In both bus and walk modes, if panel is NOT expanded, cap to default PANEL_MAX_VH
+            const isExpanded = arrivalsPanel.classList.contains('expanded');
+            if (!isExpanded) {
                 const defaultMax = vhToPx(PANEL_MAX_VH);
-                console.log('[getPanelMaxPx] BUS MODE - desired:', desired, 'defaultMax:', defaultMax, 'returning:', Math.min(desired, defaultMax));
+                console.log('[getPanelMaxPx] NOT EXPANDED - desired:', desired, 'defaultMax:', defaultMax, 'returning:', Math.min(desired, defaultMax));
                 return Math.min(desired, defaultMax);
             }
             
-            console.log('[getPanelMaxPx] EXPANDED or WALK - desired:', desired);
+            console.log('[getPanelMaxPx] EXPANDED - desired:', desired);
             return desired;
         }
     } catch {}
