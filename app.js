@@ -2165,12 +2165,13 @@ function vhToPx(vh) {
 }
 function clamp(n, min, max) { return Math.max(min, Math.min(max, n)); }
 // Compute maximum height for the bottom sheet
-// SIMPLE: Just return viewport height - the content will determine how far up it goes
+// SIMPLE: Return MORE than viewport to ensure all content fits on old Safari
 function getPanelMaxPx() {
     const viewportH = window.innerHeight || document.documentElement.clientHeight || 800;
-    // Panel can expand to FULL viewport to show all content
-    const result = Math.round(viewportH);
-    console.log('📏 [getPanelMaxPx] viewportH:', viewportH, '→ maxPx (100%):', result);
+    // Panel needs to be TALLER than viewport to show all content on Safari iOS 15
+    // Add extra 200px for Safari iOS 15 rendering bugs
+    const result = Math.round(viewportH + 200);
+    console.log('📏 [getPanelMaxPx] viewportH:', viewportH, '→ maxPx (100% + 200px):', result);
     return result;
 }
 
