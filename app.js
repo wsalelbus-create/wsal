@@ -2264,14 +2264,32 @@ function setupPanelDrag() {
     const handleStart = (y, target) => {
         console.log('[handleStart] y:', y, 'target:', target?.className || target?.tagName);
         
-        // CRITICAL FIX: Exclude quick action buttons from panel drag handling
-        // If touch is on a quick action button, don't start panel drag
-        const onQuickAction = !!(target && target.closest && (
+        // GLOBAL FIX: Exclude ALL interactive elements from panel drag handling
+        // This prevents panel snap when tapping buttons, cards, or other clickable elements
+        const isInteractiveElement = !!(target && target.closest && (
+            // Quick action buttons (Bus/Walk)
             target.closest('.quick-actions-panel') || 
-            target.closest('.qa-btn')
+            target.closest('.qa-btn') ||
+            // Station cards (clickable in bus/walk screens)
+            target.closest('.station-card') ||
+            // Any button elements
+            target.closest('button') ||
+            // Back badge, settings, map controls
+            target.closest('.back-badge') ||
+            target.closest('.settings-badge') ||
+            target.closest('.map-control-btn') ||
+            // Modal elements
+            target.closest('.modal-content') ||
+            target.closest('.close-btn') ||
+            // Station selector
+            target.closest('.station-list') ||
+            // Any element with onclick or data-clickable attribute
+            target.onclick ||
+            target.dataset?.clickable
         ));
-        if (onQuickAction) {
-            console.log('[handleStart] Touch on quick action button - ignoring for panel drag');
+        
+        if (isInteractiveElement) {
+            console.log('[handleStart] Touch on interactive element - ignoring for panel drag');
             return false;
         }
         
