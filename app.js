@@ -2191,9 +2191,11 @@ function getPanelMaxPx() {
             // This prevents the panel from jumping up on first touch
             if (uiMode === 'bus' && !busDetailActive && !arrivalsPanel.classList.contains('expanded')) {
                 const defaultMax = vhToPx(PANEL_MAX_VH);
+                console.log('[getPanelMaxPx] BUS MODE - desired:', desired, 'defaultMax:', defaultMax, 'returning:', Math.min(desired, defaultMax));
                 return Math.min(desired, defaultMax);
             }
             
+            console.log('[getPanelMaxPx] EXPANDED or WALK - desired:', desired);
             return desired;
         }
     } catch {}
@@ -2307,6 +2309,7 @@ function setupPanelDrag() {
                 dragging = true;
                 panelDragging = true;
                 arrivalsPanel.style.transition = 'none';
+                console.log('[DRAG START] uiMode:', uiMode, 'busDetailActive:', busDetailActive, 'expanded:', arrivalsPanel.classList.contains('expanded'), 'startVisible:', startVisible);
             } else {
                 return; // not enough movement yet
             }
@@ -2315,6 +2318,7 @@ function setupPanelDrag() {
         const delta = startY - y; // drag up -> positive delta
         const minPx = vhToPx(PANEL_MIN_VH);
         const maxPx = getPanelMaxPx();
+        console.log('[DRAG MOVE] delta:', delta, 'minPx:', minPx, 'maxPx:', maxPx, 'startVisible:', startVisible);
         const scale = getDragScale();
         let next = startVisible + delta * scale;
         
