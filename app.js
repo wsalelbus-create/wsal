@@ -81,8 +81,8 @@ function installViewportPolyfill() {
 
 // Drag sensitivity: make bus mode feel heavier, like Citymapper
 function getDragScale() {
-    // Citymapper-like: responsive but not too sensitive
-    return 1.3;
+    // Citymapper-like: very smooth and responsive
+    return 1.8;
 }
 
 // Snap stops: collapsed (40vh), mid (50/60/70vh), high (85/92/96vh), and max content height
@@ -2325,7 +2325,7 @@ function setupPanelDrag() {
                 }
             }
             const dy = Math.abs(y - startY);
-            if (dy > 5) { // reasonable threshold to distinguish tap from drag
+            if (dy > 3) { // low threshold for responsive drag
                 dragging = true;
                 panelDragging = true;
                 arrivalsPanel.style.transition = 'none';
@@ -2345,12 +2345,12 @@ function setupPanelDrag() {
         // Elastic bounce: allow pulling below minimum with resistance (rubber band effect)
         if (next < minPx) {
             const overPull = minPx - next; // how much below minimum
-            const resistance = 0.3; // 30% resistance - harder to pull down
+            const resistance = 0.4; // 40% resistance - easier to pull down
             next = minPx - (overPull * resistance); // apply resistance
         } else if (next > maxPx) {
             // Also apply resistance when pulling above maximum
             const overPull = next - maxPx;
-            const resistance = 0.3;
+            const resistance = 0.4;
             next = maxPx + (overPull * resistance);
         }
         
