@@ -1235,9 +1235,10 @@ function initHeadingSensors() {
     });
     // First-chance: capture the very first gesture anywhere on the page
     // This maximizes the chance iOS treats the call as a direct user-activation.
-    document.addEventListener('pointerdown', requestCompassPermission, { capture: true, once: true });
-    document.addEventListener('touchstart', requestCompassPermission, { capture: true, once: true });
-    document.addEventListener('keydown', requestCompassPermission, { capture: true, once: true });
+    // DON'T use capture phase to avoid interfering with map touches
+    document.addEventListener('pointerdown', requestCompassPermission, { once: true });
+    document.addEventListener('touchstart', requestCompassPermission, { passive: true, once: true });
+    document.addEventListener('keydown', requestCompassPermission, { once: true });
     // Retry hooks: allow subsequent attempts if the user changes Safari settings mid-session
     window.addEventListener('touchstart', requestCompassPermission, { passive: true });
     window.addEventListener('click', requestCompassPermission);
