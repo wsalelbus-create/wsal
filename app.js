@@ -2263,6 +2263,18 @@ function setupPanelDrag() {
 
     const handleStart = (y, target) => {
         console.log('[handleStart] y:', y, 'target:', target?.className || target?.tagName);
+        
+        // CRITICAL FIX: Exclude quick action buttons from panel drag handling
+        // If touch is on a quick action button, don't start panel drag
+        const onQuickAction = !!(target && target.closest && (
+            target.closest('.quick-actions-panel') || 
+            target.closest('.qa-btn')
+        ));
+        if (onQuickAction) {
+            console.log('[handleStart] Touch on quick action button - ignoring for panel drag');
+            return false;
+        }
+        
         const list = arrivalsPanel.querySelector('.routes-list');
         const inList = !!(target && target.closest && target.closest('.routes-list'));
         const isExpanded = arrivalsPanel.classList.contains('expanded');
