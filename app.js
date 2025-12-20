@@ -103,20 +103,14 @@ function getSnapStopsPx() {
 
 function pickSnapTarget(currentH, velocityPxPerMs) {
     const stops = getSnapStopsPx();
-    // Fling thresholds (px/ms): advance to next stop with lighter flicks
-    const UP_FLING = 0.6;   // ~600 px/s
-    const DOWN_FLING = -0.55; // ~550 px/s downward
+    // Very sensitive fling thresholds like Citymapper - tiny flicks advance stops
+    const UP_FLING = 0.25;   // ~250 px/s (much lower)
+    const DOWN_FLING = -0.25; // ~250 px/s downward
     if (velocityPxPerMs > UP_FLING) {
-        // next stop above current; add gating to avoid jumping straight to max near the top
+        // next stop above current
         let next = stops[stops.length - 1];
         for (let i = 0; i < stops.length; i++) {
             if (stops[i] > currentH + 1) { next = stops[i]; break; }
-        }
-        const s85 = vhToPx(85), s92 = vhToPx(92);
-        const max = stops[stops.length - 1];
-        if (next === max && currentH < s92 && velocityPxPerMs < 1.2) {
-            // If not very close to the top and flick not extremely fast, land on 85vh instead of max
-            return s85;
         }
         return next;
     }
@@ -2317,7 +2311,7 @@ function setupPanelDrag() {
                 }
             }
             const dy = Math.abs(y - startY);
-            if (dy > 3) { // lower threshold for more responsive feel
+            if (dy > 2) { // very low threshold for instant response
                 dragging = true;
                 panelDragging = true;
                 arrivalsPanel.style.transition = 'none';
@@ -2411,13 +2405,13 @@ function setupPanelDrag() {
             velocity = (b.h - a.h) / dt; // px/ms (positive = upward growth)
         }
         const absV = Math.abs(velocity);
-        // Start an inertial glide if velocity is meaningful; else snap immediately
-        if (absV > 0.04) { // ~40 px/s threshold
+        // Very sensitive flick detection like Citymapper - even tiny flicks should advance
+        if (absV > 0.015) { // ~15 px/s threshold (much lower for sensitivity)
             inertiaActive = true;
             let h = getPanelVisibleHeight();
             const dir = velocity >= 0 ? 1 : -1;
-            const DECEL = 0.0011; // px/ms^2 (lower decel => longer glide)
-            const MIN_GLIDE_MS = 380; // ensure a longer glide for scroll feel
+            const DECEL = 0.0008; // slower decel for longer, smoother glide
+            const MIN_GLIDE_MS = 450; // longer glide for buttery feel
             const startTs = performance.now();
             let lastTs = startTs;
             const step = (ts) => {
@@ -2428,14 +2422,19 @@ function setupPanelDrag() {
                 // Speed decreases linearly with time until it hits 0
                 const vNow = Math.max(0, absV - DECEL * elapsed);
                 h = clamp(h + dir * vNow * dt, minPx, maxPx);
-                setPanelVisibleHeight(h);
+                
+                // Use transform directly for buttery smooth animation (no layout thrashing)
+                const offset = Math.max(0, maxPx - h);
+                arrivalsPanel.style.transform = `translateY(${offset}px)`;
+                arrivalsPanel.dataset.visibleH = String(h);
+                
                 // Stop if speed nearly zero or bounds reached
                 const nearBound = (h <= minPx + 0.5) || (h >= maxPx - 0.5);
-                if ((elapsed >= MIN_GLIDE_MS && vNow <= 0.009) || nearBound) {
+                if ((elapsed >= MIN_GLIDE_MS && vNow <= 0.005) || nearBound) {
                     inertiaActive = false;
                     // Final snap with a soft easing
                     const target = pickSnapTarget(h, dir * vNow);
-                    arrivalsPanel.style.transition = 'transform 0.24s cubic-bezier(.2,.7,.2,1)';
+                    arrivalsPanel.style.transition = 'transform 0.22s cubic-bezier(0.25, 0.46, 0.45, 0.94)'; // iOS-like easing
                     setPanelVisibleHeight(target);
                     
                     // Reset map parallax synchronized with panel snap
