@@ -103,11 +103,14 @@ html, body {
        To center map at 30vh: top = 30vh - (160vh / 2) = 30vh - 80vh = -50vh = -50% */
     top: -50%; /* shift up so map center aligns with visible area center (~30vh from viewport top) */
     left: -10%; /* center the oversized map horizontally - 10% buffer left and right */
-    /* Performance optimizations */
+    /* Performance optimizations for smooth parallax */
     transform: translate3d(0, 0, 0);
     /* Force GPU acceleration */
     will-change: transform;
     /* Hint browser for optimization */
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+    contain: layout style paint; /* CSS containment for better performance */
 }
 
 /* Header Floating on Map */
@@ -444,14 +447,15 @@ html, body {
     align-items: stretch;
     overflow: visible;
     touch-action: none;
-    /* GPU acceleration for 60fps buttery smooth dragging */
+    /* CRITICAL: Force GPU compositing layer for native-smooth dragging */
     will-change: transform;
     backface-visibility: hidden;
     -webkit-backface-visibility: hidden;
+    transform: translate3d(0, 0, 0); /* force layer creation */
+    /* CSS containment for better performance */
+    contain: layout style paint;
     /* Initial position: collapsed (40vh visible) */
-    transform: translate3d(0, calc(var(--vh, 1vh) * 45), 0);
     transition: transform 0.25s ease;
-    will-change: transform;
 }
 
 /* Expanded sheet height (drag up) */
