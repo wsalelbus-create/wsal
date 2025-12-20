@@ -411,34 +411,6 @@ function renderBusStations(withDelay = false, fadeIn = false) {
         });
         routesListEl.appendChild(card);
     });
-    
-    // CRITICAL: Recalculate panel max height after cards are rendered
-    // This allows the panel to expand taller when there are more cards
-    requestAnimationFrame(() => {
-        requestAnimationFrame(() => {
-            try {
-                const newMax = getPanelMaxPx();
-                console.log('[renderBusStations] ✓ Recalculated maxPx:', newMax);
-                
-                // ALWAYS update the panel height so it CAN expand to show all cards
-                if (arrivalsPanel) {
-                    arrivalsPanel.style.height = `${newMax}px`;
-                    console.log('[renderBusStations] ✓ Set panel height to:', newMax);
-                    
-                    // If panel is already expanded, move it to the new max immediately
-                    if (arrivalsPanel.classList.contains('expanded')) {
-                        console.log('[renderBusStations] Panel is expanded, moving to newMax');
-                        arrivalsPanel.style.transition = 'transform 0.3s ease';
-                        if (window._setPanelVisibleHeight) {
-                            window._setPanelVisibleHeight(newMax);
-                        }
-                    }
-                }
-            } catch (e) {
-                console.warn('[renderBusStations] recalc error:', e);
-            }
-        });
-    });
 }
  
 // Render a single station using the exact Bus screen card design (header + arrivals)
@@ -536,34 +508,6 @@ function renderBusStationDetail(station, withDelay = false) {
     }
     card.appendChild(arrivalsDiv);
     routesListEl.appendChild(card);
-    
-    // CRITICAL: Recalculate panel max height after card is rendered
-    // This allows the panel to expand taller for detailed view with all arrivals
-    requestAnimationFrame(() => {
-        requestAnimationFrame(() => {
-            try {
-                const newMax = getPanelMaxPx();
-                console.log('[renderBusStationDetail] Recalculated maxPx:', newMax);
-                
-                // Update the panel height immediately so it can expand to show all arrivals
-                if (arrivalsPanel) {
-                    arrivalsPanel.style.height = `${newMax}px`;
-                    
-                    // If panel is expanded, move it to show the new max height
-                    if (arrivalsPanel.classList.contains('expanded')) {
-                        const currentVis = getPanelVisibleHeight();
-                        console.log('[renderBusStationDetail] Panel is expanded, updating to newMax:', newMax, 'from:', currentVis);
-                        arrivalsPanel.style.transition = 'transform 0.3s ease';
-                        if (window._setPanelVisibleHeight) {
-                            window._setPanelVisibleHeight(newMax);
-                        }
-                    }
-                }
-            } catch (e) {
-                console.warn('[renderBusStationDetail] recalc error:', e);
-            }
-        });
-    });
 }
 // Route Paths - GPS waypoints for all routes
 // Each route has waypoints representing major stops along the path
@@ -2154,7 +2098,7 @@ if (compassBtn) {
 const mapViewContainer = document.querySelector('.map-view-container');
 const arrivalsPanel = document.querySelector('.arrivals-panel');
 const PANEL_MIN_VH = 40; // visible height when collapsed (Safari reference)
-const PANEL_MAX_VH = 85; // visible height when expanded
+const PANEL_MAX_VH = 95; // visible height when expanded - 95% to show all content
 let panelDragging = false; // global flag to coordinate with bounce guard
 let pendingDrag = false;   // waiting to see if movement exceeds threshold
 let startTarget = null;
@@ -2184,73 +2128,12 @@ function vhToPx(vh) {
     return Math.round(h * (vh / 100));
 }
 function clamp(n, min, max) { return Math.max(min, Math.min(max, n)); }
-// Compute maximum height for the bottom sheet - CONTENT-AWARE but consistent
+// Compute maximum height for the bottom sheet
+// SIMPLE: Just return a large fixed value - the content will determine how far up it goes
 function getPanelMaxPx() {
-    try {
-        const panel = arrivalsPanel || document.querySelector('.arrivals-panel');
-        if (!panel) {
-            console.log('[getPanelMaxPx] No panel found, returning default');
-            return vhToPx(PANEL_MAX_VH);
-        }
-        
-        // Calculate how much space the actual content needs
-        const listEl = panel.querySelector('.routes-list');
-        if (listEl && (uiMode === 'bus' || (uiMode === 'walk' && busDetailActive))) {
-            console.log('[getPanelMaxPx] Measuring content in mode:', uiMode, 'busDetailActive:', busDetailActive);
-            
-            // MEASURE THE ACTUAL CONTENT HEIGHT
-            // Force the list to show its natural height temporarily
-            const oldOverflow = listEl.style.overflow;
-            const oldMaxHeight = listEl.style.maxHeight;
-            const oldFlex = listEl.style.flex;
-            listEl.style.overflow = 'visible';
-            listEl.style.maxHeight = 'none';
-            listEl.style.flex = '0 0 auto';
-            
-            // Force a reflow to get accurate measurements
-            listEl.offsetHeight;
-            
-            // Get the natural height of all cards
-            const listRect = listEl.getBoundingClientRect();
-            const panelRect = panel.getBoundingClientRect();
-            
-            // Distance from panel top to list top
-            const listTopInPanel = listRect.top - panelRect.top;
-            
-            // CRITICAL: Use scrollHeight which includes ALL content even if clipped
-            const contentHeight = listEl.scrollHeight;
-            
-            console.log('[getPanelMaxPx] listRect.height:', listRect.height, 'scrollHeight:', contentHeight, 'listTopInPanel:', listTopInPanel);
-            
-            // Restore original styles
-            listEl.style.overflow = oldOverflow;
-            listEl.style.maxHeight = oldMaxHeight;
-            listEl.style.flex = oldFlex;
-            
-            // Add skyline height (fixed at bottom)
-            const skylineH = 180;
-            
-            // Total needed: panel top padding + ALL content (including padding-bottom) + skyline
-            // The contentHeight already includes the padding-bottom of the list
-            const totalNeeded = listTopInPanel + contentHeight + skylineH;
-            
-            // Cap at viewport height minus some breathing room
-            const viewportH = window.innerHeight || document.documentElement.clientHeight || 800;
-            const maxAllowed = viewportH * 0.95; // 95% of viewport max
-            const minAllowed = vhToPx(PANEL_MAX_VH); // at least 85vh
-            
-            // Return the content-based height, but capped between min and max
-            const result = Math.min(maxAllowed, Math.max(minAllowed, totalNeeded));
-            console.log('[getPanelMaxPx] ✓ RESULT - totalNeeded:', totalNeeded, 'minAllowed:', minAllowed, 'maxAllowed:', maxAllowed, 'FINAL:', result);
-            return result;
-        }
-    } catch (e) {
-        console.warn('[getPanelMaxPx] error:', e);
-    }
-    
-    // Default: 85vh for home screen and fallback
-    console.log('[getPanelMaxPx] Using default PANEL_MAX_VH');
-    return vhToPx(PANEL_MAX_VH);
+    const viewportH = window.innerHeight || document.documentElement.clientHeight || 800;
+    // Panel can expand up to 95% of viewport - content will fill what it needs
+    return Math.round(viewportH * 0.95);
 }
 
 function setupPanelDrag() {

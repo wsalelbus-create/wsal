@@ -431,7 +431,8 @@ html, body {
     left: 0;
     right: 0;
     bottom: 0;
-    height: calc(var(--vh, 1vh) * 85);
+    /* LARGE HEIGHT: Panel can expand up to 95vh to show all content */
+    height: calc(var(--vh, 1vh) * 95);
     max-height: none;
     background: white;
     border-radius: 16px 16px 0 0;
@@ -580,10 +581,10 @@ html, body {
 /* In Bus mode, make the list non-scrollable and let it size to content.
    The sheet itself will expand up to the viewport to reveal items. */
 .arrivals-panel.bus-mode .routes-list {
-    overflow: hidden;            /* no internal scroll */
-    flex: 0 0 auto;              /* do not take remaining space */
+    overflow: visible;           /* SHOW all content - no clipping */
+    flex: 0 0 auto;              /* do not take remaining space - size to content */
     min-height: auto;            /* allow intrinsic height */
-    max-height: none;            /* no cap */
+    max-height: none;            /* no cap - grow as tall as needed */
     -webkit-overflow-scrolling: auto;
     touch-action: none;          /* gestures reserved for sheet drag */
     /* Reserve skyline height so the last card never overlaps backdrop */
@@ -592,6 +593,7 @@ html, body {
 
 /* Walking screen (detailed mode) with single card - ensure enough space below */
 .arrivals-panel.no-selector .routes-list {
+    overflow: visible;           /* SHOW all content - no clipping */
     padding-bottom: 220px !important; /* extra space for single card to sit above skyline */
     min-height: 300px; /* ensure list has minimum height even with one card */
 }
