@@ -428,26 +428,29 @@ html, body {
     left: 0;
     right: 0;
     bottom: 0;
-    height: calc(var(--vh, 1vh) * 85); /* start at max height, JS will position via transform */
+    height: calc(var(--vh, 1vh) * 85);
     max-height: none;
     background: white;
-    border-radius: 16px 16px 0 0;   /* match selector bar radius */
-    box-shadow: none;               /* remove hairline */
-    z-index: 1000;                  /* above map/controls; under header/back badge */
-    /* Skyline size made global so children (routes-list) can reserve space */
-    --skyline-max-height: 180px; /* fixed smaller height - identical in Safari and PWA */
+    border-radius: 16px 16px 0 0;
+    box-shadow: none;
+    z-index: 1000;
+    --skyline-max-height: 180px;
     padding: 16px;
-    padding-top: 120px;             /* enough space for floating selector (70px) + spacing (32px) + first element */
+    padding-top: 120px;
     --panel-pad-bottom: calc(6px + env(safe-area-inset-bottom));
-    padding-bottom: var(--panel-pad-bottom); /* safe area */
+    padding-bottom: var(--panel-pad-bottom);
     display: flex;
-    flex-direction: column;         /* internal layout */
+    flex-direction: column;
     align-items: stretch;
-    overflow: visible;              /* allow floating controls to show above panel */
-    touch-action: none;             /* gestures handled by JS for sheet drag */
-    /* Initial position: collapsed (40vh visible) - prevents flash at bottom on load */
-    transform: translateY(calc(var(--vh, 1vh) * 45)); /* start pushed down (85vh - 40vh = 45vh offset) */
-    transition: transform 0.25s ease;  /* smooth translate change */
+    overflow: visible;
+    touch-action: none;
+    /* GPU acceleration for 60fps buttery smooth dragging */
+    will-change: transform;
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+    /* Initial position: collapsed (40vh visible) */
+    transform: translate3d(0, calc(var(--vh, 1vh) * 45), 0);
+    transition: transform 0.25s ease;
     will-change: transform;
 }
 

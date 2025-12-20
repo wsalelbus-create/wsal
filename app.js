@@ -2324,23 +2324,30 @@ function setupPanelDrag() {
         const delta = startY - y; // drag up -> positive delta
         const minPx = vhToPx(PANEL_MIN_VH);
         const maxPx = getPanelMaxPx();
-        console.log('[DRAG MOVE] delta:', delta, 'minPx:', minPx, 'maxPx:', maxPx, 'startVisible:', startVisible);
         const scale = getDragScale();
         let next = startVisible + delta * scale;
         
         // Elastic bounce: allow pulling below minimum with resistance (rubber band effect)
         if (next < minPx) {
-            const overPull = minPx - next; // how much below minimum
-            const resistance = 0.3; // 30% resistance - harder to pull down
-            next = minPx - (overPull * resistance); // apply resistance
+            const overPull = minPx - next;
+            const resistance = 0.3;
+            next = minPx - (overPull * resistance);
         } else if (next > maxPx) {
-            // Also apply resistance when pulling above maximum
             const overPull = next - maxPx;
             const resistance = 0.3;
             next = maxPx + (overPull * resistance);
         }
         
-        setPanelVisibleHeight(next);
+        // Use GPU-accelerated transform directly - NO layout recalculation
+        const offset = Math.max(0, maxPx - next);
+        arrivalsPanel.style.transform = `translate3d(0, ${offset}px, 0)`;
+        arrivalsPanel.dataset.visibleH = String(next);
+        
+        // Update progress for visual effects
+        const clampedNext = clamp(next, minPx, maxPx);
+        const denom = Math.max(1, (maxPx - minPx));
+        const p = Math.max(0, Math.min(1, (clampedNext - minPx) / denom));
+        arrivalsPanel.style.setProperty('--sheet-progress', String(p));
         
         // Citymapper-style parallax: VISUAL effect only, don't actually move map tiles
         // Apply transform to map-container (the visual layer), not map-view-container
@@ -2423,9 +2430,9 @@ function setupPanelDrag() {
                 const vNow = Math.max(0, absV - DECEL * elapsed);
                 h = clamp(h + dir * vNow * dt, minPx, maxPx);
                 
-                // Use transform directly for buttery smooth animation (no layout thrashing)
+                // Use GPU-accelerated transform directly for 60fps smoothness
                 const offset = Math.max(0, maxPx - h);
-                arrivalsPanel.style.transform = `translateY(${offset}px)`;
+                arrivalsPanel.style.transform = `translate3d(0, ${offset}px, 0)`;
                 arrivalsPanel.dataset.visibleH = String(h);
                 
                 // Stop if speed nearly zero or bounds reached
