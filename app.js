@@ -2483,7 +2483,7 @@ function setupPanelDrag() {
         console.log('[Panel Touch] CAPTURED - starting drag');
         handleStart(t.clientY, e.target);
         // do NOT preventDefault on touchstart; allow taps to become clicks
-    }, { passive: false, capture: true });
+    }, { passive: false }); // REMOVED capture: true
     arrivalsPanel.addEventListener('touchmove', (e) => {
         const t = e.touches[0];
         handleMove(t.clientY);
