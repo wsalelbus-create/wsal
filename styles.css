@@ -431,9 +431,9 @@ html, body {
     left: 0;
     right: 0;
     bottom: 0;
-    /* EXTRA TALL: Panel needs to be taller than viewport for Safari iOS 15 */
-    height: calc(var(--vh, 1vh) * 120); /* 120% of viewport */
-    min-height: calc(var(--vh, 1vh) * 120); /* Safari iOS 15 fix */
+    /* Height set by JavaScript - this is just initial */
+    height: calc(var(--vh, 1vh) * 100);
+    min-height: calc(var(--vh, 1vh) * 100);
     max-height: none;
     background: white;
     border-radius: 16px 16px 0 0;
@@ -592,8 +592,8 @@ html, body {
     max-height: none;            /* no cap - grow as tall as needed */
     -webkit-overflow-scrolling: auto;
     touch-action: none;          /* gestures reserved for sheet drag */
-    /* CRITICAL: Large padding-bottom to push ALL cards above skyline */
-    padding-bottom: 250px !important; /* more space between cards and skyline */
+    /* NO padding-bottom - using spacer div instead for Safari iOS 15 compatibility */
+    padding-bottom: 0 !important;
     /* Safari iOS 15 fix: force rendering */
     -webkit-transform: translateZ(0);
     transform: translateZ(0);

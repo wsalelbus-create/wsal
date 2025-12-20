@@ -426,6 +426,14 @@ function renderBusStations(withDelay = false, fadeIn = false) {
         routesListEl.appendChild(card);
     });
     
+    // Add spacer div to push cards above skyline (Safari iOS 15 fix)
+    const spacer = document.createElement('div');
+    spacer.className = 'skyline-spacer';
+    spacer.style.height = '200px'; // space between last card and skyline
+    spacer.style.flexShrink = '0';
+    spacer.style.pointerEvents = 'none';
+    routesListEl.appendChild(spacer);
+    
     // DEBUG: Check what's actually rendered
     requestAnimationFrame(() => {
         requestAnimationFrame(() => {
