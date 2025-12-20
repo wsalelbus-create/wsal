@@ -2185,6 +2185,14 @@ function getPanelMaxPx() {
             const contentH = Math.max(0, inFlowBottom - panelRect.top);
             // Stop exactly when cards meet skyline (no growing blue gap)
             const desired = Math.ceil(Math.max(minPx, contentH + skylineH));
+            
+            // IMPORTANT: In bus mode, if panel is NOT expanded, cap max to default PANEL_MAX_VH
+            // This prevents the panel from jumping up on first touch
+            if (uiMode === 'bus' && !busDetailActive && !arrivalsPanel.classList.contains('expanded')) {
+                const defaultMax = vhToPx(PANEL_MAX_VH);
+                return Math.min(desired, defaultMax);
+            }
+            
             return desired;
         }
     } catch {}
