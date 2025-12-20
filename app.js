@@ -2256,12 +2256,6 @@ function setupPanelDrag() {
         const isExpanded = arrivalsPanel.classList.contains('expanded');
         const isBusMode = arrivalsPanel.classList.contains('bus-mode');
         
-        // In bus mode, ONLY allow dragging from the grabber handle, not from anywhere in the panel
-        if (isBusMode) {
-            const isGrabber = !!(target && target.closest && target.closest('.sheet-grabber'));
-            if (!isGrabber) return false; // don't start drag in bus mode unless touching grabber
-        }
-        
         // If starting inside the list while expanded and the list is scrolled, let it scroll instead of dragging
         if (!isBusMode && inList && isExpanded && list && list.scrollTop > 0) return false;
         startInList = inList;
