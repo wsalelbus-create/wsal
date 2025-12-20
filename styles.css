@@ -449,7 +449,12 @@ html, body {
     transform: translateY(calc(var(--vh, 1vh) * 45)); /* start pushed down (85vh - 40vh = 45vh offset) */
     transition: transform 0.25s ease;  /* smooth translate change */
     will-change: transform;
-    pointer-events: auto;           /* panel captures touches */
+    pointer-events: none;           /* CRITICAL: panel doesn't capture touches by default */
+}
+
+/* Enable pointer events only on visible panel content */
+.arrivals-panel > * {
+    pointer-events: auto;
 }
 
 /* Expanded sheet height (drag up) */
