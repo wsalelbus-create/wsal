@@ -335,7 +335,29 @@ function renderBusStations(withDelay = false, fadeIn = false) {
         // Build card and optionally show a brief loading state for arrivals
         card.appendChild(headerDiv);
         card.appendChild(divider);
-        
+    // Add overlay station badge icon + name ABOVE THE CARDS in the panel ONLY on detailed (3rd) screen
+    try {
+        if ((typeof uiMode !== 'undefined' && uiMode === 'walk') && (typeof busDetailActive !== 'undefined' && busDetailActive)) {
+            const panel = document.querySelector('.arrivals-panel');
+            if (panel) {
+                // Ensure only one overlay in the panel
+                const old = panel.querySelector('.detail-bus-overlay-panel');
+                if (old) old.remove();
+                const overlay = document.createElement('div');
+                overlay.className = 'detail-bus-overlay-panel';
+                overlay.setAttribute('role', 'presentation');
+                overlay.innerHTML = `
+                    <div class="detail-bus-overlay-row">
+                        <svg width="44" height="44" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                            <rect x="1.5" y="1.5" width="25" height="25" rx="6" fill="${badge.color}" stroke="#FFFFFF" stroke-width="3"/>
+                            <text x="14" y="14" dominant-baseline="middle" text-anchor="middle" font-family="Outfit, sans-serif" font-size="12" font-weight="900" fill="#FFFFFF">${badge.abbr}</text>
+                        </svg>
+                        <div class="detail-bus-overlay-name">${station.name}</div>
+                    </div>`;
+                panel.appendChild(overlay);
+            }
+        }
+    } catch {}
         const arrivalsDiv = document.createElement('div');
         arrivalsDiv.className = 'station-arrivals';
         if (withDelay) {
@@ -354,7 +376,14 @@ function renderBusStations(withDelay = false, fadeIn = false) {
             arrivalsDiv.innerHTML = buildArrivalsHtml();
         }
         card.appendChild(arrivalsDiv);
-        
+    // Ensure the panel expands to show content and enable list scroll on detailed screen
+    try {
+        const minPx = vhToPx(PANEL_MIN_VH);
+        const maxPx = getPanelMaxPx();
+        arrivalsPanel.classList.add('expanded');
+        arrivalsPanel.style.transition = 'transform 0.24s cubic-bezier(.2,.7,.2,1)';
+        setPanelVisibleHeight(Math.max(minPx, maxPx));
+    } catch {}
         // Drill-down: tapping a station card switches to Walk mode focused on this station
         card.addEventListener('click', (e) => {
             try {
@@ -1235,10 +1264,9 @@ function initHeadingSensors() {
     });
     // First-chance: capture the very first gesture anywhere on the page
     // This maximizes the chance iOS treats the call as a direct user-activation.
-    // DON'T use capture phase to avoid interfering with map touches
-    document.addEventListener('pointerdown', requestCompassPermission, { once: true });
-    document.addEventListener('touchstart', requestCompassPermission, { passive: true, once: true });
-    document.addEventListener('keydown', requestCompassPermission, { once: true });
+    document.addEventListener('pointerdown', requestCompassPermission, { capture: true, once: true });
+    document.addEventListener('touchstart', requestCompassPermission, { capture: true, once: true });
+    document.addEventListener('keydown', requestCompassPermission, { capture: true, once: true });
     // Retry hooks: allow subsequent attempts if the user changes Safari settings mid-session
     window.addEventListener('touchstart', requestCompassPermission, { passive: true });
     window.addEventListener('click', requestCompassPermission);
@@ -2457,42 +2485,33 @@ function setupPanelDrag() {
 
     arrivalsPanel.addEventListener('touchstart', (e) => {
         const t = e.touches[0];
-        const panelRect = arrivalsPanel.getBoundingClientRect();
-        
-        console.log('[Panel Touch Debug] mode:', uiMode, 'touchY:', t.clientY, 'panelTop:', panelRect.top, 'panelHeight:', panelRect.height, 'panelBottom:', panelRect.bottom, 'viewportHeight:', window.innerHeight);
-        
-        // CRITICAL: Only capture touches that are BELOW the panel's visual top
-        // If touch Y is above panel top, it's on the map - don't capture it
-        if (t.clientY < panelRect.top) {
-            console.log('[Panel Touch] BLOCKED - touch above panel');
-            return; // touch is on map area
-        }
-        
-        // Also exclude touches on panel UI elements that shouldn't trigger drag
-        const touchOnPanelUI = e.target && (
-            e.target.closest('.quick-actions-panel') ||
-            e.target.closest('.qa-btn') ||
-            e.target.closest('.station-card') ||
-            e.target.closest('.floating-controls')
-        );
-        
-        if (touchOnPanelUI) {
-            console.log('[Panel Touch] BLOCKED - touch on panel UI');
-            return; // let the UI element handle the touch
-        }
-        
-        console.log('[Panel Touch] CAPTURED - starting drag');
         handleStart(t.clientY, e.target);
         // do NOT preventDefault on touchstart; allow taps to become clicks
-    }, { passive: false }); // REMOVED capture: true
+    }, { passive: false, capture: true });
     arrivalsPanel.addEventListener('touchmove', (e) => {
         const t = e.touches[0];
         handleMove(t.clientY);
         if (dragging) e.preventDefault();
-    }, { passive: false });
+    }, { passive: false, capture: true });
     arrivalsPanel.addEventListener('touchend', () => handleEnd());
 
-    // Document-level touchmove and touchend to handle drags that go outside panel
+    // Document-level capture to guarantee drag from anywhere inside the panel
+    document.addEventListener('touchstart', (e) => {
+        const inPanel = e.target && e.target.closest && e.target.closest('.arrivals-panel');
+        if (!inPanel) return;
+        
+        // Don't capture if touch is on the map (even if map is behind panel)
+        const onMap = e.target && (
+            e.target.closest('.leaflet-container') || 
+            e.target.closest('#map-container') ||
+            e.target.closest('.map-view-container')
+        );
+        if (onMap) return;
+        
+        const t = e.touches && e.touches[0];
+        if (!t) return;
+        handleStart(t.clientY, e.target);
+    }, { passive: false, capture: true });
     document.addEventListener('touchmove', (e) => {
         if (!panelDragging) return;
         const t = e.touches && e.touches[0];
@@ -2503,12 +2522,7 @@ function setupPanelDrag() {
     document.addEventListener('touchend', () => { if (panelDragging) handleEnd(); }, { capture: true });
 
     // Pointer events (desktop/testing)
-    arrivalsPanel.addEventListener('pointerdown', (e) => {
-        // Only capture if pointer is in the VISIBLE part of the panel
-        const panelRect = arrivalsPanel.getBoundingClientRect();
-        if (e.clientY < panelRect.top) return; // pointer is above visible panel (on map)
-        handleStart(e.clientY, e.target);
-    });
+    arrivalsPanel.addEventListener('pointerdown', (e) => { handleStart(e.clientY, e.target); });
     window.addEventListener('pointermove', (e) => { handleMove(e.clientY); });
     window.addEventListener('pointerup', () => handleEnd());
 
