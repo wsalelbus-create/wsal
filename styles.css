@@ -588,8 +588,8 @@ html, body {
     max-height: none;            /* no cap - grow as tall as needed */
     -webkit-overflow-scrolling: auto;
     touch-action: none;          /* gestures reserved for sheet drag */
-    /* Reserve skyline height so the last card never overlaps backdrop */
-    padding-bottom: 185px; /* tight spacing - identical in Safari and PWA */
+    /* NO padding-bottom in bus mode - skyline is fixed at viewport bottom */
+    padding-bottom: 0;
 }
 
 /* Walking screen (detailed mode) with single card - ensure enough space below */
