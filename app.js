@@ -1881,6 +1881,7 @@ function setUIMode(mode) {
         const panel = document.querySelector('.arrivals-panel');
         if (panel) {
             panel.style.transition = 'none'; // no animation on mode change
+            panel.classList.remove('expanded'); // IMPORTANT: remove expanded class
             window._setPanelVisibleHeight(minPx);
             setTimeout(() => { panel.style.transition = ''; }, 50);
         }
