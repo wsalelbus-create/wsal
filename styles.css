@@ -345,7 +345,7 @@ html, body {
     top: -22px; /* 30% above panel edge, 70% inside - like Citymapper */
     left: 16px;
     right: 16px;
-    z-index: 1001; /* above arrivals panel (1000) */
+    z-index: 980; /* under arrivals panel (1000) so grabber is never cut */
     pointer-events: none; /* allow clicks through container */
 }
 
@@ -440,7 +440,7 @@ html, body {
     box-shadow: none;
     z-index: 1000;
     --skyline-max-height: 180px;
-    --skyline-gap: 12px; /* consistent gap above skyline across screens */
+    --skyline-gap: 16px; /* consistent gap above skyline across screens */
     padding: 16px;
     padding-top: 120px;
     --panel-pad-bottom: calc(6px + env(safe-area-inset-bottom));
@@ -559,8 +559,8 @@ html, body {
     display: flex;
     flex-direction: column;
     gap: 16px; /* slightly more space between cards */
-    /* Reserve full skyline height + small gap so cards never overlap skyline */
-    padding-bottom: calc(var(--skyline-max-height) + var(--skyline-gap));
+    /* Spacing handled by ::after spacer for cross-browser consistency */
+    padding-bottom: 0;
     /* CRITICAL: Let list grow to natural height - don't constrain it */
     flex: 0 0 auto;                 /* size to content, don't grow/shrink */
     min-height: auto;               /* natural height */
@@ -570,9 +570,15 @@ html, body {
     position: relative;
     z-index: 10;
 }
+/* Spacer that guarantees a consistent gap above the skyline on all screens */
+.routes-list::after {
+    content: '';
+    display: block;
+    height: calc(var(--skyline-max-height) + var(--skyline-gap));
+}
 
 /* Disable list scroll when the sheet is collapsed; enable only when expanded */
-.arrivals-panel:not(.expanded) .routes-list { overflow: hidden; touch-action: none; }
+.arrivals-panel:not(.expanded) .routes-list { overflow: visible; touch-action: none; }
 .arrivals-panel.expanded .routes-list { overflow: visible; touch-action: pan-y; }
 
 /* In Bus mode, reduce panel padding since selector bar is hidden */
@@ -594,8 +600,8 @@ html, body {
     max-height: none;            /* no cap - grow as tall as needed */
     -webkit-overflow-scrolling: auto;
     touch-action: none;          /* gestures reserved for sheet drag */
-    /* Reserve skyline space consistently in Bus mode as well */
-    padding-bottom: calc(var(--skyline-max-height) + var(--skyline-gap)) !important;
+    /* Spacing via ::after spacer; no padding needed */
+    padding-bottom: 0 !important;
     /* Safari iOS 15 fix: force rendering */
     -webkit-transform: translateZ(0);
     transform: translateZ(0);
@@ -604,7 +610,8 @@ html, body {
 /* Walking screen (detailed mode) with single card - ensure enough space below */
 .arrivals-panel.no-selector .routes-list {
     overflow: visible;           /* SHOW all content - no clipping */
-    padding-bottom: calc(var(--skyline-max-height) + var(--skyline-gap)) !important;
+    /* Spacing via ::after spacer; no padding needed */
+    padding-bottom: 0 !important;
     min-height: 300px; /* ensure list has minimum height even with one card */
     /* Safari iOS 15 fix: force rendering */
     -webkit-transform: translateZ(0);
@@ -1122,7 +1129,7 @@ html, body {
 /* Skyline: pinned to the panel bottom, always flush to blue edge */
 .arrivals-panel .skyline-inline {
   position: absolute; /* take out of flow so content above doesn't move it */
-  bottom: calc(-1 * var(--panel-pad-bottom)); /* cancel panel bottom padding so it touches the edge */
+  bottom: calc(-1 * var(--panel-pad-bottom)); /* flush to visual bottom even with safe area padding */
   left: 0;
   right: 0;
   height: var(--skyline-max-height);
