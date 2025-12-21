@@ -440,6 +440,7 @@ html, body {
     box-shadow: none;
     z-index: 1000;
     --skyline-max-height: 180px;
+    --skyline-gap: 12px; /* consistent gap above skyline across screens */
     padding: 16px;
     padding-top: 120px;
     --panel-pad-bottom: calc(6px + env(safe-area-inset-bottom));
@@ -474,6 +475,7 @@ html, body {
     border-radius: 3px;
     background: rgba(0,0,0,0.18);
     pointer-events: auto; /* receive touch events for reliable drag start */
+    z-index: 1002; /* above floating-controls (1001) so it never looks cut */
 }
 
 /* When selector bar is hidden (detailed screen), reduce top padding */
@@ -557,8 +559,8 @@ html, body {
     display: flex;
     flex-direction: column;
     gap: 16px; /* slightly more space between cards */
-    /* Reserve space so cards never overlap skyline backdrop, but keep them close */
-    padding-bottom: calc(var(--skyline-max-height) * 0.60 + 8px);
+    /* Reserve full skyline height + small gap so cards never overlap skyline */
+    padding-bottom: calc(var(--skyline-max-height) + var(--skyline-gap));
     /* CRITICAL: Let list grow to natural height - don't constrain it */
     flex: 0 0 auto;                 /* size to content, don't grow/shrink */
     min-height: auto;               /* natural height */
@@ -592,8 +594,8 @@ html, body {
     max-height: none;            /* no cap - grow as tall as needed */
     -webkit-overflow-scrolling: auto;
     touch-action: none;          /* gestures reserved for sheet drag */
-    /* NO padding-bottom - using spacer div instead for Safari iOS 15 compatibility */
-    padding-bottom: 0 !important;
+    /* Reserve skyline space consistently in Bus mode as well */
+    padding-bottom: calc(var(--skyline-max-height) + var(--skyline-gap)) !important;
     /* Safari iOS 15 fix: force rendering */
     -webkit-transform: translateZ(0);
     transform: translateZ(0);
@@ -602,7 +604,7 @@ html, body {
 /* Walking screen (detailed mode) with single card - ensure enough space below */
 .arrivals-panel.no-selector .routes-list {
     overflow: visible;           /* SHOW all content - no clipping */
-    padding-bottom: 220px !important; /* extra space for single card to sit above skyline */
+    padding-bottom: calc(var(--skyline-max-height) + var(--skyline-gap)) !important;
     min-height: 300px; /* ensure list has minimum height even with one card */
     /* Safari iOS 15 fix: force rendering */
     -webkit-transform: translateZ(0);
