@@ -2286,11 +2286,11 @@ function setupPanelDrag() {
         }
         startTarget = target || null;
         startY = y;
-        console.log('[handleStart] SET startY to:', startY);
         // read current visible height (px)
         startVisible = getPanelVisibleHeight();
         // Cache maxPx at drag start - don't recalculate during drag to prevent snap
         dragMaxPx = getPanelMaxPx();
+        console.log('[handleStart] startY:', startY, 'startVisible:', startVisible, 'dragMaxPx:', dragMaxPx, 'uiMode:', uiMode, 'busDetailActive:', busDetailActive, 'expanded:', arrivalsPanel.classList.contains('expanded'));
         lastMoves = [{ t: performance.now(), h: startVisible }];
         return true;
     };
@@ -2330,15 +2330,19 @@ function setupPanelDrag() {
         const scale = getDragScale();
         let next = startVisible + delta * scale;
         
+        console.log('[DRAG MOVE] delta:', delta, 'startVisible:', startVisible, 'next:', next, 'minPx:', minPx, 'maxPx:', maxPx, 'scale:', scale);
+        
         // Elastic bounce: allow pulling below minimum with resistance (rubber band effect)
         if (next < minPx) {
             const overPull = minPx - next;
             const resistance = 0.3;
             next = minPx - (overPull * resistance);
+            console.log('[DRAG MOVE] BELOW MIN - overPull:', overPull, 'adjusted next:', next);
         } else if (next > maxPx) {
             const overPull = next - maxPx;
             const resistance = 0.3;
             next = maxPx + (overPull * resistance);
+            console.log('[DRAG MOVE] ABOVE MAX - overPull:', overPull, 'adjusted next:', next);
         }
         
         // Use GPU-accelerated transform directly - NO layout recalculation
