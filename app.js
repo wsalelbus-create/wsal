@@ -2165,9 +2165,9 @@ function vhToPx(vh) {
 }
 function clamp(n, min, max) { return Math.max(min, Math.min(max, n)); }
 // Compute maximum height for the bottom sheet
-// SIMPLE: Just return viewport height
 function getPanelMaxPx() {
     const viewportH = window.innerHeight || document.documentElement.clientHeight || 800;
+    // Panel = viewport height (skyline is now inside panel, not fixed)
     const result = Math.round(viewportH);
     console.log('📏 [getPanelMaxPx] viewportH:', viewportH, '→ maxPx:', result);
     return result;

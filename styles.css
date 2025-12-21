@@ -345,7 +345,7 @@ html, body {
     top: -22px; /* 30% above panel edge, 70% inside - like Citymapper */
     left: 16px;
     right: 16px;
-    z-index: 980; /* under arrivals panel (1000) so grabber is never cut */
+    z-index: 1001; /* above arrivals panel (1000) */
     pointer-events: none; /* allow clicks through container */
 }
 
@@ -440,14 +440,12 @@ html, body {
     box-shadow: none;
     z-index: 1000;
     --skyline-max-height: 180px;
-    --skyline-gap: 16px; /* consistent gap above skyline across screens */
     padding: 16px;
     padding-top: 120px;
     --panel-pad-bottom: calc(6px + env(safe-area-inset-bottom));
     padding-bottom: var(--panel-pad-bottom);
-    display: grid;
-    grid-template-rows: min-content min-content 1fr min-content; /* QA, header, list, skyline */
-    row-gap: var(--skyline-gap);
+    display: flex;
+    flex-direction: column;
     align-items: stretch;
     overflow: visible; /* Safari iOS 15 fix - allow content to overflow */
     touch-action: none;
@@ -465,12 +463,6 @@ html, body {
 /* Expanded sheet height (drag up) */
 .arrivals-panel.expanded { height: calc(var(--vh, 1vh) * 85); /* expands to 85% when user drags up */ }
 
-/* Grid placement for primary children */
-#quick-actions { grid-row: 1; }
-.routes-header { grid-row: 2; }
-.routes-list  { grid-row: 3; }
-#skyline-inline { grid-row: 4; }
-
 /* Visible sheet grabber for better affordance and touch target */
 .sheet-grabber {
     position: absolute;
@@ -482,7 +474,6 @@ html, body {
     border-radius: 3px;
     background: rgba(0,0,0,0.18);
     pointer-events: auto; /* receive touch events for reliable drag start */
-    z-index: 1002; /* above floating-controls (1001) so it never looks cut */
 }
 
 /* When selector bar is hidden (detailed screen), reduce top padding */
@@ -566,7 +557,8 @@ html, body {
     display: flex;
     flex-direction: column;
     gap: 16px; /* slightly more space between cards */
-    padding-bottom: 0; /* spacing now comes from grid row-gap */
+    /* Reserve space so cards never overlap skyline backdrop */
+    padding-bottom: 185px; /* tight spacing - identical in Safari and PWA */
     /* CRITICAL: Let list grow to natural height - don't constrain it */
     flex: 0 0 auto;                 /* size to content, don't grow/shrink */
     min-height: auto;               /* natural height */
@@ -578,7 +570,7 @@ html, body {
 }
 
 /* Disable list scroll when the sheet is collapsed; enable only when expanded */
-.arrivals-panel:not(.expanded) .routes-list { overflow: visible; touch-action: none; }
+.arrivals-panel:not(.expanded) .routes-list { overflow: hidden; touch-action: none; }
 .arrivals-panel.expanded .routes-list { overflow: visible; touch-action: pan-y; }
 
 /* In Bus mode, reduce panel padding since selector bar is hidden */
@@ -600,8 +592,8 @@ html, body {
     max-height: none;            /* no cap - grow as tall as needed */
     -webkit-overflow-scrolling: auto;
     touch-action: none;          /* gestures reserved for sheet drag */
-    /* Spacing via ::after spacer; no padding needed */
-    padding-bottom: 0 !important;
+    /* Padding to create space between last card and skyline */
+    padding-bottom: 185px;       /* matches skyline height + 5px gap */
     /* Safari iOS 15 fix: force rendering */
     -webkit-transform: translateZ(0);
     transform: translateZ(0);
@@ -610,8 +602,7 @@ html, body {
 /* Walking screen (detailed mode) with single card - ensure enough space below */
 .arrivals-panel.no-selector .routes-list {
     overflow: visible;           /* SHOW all content - no clipping */
-    /* Spacing via ::after spacer; no padding needed */
-    padding-bottom: 0 !important;
+    padding-bottom: 220px !important; /* extra space for single card to sit above skyline */
     min-height: 300px; /* ensure list has minimum height even with one card */
     /* Safari iOS 15 fix: force rendering */
     -webkit-transform: translateZ(0);
@@ -1126,20 +1117,21 @@ html, body {
 .arrivals-panel .routes-header,
 .arrivals-panel .routes-list { position: relative; z-index: 1; }
 
-/* Skyline: in normal flow at the bottom grid row; height auto from viewport width */
+/* Skyline: flows naturally after routes-list content */
 .arrivals-panel .skyline-inline {
-  position: relative;
-  left: 0;
-  right: 0;
-  width: 100%;
-  aspect-ratio: 100 / 68; /* height = 0.68 * width (pure CSS) */
-  height: auto;
-  margin-bottom: calc(-1 * var(--panel-pad-bottom)); /* visually flush to bottom */
-  opacity: 1;
-  margin: 0;                 /* no extra gap below city */
-  pointer-events: none;
-  z-index: 0;                /* behind all content */
-  overflow: hidden;
+  position: relative !important; /* flows with content, not absolute */
+  left: 0 !important;
+  right: 0 !important;
+  height: 180px !important;
+  max-height: 180px !important;
+  opacity: 1 !important;
+  margin: 0 !important;
+  margin-top: -185px !important; /* pull up into the padding-bottom space */
+  pointer-events: none !important;
+  z-index: 0 !important; /* behind all content */
+  overflow: hidden !important;
+  transform: translateZ(0) !important;
+  will-change: auto !important;
 }
 
 /* Ensure SVG scales to container height */
