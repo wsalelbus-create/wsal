@@ -2169,17 +2169,15 @@ function getPanelMaxPx() {
             // Stop exactly when cards meet skyline (no growing blue gap)
             const desired = Math.ceil(Math.max(minPx, contentH + skylineH));
             
-            // IMPORTANT: Cap max height to prevent panel jump on first touch
-            // In both bus and walk modes, if panel is NOT expanded, cap to default PANEL_MAX_VH
-            const isExpanded = arrivalsPanel.classList.contains('expanded');
-            if (!isExpanded) {
-                const defaultMax = vhToPx(PANEL_MAX_VH);
-                console.log('[getPanelMaxPx] NOT EXPANDED - desired:', desired, 'defaultMax:', defaultMax, 'returning:', Math.min(desired, defaultMax));
-                return Math.min(desired, defaultMax);
-            }
+            // IMPORTANT: Always allow dragging to full viewport height
+            // Use the larger of content height or default max to prevent snap
+            const defaultMax = vhToPx(PANEL_MAX_VH);
+            const maxAllowed = Math.max(desired, defaultMax);
             
-            console.log('[getPanelMaxPx] EXPANDED - desired:', desired);
-            return desired;
+            // FIXED: Always return maxAllowed regardless of expanded state
+            // The expanded state is set AFTER drag ends, so checking it here causes inconsistency
+            console.log('[getPanelMaxPx] desired:', desired, 'defaultMax:', defaultMax, 'maxAllowed:', maxAllowed);
+            return maxAllowed;
         }
     } catch {}
     // Default cap
