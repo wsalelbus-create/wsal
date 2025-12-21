@@ -2198,6 +2198,7 @@ function setupPanelDrag() {
     let dragging = false;
     let startY = 0;
     let startVisible = 0; // visible height of the sheet during drag
+    let dragMaxPx = 0; // cache max height at drag start to prevent snap
     let lastMoves = [];
     let startInList = false;
     let startListEl = null;
@@ -2288,6 +2289,8 @@ function setupPanelDrag() {
         console.log('[handleStart] SET startY to:', startY);
         // read current visible height (px)
         startVisible = getPanelVisibleHeight();
+        // Cache maxPx at drag start - don't recalculate during drag to prevent snap
+        dragMaxPx = getPanelMaxPx();
         lastMoves = [{ t: performance.now(), h: startVisible }];
         return true;
     };
@@ -2323,7 +2326,7 @@ function setupPanelDrag() {
         if (!dragging) return;
         const delta = startY - y; // drag up -> positive delta
         const minPx = vhToPx(PANEL_MIN_VH);
-        const maxPx = getPanelMaxPx();
+        const maxPx = dragMaxPx; // use cached value from drag start
         const scale = getDragScale();
         let next = startVisible + delta * scale;
         
@@ -2402,7 +2405,7 @@ function setupPanelDrag() {
         // We'll handle inertia manually; disable CSS transition during the glide
         arrivalsPanel.style.transition = 'none';
         const minPx = vhToPx(PANEL_MIN_VH);
-        const maxPx = getPanelMaxPx();
+        const maxPx = dragMaxPx; // use cached value from drag start
         // compute velocity using recent samples (~120ms)
         let velocity = 0;
         if (lastMoves.length >= 2) {
