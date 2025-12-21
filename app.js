@@ -2223,7 +2223,10 @@ function setupPanelDrag() {
         // Allow elastic bounce: don't clamp during drag, only clamp offset calculation
         const vis = visiblePx; // use raw value to allow over-pull
         const offset = Math.max(0, maxPx - vis); // how far to push the panel down
-        arrivalsPanel.style.transform = `translateY(${offset}px)`;
+        // Cross-browser transform with webkit prefix
+        const transformValue = `translateY(${offset}px)`;
+        arrivalsPanel.style.transform = transformValue;
+        arrivalsPanel.style.webkitTransform = transformValue;
         arrivalsPanel.style.height = `${maxPx}px`; // keep the panel sized to its max
         // Expose sizes to CSS for consistent PWA/Safari proportions
         arrivalsPanel.style.setProperty('--panel-visible', `${vis}px`);
@@ -2345,7 +2348,9 @@ function setupPanelDrag() {
         
         // Use GPU-accelerated transform directly - NO layout recalculation
         const offset = Math.max(0, maxPx - next);
-        arrivalsPanel.style.transform = `translate3d(0, ${offset}px, 0)`;
+        const panelTransform = `translate3d(0, ${offset}px, 0)`;
+        arrivalsPanel.style.transform = panelTransform;
+        arrivalsPanel.style.webkitTransform = panelTransform;
         arrivalsPanel.dataset.visibleH = String(next);
         
         // Update progress for visual effects
@@ -2373,7 +2378,9 @@ function setupPanelDrag() {
                 const maxTranslate = 200; // max 200px movement in either direction (we have 40% buffer = ~240px at typical viewport)
                 const clampedTranslate = Math.max(-maxTranslate, Math.min(maxTranslate, translateAmount));
                 
-                mapInner.style.transform = `translateY(${clampedTranslate}px) scale(${scaleAmount})`;
+                const mapTransform = `translateY(${clampedTranslate}px) scale(${scaleAmount})`;
+                mapInner.style.transform = mapTransform;
+                mapInner.style.webkitTransform = mapTransform;
                 mapInner.style.transformOrigin = 'center center'; // scale from center
                 mapInner.style.transition = 'none'; // no transition during drag
             }
@@ -2437,7 +2444,9 @@ function setupPanelDrag() {
                 
                 // Use GPU-accelerated transform directly for 60fps smoothness
                 const offset = Math.max(0, maxPx - h);
-                arrivalsPanel.style.transform = `translate3d(0, ${offset}px, 0)`;
+                const inertiaTransform = `translate3d(0, ${offset}px, 0)`;
+                arrivalsPanel.style.transform = inertiaTransform;
+                arrivalsPanel.style.webkitTransform = inertiaTransform;
                 arrivalsPanel.dataset.visibleH = String(h);
                 
                 // Stop if speed nearly zero or bounds reached
@@ -2447,13 +2456,17 @@ function setupPanelDrag() {
                     // Final snap with a soft easing
                     const target = pickSnapTarget(h, dir * vNow);
                     arrivalsPanel.style.transition = 'transform 0.22s cubic-bezier(0.25, 0.46, 0.45, 0.94)'; // iOS-like easing
+                    arrivalsPanel.style.webkitTransition = '-webkit-transform 0.22s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
                     setPanelVisibleHeight(target);
                     
                     // Reset map parallax synchronized with panel snap
                     const mapInner = document.getElementById('map-container');
                     if (mapInner) {
+                        const mapResetTransform = 'translateY(0) scale(1)';
                         mapInner.style.transition = 'transform 0.24s cubic-bezier(.2,.7,.2,1)';
-                        mapInner.style.transform = 'translateY(0) scale(1)';
+                        mapInner.style.webkitTransition = '-webkit-transform 0.24s cubic-bezier(.2,.7,.2,1)';
+                        mapInner.style.transform = mapResetTransform;
+                        mapInner.style.webkitTransform = mapResetTransform;
                     }
                     
                     if (target >= (minPx + maxPx) / 2) arrivalsPanel.classList.add('expanded');
@@ -2485,15 +2498,22 @@ function setupPanelDrag() {
             const easing = isBouncingBack 
                 ? 'transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)' // elastic bounce with overshoot
                 : 'transform 0.24s cubic-bezier(.2,.7,.2,1)'; // normal snap
+            const webkitEasing = isBouncingBack 
+                ? '-webkit-transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)'
+                : '-webkit-transform 0.24s cubic-bezier(.2,.7,.2,1)';
             
             arrivalsPanel.style.transition = easing;
+            arrivalsPanel.style.webkitTransition = webkitEasing;
             setPanelVisibleHeight(target);
             
             // Reset map parallax synchronized with panel snap
             const mapInner = document.getElementById('map-container');
             if (mapInner) {
+                const mapResetTransform = 'translateY(0) scale(1)';
                 mapInner.style.transition = easing; // use same easing as panel
-                mapInner.style.transform = 'translateY(0) scale(1)';
+                mapInner.style.webkitTransition = webkitEasing;
+                mapInner.style.transform = mapResetTransform;
+                mapInner.style.webkitTransform = mapResetTransform;
             }
             
             if (target >= (minPx + maxPx) / 2) arrivalsPanel.classList.add('expanded');
@@ -2611,9 +2631,12 @@ if (arrivalsPanel) {
     const minPx = vhToPx(PANEL_MIN_VH);
     const maxPx = vhToPx(PANEL_MAX_VH);
     const offset = Math.max(0, maxPx - minPx);
-    arrivalsPanel.style.transform = `translateY(${offset}px)`;
+    const initialTransform = `translateY(${offset}px)`;
+    arrivalsPanel.style.transform = initialTransform;
+    arrivalsPanel.style.webkitTransform = initialTransform;
     arrivalsPanel.style.height = `${maxPx}px`;
     arrivalsPanel.style.transition = 'none'; // no transition on initial load
+    arrivalsPanel.style.webkitTransition = 'none';
 }
 
 // Wait for polyfill to fully apply before initializing panel drag handlers
