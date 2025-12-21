@@ -446,7 +446,7 @@ html, body {
     display: flex;
     flex-direction: column;
     align-items: stretch;
-    overflow: visible;
+    overflow: hidden; /* clip content at border-radius for proper rounded corners */
     touch-action: none;
     /* CRITICAL: Force GPU compositing layer for native-smooth dragging */
     will-change: transform;
