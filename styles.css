@@ -445,8 +445,9 @@ html, body {
     padding-top: 120px;
     --panel-pad-bottom: calc(6px + env(safe-area-inset-bottom));
     padding-bottom: var(--panel-pad-bottom);
-    display: flex;
-    flex-direction: column;
+    display: grid;
+    grid-template-rows: min-content min-content 1fr min-content; /* QA, header, list, skyline */
+    row-gap: var(--skyline-gap);
     align-items: stretch;
     overflow: visible; /* Safari iOS 15 fix - allow content to overflow */
     touch-action: none;
@@ -463,6 +464,12 @@ html, body {
 
 /* Expanded sheet height (drag up) */
 .arrivals-panel.expanded { height: calc(var(--vh, 1vh) * 85); /* expands to 85% when user drags up */ }
+
+/* Grid placement for primary children */
+#quick-actions { grid-row: 1; }
+.routes-header { grid-row: 2; }
+.routes-list  { grid-row: 3; }
+#skyline-inline { grid-row: 4; }
 
 /* Visible sheet grabber for better affordance and touch target */
 .sheet-grabber {
@@ -559,8 +566,7 @@ html, body {
     display: flex;
     flex-direction: column;
     gap: 16px; /* slightly more space between cards */
-    /* Spacing handled by ::after spacer for cross-browser consistency */
-    padding-bottom: 0;
+    padding-bottom: 0; /* spacing now comes from grid row-gap */
     /* CRITICAL: Let list grow to natural height - don't constrain it */
     flex: 0 0 auto;                 /* size to content, don't grow/shrink */
     min-height: auto;               /* natural height */
@@ -569,12 +575,6 @@ html, body {
     /* Safari iOS 15 fix: force new stacking context */
     position: relative;
     z-index: 10;
-}
-/* Spacer that guarantees a consistent gap above the skyline on all screens */
-.routes-list::after {
-    content: '';
-    display: block;
-    height: calc(var(--skyline-max-height) + var(--skyline-gap));
 }
 
 /* Disable list scroll when the sheet is collapsed; enable only when expanded */
@@ -1126,13 +1126,15 @@ html, body {
 .arrivals-panel .routes-header,
 .arrivals-panel .routes-list { position: relative; z-index: 1; }
 
-/* Skyline: pinned to the panel bottom, always flush to blue edge */
+/* Skyline: in normal flow at the bottom grid row; height auto from viewport width */
 .arrivals-panel .skyline-inline {
-  position: absolute; /* take out of flow so content above doesn't move it */
-  bottom: calc(-1 * var(--panel-pad-bottom)); /* flush to visual bottom even with safe area padding */
+  position: relative;
   left: 0;
   right: 0;
-  height: var(--skyline-max-height);
+  width: 100%;
+  aspect-ratio: 100 / 68; /* height = 0.68 * width (pure CSS) */
+  height: auto;
+  margin-bottom: calc(-1 * var(--panel-pad-bottom)); /* visually flush to bottom */
   opacity: 1;
   margin: 0;                 /* no extra gap below city */
   pointer-events: none;
