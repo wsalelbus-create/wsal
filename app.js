@@ -426,6 +426,14 @@ function renderBusStations(withDelay = false, fadeIn = false) {
         routesListEl.appendChild(card);
     });
     
+    // Add spacer div to push cards above skyline (Safari iOS 15 fix)
+    const spacer = document.createElement('div');
+    spacer.className = 'skyline-spacer';
+    spacer.style.height = '200px'; // space between last card and skyline
+    spacer.style.flexShrink = '0';
+    spacer.style.pointerEvents = 'none';
+    routesListEl.appendChild(spacer);
+    
     // DEBUG: Check what's actually rendered
     requestAnimationFrame(() => {
         requestAnimationFrame(() => {
@@ -2165,11 +2173,13 @@ function vhToPx(vh) {
 }
 function clamp(n, min, max) { return Math.max(min, Math.min(max, n)); }
 // Compute maximum height for the bottom sheet
+// SIMPLE: Return MORE than viewport to ensure all content fits on old Safari
 function getPanelMaxPx() {
     const viewportH = window.innerHeight || document.documentElement.clientHeight || 800;
-    // Panel = viewport height (skyline is now inside panel, not fixed)
-    const result = Math.round(viewportH);
-    console.log('📏 [getPanelMaxPx] viewportH:', viewportH, '→ maxPx:', result);
+    // Panel needs to be TALLER than viewport to show all content on Safari iOS 15
+    // Add extra 200px for Safari iOS 15 rendering bugs
+    const result = Math.round(viewportH + 200);
+    console.log('📏 [getPanelMaxPx] viewportH:', viewportH, '→ maxPx (100% + 200px):', result);
     return result;
 }
 

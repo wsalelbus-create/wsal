@@ -592,8 +592,8 @@ html, body {
     max-height: none;            /* no cap - grow as tall as needed */
     -webkit-overflow-scrolling: auto;
     touch-action: none;          /* gestures reserved for sheet drag */
-    /* Padding to create space between last card and skyline */
-    padding-bottom: 185px;       /* matches skyline height + 5px gap */
+    /* NO padding-bottom - using spacer div instead for Safari iOS 15 compatibility */
+    padding-bottom: 0 !important;
     /* Safari iOS 15 fix: force rendering */
     -webkit-transform: translateZ(0);
     transform: translateZ(0);
@@ -1117,20 +1117,20 @@ html, body {
 .arrivals-panel .routes-header,
 .arrivals-panel .routes-list { position: relative; z-index: 1; }
 
-/* Skyline: flows naturally after routes-list content */
+/* Skyline: pinned to viewport bottom, always below panel content */
 .arrivals-panel .skyline-inline {
-  position: relative !important; /* flows with content, not absolute */
+  position: fixed !important; /* fixed to viewport - always at bottom */
+  bottom: 0 !important; /* sit flush at viewport bottom */
   left: 0 !important;
   right: 0 !important;
-  height: 180px !important;
+  height: 180px !important; /* fixed smaller height - identical in Safari and PWA */
   max-height: 180px !important;
   opacity: 1 !important;
   margin: 0 !important;
-  margin-top: -185px !important; /* pull up into the padding-bottom space */
   pointer-events: none !important;
   z-index: 0 !important; /* behind all content */
-  overflow: hidden !important;
-  transform: translateZ(0) !important;
+  overflow: hidden !important; /* clip any overflow */
+  transform: translateZ(0) !important; /* force GPU layer to prevent repaints */
   will-change: auto !important;
 }
 
