@@ -431,9 +431,8 @@ html, body {
     left: 0;
     right: 0;
     bottom: 0;
-    /* Height set by JavaScript - this is just initial */
+    /* FULL HEIGHT: Panel can expand to 100vh to show all content */
     height: calc(var(--vh, 1vh) * 100);
-    min-height: calc(var(--vh, 1vh) * 100);
     max-height: none;
     background: white;
     border-radius: 16px 16px 0 0;
@@ -447,7 +446,7 @@ html, body {
     display: flex;
     flex-direction: column;
     align-items: stretch;
-    overflow: visible; /* Safari iOS 15 fix - allow content to overflow */
+    overflow: visible;
     touch-action: none;
     /* CRITICAL: Force GPU compositing layer for native-smooth dragging */
     will-change: transform;
@@ -564,9 +563,6 @@ html, body {
     min-height: auto;               /* natural height */
     overflow: visible;              /* show all content - no clipping */
     -webkit-overflow-scrolling: touch;
-    /* Safari iOS 15 fix: force new stacking context */
-    position: relative;
-    z-index: 10;
 }
 
 /* Disable list scroll when the sheet is collapsed; enable only when expanded */
@@ -592,11 +588,8 @@ html, body {
     max-height: none;            /* no cap - grow as tall as needed */
     -webkit-overflow-scrolling: auto;
     touch-action: none;          /* gestures reserved for sheet drag */
-    /* NO padding-bottom - using spacer div instead for Safari iOS 15 compatibility */
-    padding-bottom: 0 !important;
-    /* Safari iOS 15 fix: force rendering */
-    -webkit-transform: translateZ(0);
-    transform: translateZ(0);
+    /* NO padding-bottom in bus mode - skyline is fixed at viewport bottom */
+    padding-bottom: 0;
 }
 
 /* Walking screen (detailed mode) with single card - ensure enough space below */
@@ -604,9 +597,6 @@ html, body {
     overflow: visible;           /* SHOW all content - no clipping */
     padding-bottom: 220px !important; /* extra space for single card to sit above skyline */
     min-height: 300px; /* ensure list has minimum height even with one card */
-    /* Safari iOS 15 fix: force rendering */
-    -webkit-transform: translateZ(0);
-    transform: translateZ(0);
 }
 
 /* Hide scrollbars for bottom-sheet feel */
