@@ -588,8 +588,8 @@ html, body {
     max-height: none;            /* no cap - grow as tall as needed */
     -webkit-overflow-scrolling: auto;
     touch-action: none;          /* gestures reserved for sheet drag */
-    /* NO padding-bottom in bus mode - skyline is fixed at viewport bottom */
-    padding-bottom: 0;
+    /* Reserve skyline height so the last card never overlaps backdrop */
+    padding-bottom: 200px; /* space for skyline at bottom */
 }
 
 /* Walking screen (detailed mode) with single card - ensure enough space below */
