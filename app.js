@@ -426,6 +426,28 @@ function renderBusStations(withDelay = false, fadeIn = false) {
         routesListEl.appendChild(card);
     });
     
+    // CRITICAL: Recalculate panel height after cards render (for iOS Safari compatibility)
+    requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+            try {
+                const newMax = getPanelMaxPx();
+                console.log('🔧 [renderBusStations] Recalculated maxPx after render:', newMax);
+                
+                // Update panel height
+                if (arrivalsPanel) {
+                    arrivalsPanel.style.height = `${newMax}px`;
+                    
+                    // If expanded, update visible height
+                    if (arrivalsPanel.classList.contains('expanded') && window._setPanelVisibleHeight) {
+                        window._setPanelVisibleHeight(newMax);
+                    }
+                }
+            } catch (e) {
+                console.warn('[renderBusStations] recalc error:', e);
+            }
+        });
+    });
+    
     // DEBUG: Check what's actually rendered
     requestAnimationFrame(() => {
         requestAnimationFrame(() => {
@@ -2164,14 +2186,62 @@ function vhToPx(vh) {
     return Math.round(h * (vh / 100));
 }
 function clamp(n, min, max) { return Math.max(min, Math.min(max, n)); }
-// Compute maximum height for the bottom sheet
-// SIMPLE: Just return viewport height - the content will determine how far up it goes
+// Compute maximum height for the bottom sheet - CONTENT-AWARE
 function getPanelMaxPx() {
+    try {
+        const panel = arrivalsPanel || document.querySelector('.arrivals-panel');
+        if (!panel) {
+            const viewportH = window.innerHeight || document.documentElement.clientHeight || 800;
+            return Math.round(viewportH);
+        }
+        
+        // In bus/walk modes, measure actual content height
+        const listEl = panel.querySelector('.routes-list');
+        if (listEl && (uiMode === 'bus' || (uiMode === 'walk' && busDetailActive))) {
+            // Get all the cards
+            const cards = listEl.querySelectorAll('.station-card, .route-item');
+            if (cards.length === 0) {
+                const viewportH = window.innerHeight || document.documentElement.clientHeight || 800;
+                return Math.round(viewportH);
+            }
+            
+            // Calculate total height needed for all cards
+            let totalCardsHeight = 0;
+            cards.forEach(card => {
+                const cardRect = card.getBoundingClientRect();
+                totalCardsHeight += cardRect.height;
+            });
+            
+            // Add gaps between cards (16px each)
+            const gaps = (cards.length - 1) * 16;
+            totalCardsHeight += gaps;
+            
+            // Get panel padding
+            const panelStyle = window.getComputedStyle(panel);
+            const paddingTop = parseFloat(panelStyle.paddingTop) || 0;
+            const paddingBottom = parseFloat(panelStyle.paddingBottom) || 0;
+            
+            // Add skyline height
+            const skylineH = 180;
+            
+            // Total needed
+            const totalNeeded = paddingTop + totalCardsHeight + skylineH + paddingBottom + 50; // +50px breathing room
+            
+            // Cap at viewport
+            const viewportH = window.innerHeight || document.documentElement.clientHeight || 800;
+            const result = Math.min(viewportH, Math.max(vhToPx(PANEL_MAX_VH), totalNeeded));
+            
+            console.log('📏 [getPanelMaxPx] cards:', cards.length, 'totalCardsHeight:', totalCardsHeight, 'paddingTop:', paddingTop, 'totalNeeded:', totalNeeded, '→ result:', result);
+            return Math.round(result);
+        }
+    } catch (e) {
+        console.warn('[getPanelMaxPx] error:', e);
+    }
+    
+    // Default: full viewport
     const viewportH = window.innerHeight || document.documentElement.clientHeight || 800;
-    // Panel can expand to FULL viewport to show all content
-    const result = Math.round(viewportH);
-    console.log('📏 [getPanelMaxPx] viewportH:', viewportH, '→ maxPx (100%):', result);
-    return result;
+    console.log('📏 [getPanelMaxPx] default → viewportH:', viewportH);
+    return Math.round(viewportH);
 }
 
 function setupPanelDrag() {
