@@ -1745,7 +1745,7 @@ function updateMap() {
             // Show all stations as badge-only markers (no stick, no shadows)
             const markers = STATIONS.map(s => {
                 const badge = stationBadgeFor(s.name);
-                return L.marker([s.lat, s.lon], {
+                const marker = L.marker([s.lat, s.lon], {
                     icon: L.divIcon({
                         className: 'custom-marker',
                         html: `<svg width="24" height="24" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
@@ -1757,6 +1757,14 @@ function updateMap() {
                     }),
                     zIndexOffset: 900
                 });
+                
+                // Add click handler: tap station to center map and reorder cards
+                marker.on('click', () => {
+                    console.log('[Bus Stop Tap] Centering on:', s.name);
+                    map.setView([s.lat, s.lon], map.getZoom(), { animate: true, duration: 0.3 });
+                });
+                
+                return marker;
             });
             busStationsLayer = L.layerGroup(markers).addTo(map);
         } else if (uiMode === 'idle') {
