@@ -2421,19 +2421,23 @@ function setupPanelDrag() {
         setPanelVisibleHeight(next);
         
         // Show/hide distance circles based on panel position in idle mode
-        // Circles appear when pulled past threshold and stay until dragged back below
+        // Circles appear when panel is pulled DOWN (next < initial position)
+        // and stay visible until dragged back UP to initial position
         if (uiMode === 'idle' && userLat && userLon) {
-            const minPx = vhToPx(PANEL_MIN_VH);
-            const threshold = minPx + vhToPx(10); // Show circles when pulled 10vh above minimum
-            console.log('[CIRCLES DEBUG] next:', next, 'threshold:', threshold, 'minPx:', minPx, 'circlesExist:', !!distanceCirclesLayer);
-            if (next > threshold) {
+            const initialPx = vhToPx(PANEL_MIN_VH); // Initial collapsed position (40vh)
+            const threshold = initialPx - vhToPx(10); // Show circles when pulled 10vh DOWN from initial
+            console.log('[CIRCLES DEBUG] next:', next, 'threshold:', threshold, 'initialPx:', initialPx, 'circlesExist:', !!distanceCirclesLayer);
+            
+            // Show circles when pulled down past threshold
+            if (next < threshold) {
                 if (!distanceCirclesLayer) {
-                    console.log('[CIRCLES] Showing circles');
+                    console.log('[CIRCLES] Showing circles - panel pulled down');
                     showDistanceCircles();
                 }
             } else {
+                // Hide circles when dragged back up to initial position
                 if (distanceCirclesLayer) {
-                    console.log('[CIRCLES] Hiding circles');
+                    console.log('[CIRCLES] Hiding circles - panel back to initial');
                     hideDistanceCircles();
                 }
             }
