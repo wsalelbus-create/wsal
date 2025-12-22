@@ -993,9 +993,10 @@ html, body {
 
 /* Map Crosshair (Citymapper style) */
 .map-crosshair {
-    position: absolute; /* absolute to map container */
-    /* left and top will be set by JS to match GPS position */
-    transform: translate(-50%, -50%); /* center on the coordinate */
+    position: fixed; /* fixed to viewport center */
+    top: 30vh; /* center in visible map area */
+    left: 50%;
+    transform: translate(-50%, -50%);
     z-index: 1001; /* above map (1), below panel (1003) */
     pointer-events: none;
     opacity: 0;

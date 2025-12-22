@@ -1208,8 +1208,6 @@ function startGeoWatch() {
             if (userMarker) {
                 try { userMarker.setLatLng([userLat, userLon]); } catch (e) {}
             }
-            // Update crosshair to follow GPS position
-            updateCrosshairPosition();
         },
         (err) => {
             console.warn('watchPosition error:', err);
@@ -1461,25 +1459,6 @@ stationModal.addEventListener('click', (e) => {
 });
 
 // --- Map Functionality ---
-// Update crosshair position to match GPS blue dot on screen
-function updateCrosshairPosition() {
-    if (!map || !userLat || !userLon) return;
-    
-    const crosshair = document.getElementById('map-crosshair');
-    if (!crosshair) return;
-    
-    try {
-        // Get the pixel position of the GPS coordinate on the map
-        const point = map.latLngToContainerPoint([userLat, userLon]);
-        
-        // Position crosshair at the GPS marker location
-        crosshair.style.left = `${point.x}px`;
-        crosshair.style.top = `${point.y}px`;
-    } catch (e) {
-        console.warn('[Crosshair] Position update failed:', e);
-    }
-}
-
 function initMap() {
     const mapContainer = document.getElementById('map-container');
 
@@ -1615,16 +1594,6 @@ function initMap() {
                         mapInner.style.transformOrigin = 'center center';
                     }
                     
-                    // Apply same transform to crosshair
-                    const crosshair = document.getElementById('map-crosshair');
-                    if (crosshair) {
-                        const translateAmount = -panelDelta * parallaxFactor;
-                        const maxTranslate = 200;
-                        const clampedTranslate = Math.max(-maxTranslate, Math.min(maxTranslate, translateAmount));
-                        crosshair.style.transition = 'transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)';
-                        crosshair.style.transform = `translateY(${clampedTranslate}px)`;
-                    }
-                    
                     // Show circles only in idle mode
                     if (uiMode === 'idle' && userLat && userLon) {
                         showDistanceCircles();
@@ -1637,7 +1606,7 @@ function initMap() {
     // ALL SCREENS: Collapse panel when user starts dragging the map (like Citymapper)
     map.on('movestart', () => {
         try {
-            // Collapse panel when map drag starts
+            // Collapse panel when map drag starts - SAME effect as tap
             const currentH = window._getPanelVisibleHeight ? window._getPanelVisibleHeight() : 0;
             const minPx = vhToPx(PANEL_MIN_VH); // 40vh
             const maxPx = getPanelMaxPx();
@@ -1645,13 +1614,14 @@ function initMap() {
             
             // Only collapse if panel is at 40vh or higher (not already collapsed)
             if (currentH >= minPx - 10) {
-                console.log('[Map Drag] Collapsing panel to 20vh');
+                console.log('[Map Drag] Collapsing panel to 20vh with elastic bounce');
                 const panel = document.querySelector('.arrivals-panel');
                 if (panel && window._setPanelVisibleHeight) {
-                    panel.style.transition = 'transform 0.3s ease-out';
+                    // Use ELASTIC BOUNCE easing - SAME as tap
+                    panel.style.transition = 'transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)';
                     window._setPanelVisibleHeight(circlesHook);
                     
-                    // Apply parallax effect
+                    // Apply parallax effect - SAME as tap
                     const mapInner = document.getElementById('map-container');
                     if (mapInner) {
                         const parallaxFactor = 0.5;
@@ -1663,19 +1633,10 @@ function initMap() {
                         const maxTranslate = 200;
                         const clampedTranslate = Math.max(-maxTranslate, Math.min(maxTranslate, translateAmount));
                         
-                        mapInner.style.transition = 'transform 0.3s ease-out';
+                        // ELASTIC BOUNCE - SAME as tap
+                        mapInner.style.transition = 'transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)';
                         mapInner.style.transform = `translateY(${clampedTranslate}px) scale(${scaleAmount})`;
                         mapInner.style.transformOrigin = 'center center';
-                    }
-                    
-                    // Apply same transform to crosshair
-                    const crosshair = document.getElementById('map-crosshair');
-                    if (crosshair) {
-                        const translateAmount = -panelDelta * parallaxFactor;
-                        const maxTranslate = 200;
-                        const clampedTranslate = Math.max(-maxTranslate, Math.min(maxTranslate, translateAmount));
-                        crosshair.style.transition = 'transform 0.3s ease-out';
-                        crosshair.style.transform = `translateY(${clampedTranslate}px)`;
                     }
                     
                     // Show circles only in idle mode
@@ -1695,9 +1656,6 @@ function initMap() {
     
     map.on('moveend', () => {
         try {
-            // Update crosshair position after map movement
-            updateCrosshairPosition();
-            
             // ONLY reorder if in bus mode AND panel is NOT being dragged
             if (uiMode === 'bus' && !busDetailActive && !panelDragging) {
                 // Keep crosshair visible (don't hide it)
@@ -1708,13 +1666,6 @@ function initMap() {
                     renderBusStations(true); // reorder with loading spinner
                 }, 300);
             }
-        } catch {}
-    });
-    
-    // Update crosshair during zoom
-    map.on('zoom', () => {
-        try {
-            updateCrosshairPosition();
         } catch {}
     });
 
@@ -1798,8 +1749,6 @@ function updateMap() {
         if (userMarker && !map.hasLayer(userMarker)) {
             try { userMarker.addTo(map); } catch (e) {}
         }
-        // Update crosshair to GPS position
-        updateCrosshairPosition();
         // Ensure rotor reflects the latest heading
         const el = userMarker.getElement();
         if (el) {
@@ -2187,30 +2136,54 @@ function setUIMode(mode) {
     }
     
     // ALWAYS center map on GPS location when switching screens
-    // This ensures user always sees where they are (blue dot centered)
+    // In bus mode, offset the map so GPS blue dot appears at crosshair position (50% left, 30vh top)
     if (map && userLat && userLon) {
         if (mode === 'idle') {
-            console.log('[setUIMode] Idle mode - centering on GPS');
-            map.setView([userLat, userLon], 16, { animate: true, duration: 0.3 });
+            console.log('[setUIMode] Idle mode - centering on GPS with proper zoom');
+            map.setView([userLat, userLon], 16, { animate: false }); // No animation for instant center
         } else if (mode === 'walk') {
             console.log('[setUIMode] Walk mode - centering on GPS');
             map.setView([userLat, userLon], 15, { animate: true, duration: 0.3 });
         } else if (mode === 'bus') {
-            console.log('[setUIMode] Bus mode - centering on GPS');
+            console.log('[setUIMode] Bus mode - centering GPS at crosshair position');
+            // Crosshair is at 50% left, 30vh top
+            // We need to offset the map so GPS appears there instead of screen center
+            const mapContainer = map.getContainer();
+            const containerWidth = mapContainer.offsetWidth;
+            const containerHeight = mapContainer.offsetHeight;
+            
+            // Crosshair position in pixels from top-left
+            const crosshairX = containerWidth * 0.5; // 50% from left
+            const crosshairY = window.innerHeight * 0.3; // 30vh from top
+            
+            // Screen center
+            const centerX = containerWidth * 0.5;
+            const centerY = containerHeight * 0.5;
+            
+            // Offset needed to move GPS from center to crosshair position
+            const offsetX = crosshairX - centerX;
+            const offsetY = crosshairY - centerY;
+            
+            // Pan the map by this offset so GPS appears at crosshair
             map.setView([userLat, userLon], 14, { animate: true, duration: 0.3 });
+            setTimeout(() => {
+                map.panBy([-offsetX, -offsetY], { animate: false });
+            }, 50);
         }
     }
     
-    // ALWAYS reset panel to minimum position when changing screens
-    // This ensures consistent UX - panel always starts at bottom on every screen
-    const minPx = vhToPx(PANEL_MIN_VH);
-    if (window._setPanelVisibleHeight) {
-        const panel = document.querySelector('.arrivals-panel');
-        if (panel) {
-            panel.style.transition = 'none'; // no animation on mode change
-            panel.classList.remove('expanded'); // IMPORTANT: remove expanded class
-            window._setPanelVisibleHeight(minPx);
-            setTimeout(() => { panel.style.transition = ''; }, 50);
+    // Reset panel to 40vh for idle and walk modes only
+    // Bus mode keeps current panel position
+    if (mode !== 'bus') {
+        const minPx = vhToPx(PANEL_MIN_VH);
+        if (window._setPanelVisibleHeight) {
+            const panel = document.querySelector('.arrivals-panel');
+            if (panel) {
+                panel.style.transition = 'none'; // no animation on mode change
+                panel.classList.remove('expanded'); // IMPORTANT: remove expanded class
+                window._setPanelVisibleHeight(minPx);
+                setTimeout(() => { panel.style.transition = ''; }, 50);
+            }
         }
     }
 
@@ -2721,17 +2694,6 @@ function setupPanelDrag() {
                 mapInner.style.transformOrigin = 'center center'; // scale from center
                 mapInner.style.transition = 'none'; // no transition during drag
             }
-            
-            // IMPORTANT: Apply same transform to crosshair so it stays fixed relative to map center
-            // This prevents crosshair from moving and triggering station reordering
-            const crosshair = document.getElementById('map-crosshair');
-            if (crosshair) {
-                const translateAmount = -panelDelta * parallaxFactor;
-                const maxTranslate = 200;
-                const clampedTranslate = Math.max(-maxTranslate, Math.min(maxTranslate, translateAmount));
-                crosshair.style.transform = `translateY(${clampedTranslate}px)`;
-                crosshair.style.transition = 'none';
-            }
         }
         
         // record movement for velocity calculation
@@ -2841,13 +2803,6 @@ function setupPanelDrag() {
                         mapInner.style.transform = 'translateY(0) scale(1)';
                     }
                     
-                    // Reset crosshair transform
-                    const crosshair = document.getElementById('map-crosshair');
-                    if (crosshair) {
-                        crosshair.style.transition = 'transform 0.24s cubic-bezier(.2,.7,.2,1)';
-                        crosshair.style.transform = 'translateY(0)';
-                    }
-                    
                     if (target >= (minPx + maxPx) / 2) {
                         arrivalsPanel.classList.add('expanded');
                     } else {
@@ -2872,8 +2827,29 @@ function setupPanelDrag() {
                     
                     // Re-center map on GPS when pulling up from 20vh (ALL screens)
                     if (userLat && userLon && target > circlesHook + 10) {
-                        console.log('[MAP] Re-centering on GPS after pulling up from 20vh');
-                        map.setView([userLat, userLon], map.getZoom(), { animate: true, duration: 0.3 });
+                        console.log('[MAP] Re-centering GPS to crosshair position after pulling up from 20vh');
+                        
+                        // In bus mode, position GPS at crosshair location
+                        if (uiMode === 'bus') {
+                            const mapContainer = map.getContainer();
+                            const containerWidth = mapContainer.offsetWidth;
+                            const containerHeight = mapContainer.offsetHeight;
+                            
+                            const crosshairX = containerWidth * 0.5;
+                            const crosshairY = window.innerHeight * 0.3;
+                            const centerX = containerWidth * 0.5;
+                            const centerY = containerHeight * 0.5;
+                            const offsetX = crosshairX - centerX;
+                            const offsetY = crosshairY - centerY;
+                            
+                            map.setView([userLat, userLon], map.getZoom(), { animate: true, duration: 0.3 });
+                            setTimeout(() => {
+                                map.panBy([-offsetX, -offsetY], { animate: false });
+                            }, 50);
+                        } else {
+                            // Other modes: normal center
+                            map.setView([userLat, userLon], map.getZoom(), { animate: true, duration: 0.3 });
+                        }
                     }
                     
                     lastMoves = [];
@@ -2918,13 +2894,6 @@ function setupPanelDrag() {
                 mapInner.style.transform = 'translateY(0) scale(1)';
             }
             
-            // Reset crosshair transform
-            const crosshair = document.getElementById('map-crosshair');
-            if (crosshair) {
-                crosshair.style.transition = easing;
-                crosshair.style.transform = 'translateY(0)';
-            }
-            
             if (target >= (minPx + maxPx) / 2) {
                 arrivalsPanel.classList.add('expanded');
             } else {
@@ -2948,8 +2917,29 @@ function setupPanelDrag() {
             
             // Re-center map on GPS when pulling up from 20vh (ALL screens)
             if (userLat && userLon && target > circlesHook + 10) {
-                console.log('[MAP] Re-centering on GPS after pulling up from 20vh');
-                map.setView([userLat, userLon], map.getZoom(), { animate: true, duration: 0.3 });
+                console.log('[MAP] Re-centering GPS to crosshair position after pulling up from 20vh');
+                
+                // In bus mode, position GPS at crosshair location
+                if (uiMode === 'bus') {
+                    const mapContainer = map.getContainer();
+                    const containerWidth = mapContainer.offsetWidth;
+                    const containerHeight = mapContainer.offsetHeight;
+                    
+                    const crosshairX = containerWidth * 0.5;
+                    const crosshairY = window.innerHeight * 0.3;
+                    const centerX = containerWidth * 0.5;
+                    const centerY = containerHeight * 0.5;
+                    const offsetX = crosshairX - centerX;
+                    const offsetY = crosshairY - centerY;
+                    
+                    map.setView([userLat, userLon], map.getZoom(), { animate: true, duration: 0.3 });
+                    setTimeout(() => {
+                        map.panBy([-offsetX, -offsetY], { animate: false });
+                    }, 50);
+                } else {
+                    // Other modes: normal center
+                    map.setView([userLat, userLon], map.getZoom(), { animate: true, duration: 0.3 });
+                }
             }
             
             lastMoves = [];
