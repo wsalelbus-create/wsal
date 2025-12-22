@@ -87,10 +87,11 @@ function getDragScale() {
 
 // Snap stops: fewer stops for smoother, more scroll-like feel
 function getSnapStopsPx() {
-    const minPx = vhToPx(PANEL_MIN_VH);
+    const minPx = vhToPx(PANEL_MIN_VH); // 40vh - initial position
     const maxPx = getPanelMaxPx();
     
-    // Add a hook position below minPx for circles view (30vh - pulled down 10vh from initial 40vh)
+    // Hook position for circles view - 10vh LESS than initial (30vh instead of 40vh)
+    // This is SMALLER value = panel pulled DOWN to show more map
     const circlesHook = vhToPx(30);
     const stops = [circlesHook, minPx];
     
@@ -2405,20 +2406,16 @@ function setupPanelDrag() {
             }
         }
         if (!dragging) return;
-        const delta = startY - y; // drag up -> positive delta
+        const delta = startY - y; // drag up -> positive delta, drag down -> negative delta
         const minPx = vhToPx(PANEL_MIN_VH);
         const maxPx = getPanelMaxPx();
         console.log('[DRAG MOVE] delta:', delta, 'minPx:', minPx, 'maxPx:', maxPx, 'startVisible:', startVisible);
         const scale = getDragScale();
         let next = startVisible + delta * scale;
         
-        // Elastic bounce: allow pulling below minimum with resistance (rubber band effect)
-        if (next < minPx) {
-            const overPull = minPx - next; // how much below minimum
-            const resistance = 0.15; // 15% resistance - easy to pull down for circles view
-            next = minPx - (overPull * resistance); // apply resistance
-        } else if (next > maxPx) {
-            // Also apply resistance when pulling above maximum
+        // NO resistance when pulling down - allow smooth pull to circles view
+        // Only apply resistance when pulling up beyond maximum
+        if (next > maxPx) {
             const overPull = next - maxPx;
             const resistance = 0.3;
             next = maxPx + (overPull * resistance);
