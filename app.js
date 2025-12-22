@@ -1566,11 +1566,19 @@ function initMap() {
             
             // Only collapse if panel is at 40vh or higher (not already collapsed)
             if (currentH >= minPx - 10) {
-                console.log('[Map Click] Collapsing panel to 20vh');
+                console.log('[Map Click] Collapsing panel to 20vh with bounce effect');
                 const panel = document.querySelector('.arrivals-panel');
                 if (panel && window._setPanelVisibleHeight) {
-                    panel.style.transition = 'transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
+                    // Use the SAME easing as manual drag snap for satisfying bounce
+                    panel.style.transition = 'transform 0.24s cubic-bezier(.2,.7,.2,1)';
                     window._setPanelVisibleHeight(circlesHook);
+                    
+                    // Reset map parallax synchronized with panel snap
+                    const mapInner = document.getElementById('map-container');
+                    if (mapInner) {
+                        mapInner.style.transition = 'transform 0.24s cubic-bezier(.2,.7,.2,1)';
+                        mapInner.style.transform = 'translateY(0) scale(1)';
+                    }
                     
                     // Show circles only in idle mode
                     if (uiMode === 'idle' && userLat && userLon) {
