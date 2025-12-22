@@ -1140,3 +1140,14 @@ html, body {
 .leaflet-overlay-pane .leaflet-zoom-animated {
     transition: none !important;
 }
+
+/* Settings badge - keep above arrival panel */
+.settings-badge {
+    z-index: 1100 !important;
+    position: relative;
+}
+
+.back-badge {
+    z-index: 1100 !important;
+    position: relative;
+}
