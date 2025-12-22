@@ -1696,8 +1696,8 @@ function updateMap() {
                     </svg>
                 </div>
                 <!-- Soft halo behind the blue location dot -->
-                <div class="user-dot-halo" style="position:absolute; left:50%; top:50%; width: 42px; height: 42px; border-radius: 50%; transform: translate(-50%, -50%); background: radial-gradient(circle, rgba(64,115,148,0.35) 0%, rgba(64,115,148,0.18) 45%, rgba(64,115,148,0.00) 75%);"></div>
-                <div class="user-dot" style="position:absolute; left:50%; top:50%; width: 21px; height: 21px; background: rgb(64, 115, 148); border-radius: 50%; border: 3px solid white; box-shadow: 0 2px 8px rgba(0,0,0,0.30); transform: translate(-50%, -50%);"></div>
+                <div class="user-dot-halo" style="position:absolute; left:50%; top:50%; width: 42px; height: 42px; border-radius: 50%; transform: translate(-50%, -50%); background: radial-gradient(circle, rgba(0,102,204,0.35) 0%, rgba(0,102,204,0.18) 45%, rgba(0,102,204,0.00) 75%);"></div>
+                <div class="user-dot" style="position:absolute; left:50%; top:50%; width: 21px; height: 21px; background: #0066CC; border-radius: 50%; border: 3px solid white; box-shadow: 0 2px 8px rgba(0,0,0,0.30); transform: translate(-50%, -50%);"></div>
             </div>`;
 
         if (userMarker) {
@@ -3054,69 +3054,6 @@ try {
 // Initialize weather module (handles its own display updates)
 if (window.WeatherModule) {
     WeatherModule.init();
-}
-
-// Lock screen orientation to portrait (PWA and browser)
-try {
-    if (screen.orientation && screen.orientation.lock) {
-        screen.orientation.lock('portrait-primary').catch(err => {
-            console.log('Orientation lock not supported or failed:', err);
-        });
-    }
-} catch (e) {
-    console.log('Screen orientation API not available');
-}
-
-// BLOCK orientation change events - prevent layout from responding to rotation
-window.addEventListener('orientationchange', (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    // Force back to portrait
-    if (window.orientation !== 0 && window.orientation !== 180) {
-        document.documentElement.style.transform = 'rotate(-90deg)';
-        document.documentElement.style.transformOrigin = 'left top';
-        document.documentElement.style.width = '100vh';
-        document.documentElement.style.height = '100vw';
-        document.documentElement.style.position = 'absolute';
-        document.documentElement.style.top = '100%';
-        document.documentElement.style.left = '0';
-    } else {
-        document.documentElement.style.transform = '';
-        document.documentElement.style.transformOrigin = '';
-        document.documentElement.style.width = '';
-        document.documentElement.style.height = '';
-        document.documentElement.style.position = '';
-        document.documentElement.style.top = '';
-        document.documentElement.style.left = '';
-    }
-}, true);
-
-// Block resize events during orientation change
-let resizeTimeout;
-window.addEventListener('resize', (e) => {
-    clearTimeout(resizeTimeout);
-    resizeTimeout = setTimeout(() => {
-        // Only allow resize if in portrait
-        if (window.innerWidth > window.innerHeight) {
-            e.preventDefault();
-            e.stopPropagation();
-        }
-    }, 100);
-}, true);
-
-// Update theme-color for browser status bar (only in browser, not PWA)
-try {
-    const isPWA = (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) || !!window.navigator.standalone;
-    if (!isPWA) {
-        // In browser: use arrival panel color rgb(64, 115, 148)
-        const themeColorMeta = document.querySelector('meta[name="theme-color"]');
-        if (themeColorMeta) {
-            themeColorMeta.setAttribute('content', 'rgb(64, 115, 148)');
-        }
-    }
-    // In PWA: keep default theme-color (already set in manifest)
-} catch (e) {
-    console.log('Theme color update failed');
 }
 
 // Refresh every minute depending on UI mode
