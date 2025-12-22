@@ -2746,6 +2746,9 @@ function setupPanelDrag() {
                         } else if (!isAt20vh && distanceCirclesLayer) {
                             console.log('[CIRCLES] ❌ Hiding circles - not at 20vh (inertia)');
                             hideDistanceCircles();
+                            // Re-center map on GPS when leaving 20vh (going back up)
+                            console.log('[MAP] Re-centering on GPS after leaving 20vh');
+                            map.setView([userLat, userLon], map.getZoom(), { animate: true, duration: 0.3 });
                         }
                     }
                     
@@ -2809,6 +2812,9 @@ function setupPanelDrag() {
                 } else if (!isAt20vh && distanceCirclesLayer) {
                     console.log('[CIRCLES] ❌ Hiding circles - not at 20vh');
                     hideDistanceCircles();
+                    // Re-center map on GPS when leaving 20vh (going back up)
+                    console.log('[MAP] Re-centering on GPS after leaving 20vh');
+                    map.setView([userLat, userLon], map.getZoom(), { animate: true, duration: 0.3 });
                 }
             }
             
