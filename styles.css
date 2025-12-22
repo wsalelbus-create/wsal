@@ -103,14 +103,11 @@ html, body {
        To center map at 30vh: top = 30vh - (160vh / 2) = 30vh - 80vh = -50vh = -50% */
     top: -50%; /* shift up so map center aligns with visible area center (~30vh from viewport top) */
     left: -10%; /* center the oversized map horizontally - 10% buffer left and right */
-    /* Performance optimizations for smooth parallax */
+    /* Performance optimizations */
     transform: translate3d(0, 0, 0);
     /* Force GPU acceleration */
     will-change: transform;
     /* Hint browser for optimization */
-    backface-visibility: hidden;
-    -webkit-backface-visibility: hidden;
-    contain: layout style paint; /* CSS containment for better performance */
 }
 
 /* Header Floating on Map */
@@ -431,38 +428,27 @@ html, body {
     left: 0;
     right: 0;
     bottom: 0;
-    /* FULL HEIGHT: Panel can expand to 100vh to show all content */
-    height: calc(var(--vh, 1vh) * 100);
+    height: calc(var(--vh, 1vh) * 85); /* start at max height, JS will position via transform */
     max-height: none;
     background: white;
-    /* Cross-browser border-radius */
-    border-radius: 16px 16px 0 0;
-    -webkit-border-radius: 16px 16px 0 0;
-    box-shadow: none;
-    z-index: 1000;
-    --skyline-max-height: 180px;
+    border-radius: 16px 16px 0 0;   /* match selector bar radius */
+    box-shadow: none;               /* remove hairline */
+    z-index: 1000;                  /* above map/controls; under header/back badge */
+    /* Skyline size made global so children (routes-list) can reserve space */
+    --skyline-max-height: 180px; /* fixed smaller height - identical in Safari and PWA */
     padding: 16px;
-    padding-top: 120px;
+    padding-top: 120px;             /* enough space for floating selector (70px) + spacing (32px) + first element */
     --panel-pad-bottom: calc(6px + env(safe-area-inset-bottom));
-    padding-bottom: var(--panel-pad-bottom);
+    padding-bottom: var(--panel-pad-bottom); /* safe area */
     display: flex;
-    flex-direction: column;
+    flex-direction: column;         /* internal layout */
     align-items: stretch;
-    /* Allow content to overflow for grabber bar visibility */
-    overflow: visible;
-    touch-action: none;
-    /* CRITICAL: Force GPU compositing layer for native-smooth dragging */
+    overflow: visible;              /* allow floating controls to show above panel */
+    touch-action: none;             /* gestures handled by JS for sheet drag */
+    /* Initial position: collapsed (40vh visible) - prevents flash at bottom on load */
+    transform: translateY(calc(var(--vh, 1vh) * 45)); /* start pushed down (85vh - 40vh = 45vh offset) */
+    transition: transform 0.25s ease;  /* smooth translate change */
     will-change: transform;
-    backface-visibility: hidden;
-    -webkit-backface-visibility: hidden;
-    /* Use translate3d for better cross-browser transform support */
-    transform: translate3d(0, 0, 0);
-    -webkit-transform: translate3d(0, 0, 0);
-    /* CSS containment for better performance */
-    contain: layout style paint;
-    /* Initial position: collapsed (40vh visible) */
-    transition: transform 0.25s ease;
-    -webkit-transition: -webkit-transform 0.25s ease;
 }
 
 /* Expanded sheet height (drag up) */
@@ -564,16 +550,15 @@ html, body {
     gap: 16px; /* slightly more space between cards */
     /* Reserve space so cards never overlap skyline backdrop */
     padding-bottom: 185px; /* tight spacing - identical in Safari and PWA */
-    /* CRITICAL: Let list grow to natural height - don't constrain it */
-    flex: 0 0 auto;                 /* size to content, don't grow/shrink */
-    min-height: auto;               /* natural height */
-    overflow: visible;              /* show all content - no clipping */
+    flex: 1 1 auto;                 /* take remaining space in panel */
+    min-height: 0;                  /* allow flex child to shrink for scroll */
+    overflow-y: auto;               /* default, will be disabled when not expanded */
     -webkit-overflow-scrolling: touch;
 }
 
 /* Disable list scroll when the sheet is collapsed; enable only when expanded */
 .arrivals-panel:not(.expanded) .routes-list { overflow: hidden; touch-action: none; }
-.arrivals-panel.expanded .routes-list { overflow: visible; touch-action: pan-y; }
+.arrivals-panel.expanded .routes-list { overflow-y: auto; touch-action: pan-y; }
 
 /* In Bus mode, reduce panel padding since selector bar is hidden */
 .arrivals-panel.bus-mode {
@@ -588,19 +573,18 @@ html, body {
 /* In Bus mode, make the list non-scrollable and let it size to content.
    The sheet itself will expand up to the viewport to reveal items. */
 .arrivals-panel.bus-mode .routes-list {
-    overflow: visible;           /* SHOW all content - no clipping */
-    flex: 0 0 auto;              /* do not take remaining space - size to content */
+    overflow: hidden;            /* no internal scroll */
+    flex: 0 0 auto;              /* do not take remaining space */
     min-height: auto;            /* allow intrinsic height */
-    max-height: none;            /* no cap - grow as tall as needed */
+    max-height: none;            /* no cap */
     -webkit-overflow-scrolling: auto;
     touch-action: none;          /* gestures reserved for sheet drag */
     /* Reserve skyline height so the last card never overlaps backdrop */
-    padding-bottom: 200px; /* space for skyline at bottom */
+    padding-bottom: 185px; /* tight spacing - identical in Safari and PWA */
 }
 
 /* Walking screen (detailed mode) with single card - ensure enough space below */
 .arrivals-panel.no-selector .routes-list {
-    overflow: visible;           /* SHOW all content - no clipping */
     padding-bottom: 220px !important; /* extra space for single card to sit above skyline */
     min-height: 300px; /* ensure list has minimum height even with one card */
 }

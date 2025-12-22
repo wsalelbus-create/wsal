@@ -2169,15 +2169,17 @@ function getPanelMaxPx() {
             // Stop exactly when cards meet skyline (no growing blue gap)
             const desired = Math.ceil(Math.max(minPx, contentH + skylineH));
             
-            // IMPORTANT: Always allow dragging to full viewport height
-            // Use the larger of content height or default max to prevent snap
-            const defaultMax = vhToPx(PANEL_MAX_VH);
-            const maxAllowed = Math.max(desired, defaultMax);
+            // IMPORTANT: Cap max height to prevent panel jump on first touch
+            // In both bus and walk modes, if panel is NOT expanded, cap to default PANEL_MAX_VH
+            const isExpanded = arrivalsPanel.classList.contains('expanded');
+            if (!isExpanded) {
+                const defaultMax = vhToPx(PANEL_MAX_VH);
+                console.log('[getPanelMaxPx] NOT EXPANDED - desired:', desired, 'defaultMax:', defaultMax, 'returning:', Math.min(desired, defaultMax));
+                return Math.min(desired, defaultMax);
+            }
             
-            // FIXED: Always return maxAllowed regardless of expanded state
-            // The expanded state is set AFTER drag ends, so checking it here causes inconsistency
-            console.log('[getPanelMaxPx] desired:', desired, 'defaultMax:', defaultMax, 'maxAllowed:', maxAllowed);
-            return maxAllowed;
+            console.log('[getPanelMaxPx] EXPANDED - desired:', desired);
+            return desired;
         }
     } catch {}
     // Default cap
@@ -2196,7 +2198,6 @@ function setupPanelDrag() {
     let dragging = false;
     let startY = 0;
     let startVisible = 0; // visible height of the sheet during drag
-    let dragMaxPx = 0; // cache max height at drag start to prevent snap
     let lastMoves = [];
     let startInList = false;
     let startListEl = null;
@@ -2223,10 +2224,7 @@ function setupPanelDrag() {
         // Allow elastic bounce: don't clamp during drag, only clamp offset calculation
         const vis = visiblePx; // use raw value to allow over-pull
         const offset = Math.max(0, maxPx - vis); // how far to push the panel down
-        // Cross-browser transform with webkit prefix
-        const transformValue = `translateY(${offset}px)`;
-        arrivalsPanel.style.transform = transformValue;
-        arrivalsPanel.style.webkitTransform = transformValue;
+        arrivalsPanel.style.transform = `translateY(${offset}px)`;
         arrivalsPanel.style.height = `${maxPx}px`; // keep the panel sized to its max
         // Expose sizes to CSS for consistent PWA/Safari proportions
         arrivalsPanel.style.setProperty('--panel-visible', `${vis}px`);
@@ -2287,11 +2285,9 @@ function setupPanelDrag() {
         }
         startTarget = target || null;
         startY = y;
+        console.log('[handleStart] SET startY to:', startY);
         // read current visible height (px)
         startVisible = getPanelVisibleHeight();
-        // Cache maxPx at drag start - don't recalculate during drag to prevent snap
-        dragMaxPx = getPanelMaxPx();
-        console.log('[handleStart] startY:', startY, 'startVisible:', startVisible, 'dragMaxPx:', dragMaxPx, 'uiMode:', uiMode, 'busDetailActive:', busDetailActive, 'expanded:', arrivalsPanel.classList.contains('expanded'));
         lastMoves = [{ t: performance.now(), h: startVisible }];
         return true;
     };
@@ -2327,37 +2323,24 @@ function setupPanelDrag() {
         if (!dragging) return;
         const delta = startY - y; // drag up -> positive delta
         const minPx = vhToPx(PANEL_MIN_VH);
-        const maxPx = dragMaxPx; // use cached value from drag start
+        const maxPx = getPanelMaxPx();
+        console.log('[DRAG MOVE] delta:', delta, 'minPx:', minPx, 'maxPx:', maxPx, 'startVisible:', startVisible);
         const scale = getDragScale();
         let next = startVisible + delta * scale;
         
-        console.log('[DRAG MOVE] delta:', delta, 'startVisible:', startVisible, 'next:', next, 'minPx:', minPx, 'maxPx:', maxPx, 'scale:', scale);
-        
         // Elastic bounce: allow pulling below minimum with resistance (rubber band effect)
         if (next < minPx) {
-            const overPull = minPx - next;
-            const resistance = 0.3;
-            next = minPx - (overPull * resistance);
-            console.log('[DRAG MOVE] BELOW MIN - overPull:', overPull, 'adjusted next:', next);
+            const overPull = minPx - next; // how much below minimum
+            const resistance = 0.3; // 30% resistance - harder to pull down
+            next = minPx - (overPull * resistance); // apply resistance
         } else if (next > maxPx) {
+            // Also apply resistance when pulling above maximum
             const overPull = next - maxPx;
             const resistance = 0.3;
             next = maxPx + (overPull * resistance);
-            console.log('[DRAG MOVE] ABOVE MAX - overPull:', overPull, 'adjusted next:', next);
         }
         
-        // Use GPU-accelerated transform directly - NO layout recalculation
-        const offset = Math.max(0, maxPx - next);
-        const panelTransform = `translate3d(0, ${offset}px, 0)`;
-        arrivalsPanel.style.transform = panelTransform;
-        arrivalsPanel.style.webkitTransform = panelTransform;
-        arrivalsPanel.dataset.visibleH = String(next);
-        
-        // Update progress for visual effects
-        const clampedNext = clamp(next, minPx, maxPx);
-        const denom = Math.max(1, (maxPx - minPx));
-        const p = Math.max(0, Math.min(1, (clampedNext - minPx) / denom));
-        arrivalsPanel.style.setProperty('--sheet-progress', String(p));
+        setPanelVisibleHeight(next);
         
         // Citymapper-style parallax: VISUAL effect only, don't actually move map tiles
         // Apply transform to map-container (the visual layer), not map-view-container
@@ -2378,9 +2361,7 @@ function setupPanelDrag() {
                 const maxTranslate = 200; // max 200px movement in either direction (we have 40% buffer = ~240px at typical viewport)
                 const clampedTranslate = Math.max(-maxTranslate, Math.min(maxTranslate, translateAmount));
                 
-                const mapTransform = `translateY(${clampedTranslate}px) scale(${scaleAmount})`;
-                mapInner.style.transform = mapTransform;
-                mapInner.style.webkitTransform = mapTransform;
+                mapInner.style.transform = `translateY(${clampedTranslate}px) scale(${scaleAmount})`;
                 mapInner.style.transformOrigin = 'center center'; // scale from center
                 mapInner.style.transition = 'none'; // no transition during drag
             }
@@ -2414,7 +2395,7 @@ function setupPanelDrag() {
         // We'll handle inertia manually; disable CSS transition during the glide
         arrivalsPanel.style.transition = 'none';
         const minPx = vhToPx(PANEL_MIN_VH);
-        const maxPx = dragMaxPx; // use cached value from drag start
+        const maxPx = getPanelMaxPx();
         // compute velocity using recent samples (~120ms)
         let velocity = 0;
         if (lastMoves.length >= 2) {
@@ -2442,11 +2423,9 @@ function setupPanelDrag() {
                 const vNow = Math.max(0, absV - DECEL * elapsed);
                 h = clamp(h + dir * vNow * dt, minPx, maxPx);
                 
-                // Use GPU-accelerated transform directly for 60fps smoothness
+                // Use transform directly for buttery smooth animation (no layout thrashing)
                 const offset = Math.max(0, maxPx - h);
-                const inertiaTransform = `translate3d(0, ${offset}px, 0)`;
-                arrivalsPanel.style.transform = inertiaTransform;
-                arrivalsPanel.style.webkitTransform = inertiaTransform;
+                arrivalsPanel.style.transform = `translateY(${offset}px)`;
                 arrivalsPanel.dataset.visibleH = String(h);
                 
                 // Stop if speed nearly zero or bounds reached
@@ -2456,17 +2435,13 @@ function setupPanelDrag() {
                     // Final snap with a soft easing
                     const target = pickSnapTarget(h, dir * vNow);
                     arrivalsPanel.style.transition = 'transform 0.22s cubic-bezier(0.25, 0.46, 0.45, 0.94)'; // iOS-like easing
-                    arrivalsPanel.style.webkitTransition = '-webkit-transform 0.22s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
                     setPanelVisibleHeight(target);
                     
                     // Reset map parallax synchronized with panel snap
                     const mapInner = document.getElementById('map-container');
                     if (mapInner) {
-                        const mapResetTransform = 'translateY(0) scale(1)';
                         mapInner.style.transition = 'transform 0.24s cubic-bezier(.2,.7,.2,1)';
-                        mapInner.style.webkitTransition = '-webkit-transform 0.24s cubic-bezier(.2,.7,.2,1)';
-                        mapInner.style.transform = mapResetTransform;
-                        mapInner.style.webkitTransform = mapResetTransform;
+                        mapInner.style.transform = 'translateY(0) scale(1)';
                     }
                     
                     if (target >= (minPx + maxPx) / 2) arrivalsPanel.classList.add('expanded');
@@ -2498,22 +2473,15 @@ function setupPanelDrag() {
             const easing = isBouncingBack 
                 ? 'transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)' // elastic bounce with overshoot
                 : 'transform 0.24s cubic-bezier(.2,.7,.2,1)'; // normal snap
-            const webkitEasing = isBouncingBack 
-                ? '-webkit-transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)'
-                : '-webkit-transform 0.24s cubic-bezier(.2,.7,.2,1)';
             
             arrivalsPanel.style.transition = easing;
-            arrivalsPanel.style.webkitTransition = webkitEasing;
             setPanelVisibleHeight(target);
             
             // Reset map parallax synchronized with panel snap
             const mapInner = document.getElementById('map-container');
             if (mapInner) {
-                const mapResetTransform = 'translateY(0) scale(1)';
                 mapInner.style.transition = easing; // use same easing as panel
-                mapInner.style.webkitTransition = webkitEasing;
-                mapInner.style.transform = mapResetTransform;
-                mapInner.style.webkitTransform = mapResetTransform;
+                mapInner.style.transform = 'translateY(0) scale(1)';
             }
             
             if (target >= (minPx + maxPx) / 2) arrivalsPanel.classList.add('expanded');
@@ -2631,12 +2599,9 @@ if (arrivalsPanel) {
     const minPx = vhToPx(PANEL_MIN_VH);
     const maxPx = vhToPx(PANEL_MAX_VH);
     const offset = Math.max(0, maxPx - minPx);
-    const initialTransform = `translateY(${offset}px)`;
-    arrivalsPanel.style.transform = initialTransform;
-    arrivalsPanel.style.webkitTransform = initialTransform;
+    arrivalsPanel.style.transform = `translateY(${offset}px)`;
     arrivalsPanel.style.height = `${maxPx}px`;
     arrivalsPanel.style.transition = 'none'; // no transition on initial load
-    arrivalsPanel.style.webkitTransition = 'none';
 }
 
 // Wait for polyfill to fully apply before initializing panel drag handlers
