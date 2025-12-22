@@ -1773,7 +1773,7 @@ function showDistanceCircles() {
         
         console.log(`[showDistanceCircles] ✅ Creating circle ${i + 1}/3: ${minutes} min, radius: ${radiusMeters}m`);
         
-        // Draw circle with stable rendering (no thickness change during zoom)
+        // Draw circle with vector-effect to keep constant stroke width during zoom
         const circle = L.circle([userLat, userLon], {
             radius: radiusMeters,
             color: '#6B7C93',
@@ -1781,7 +1781,8 @@ function showDistanceCircles() {
             fillOpacity: 0,
             weight: 1.5,
             opacity: 0.6,
-            interactive: false
+            interactive: false,
+            className: 'distance-circle-stable' // Add class for CSS vector-effect
         });
         circle.addTo(distanceCirclesLayer);
         console.log(`[showDistanceCircles] ✅ Circle ${i + 1}/3 ADDED TO MAP`);
@@ -2566,11 +2567,17 @@ function setupPanelDrag() {
                     }
                     
                     // Show/hide distance circles based on final position in idle mode
+                    // Only show at 20vh, hide at all other positions
                     if (uiMode === 'idle' && userLat && userLon) {
-                        const threshold = minPx + vhToPx(10);
-                        if (target > threshold && !distanceCirclesLayer) {
+                        const circlesHook = vhToPx(20);
+                        const isAt20vh = Math.abs(target - circlesHook) < 1;
+                        console.log('[CIRCLES INERTIA] target:', target, 'circlesHook:', circlesHook, 'isAt20vh:', isAt20vh);
+                        
+                        if (isAt20vh && !distanceCirclesLayer) {
+                            console.log('[CIRCLES] ✅ Showing circles - at 20vh (inertia)');
                             showDistanceCircles();
-                        } else if (target <= threshold && distanceCirclesLayer) {
+                        } else if (!isAt20vh && distanceCirclesLayer) {
+                            console.log('[CIRCLES] ❌ Hiding circles - not at 20vh (inertia)');
                             hideDistanceCircles();
                         }
                     }
