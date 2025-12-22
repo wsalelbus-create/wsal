@@ -2578,6 +2578,14 @@ function setupPanelDrag() {
                 dragging = true;
                 panelDragging = true;
                 arrivalsPanel.style.transition = 'none';
+                
+                // CRITICAL: Disable Leaflet map dragging to prevent moveend events during panel drag
+                if (map && map.dragging) {
+                    try {
+                        map.dragging.disable();
+                        console.log('[DRAG START] Disabled map dragging to prevent false moveend events');
+                    } catch (e) {}
+                }
                 console.log('[DRAG START] dy:', dy, 'uiMode:', uiMode, 'busDetailActive:', busDetailActive, 'expanded:', arrivalsPanel.classList.contains('expanded'), 'startVisible:', startVisible, 'startY:', startY, 'currentY:', y);
             } else {
                 return; // not enough movement yet
@@ -2658,6 +2666,14 @@ function setupPanelDrag() {
         pendingDrag = false;
         panelDragging = false;
         startTarget = null;
+        
+        // Re-enable Leaflet map dragging after panel drag ends
+        if (map && map.dragging) {
+            try {
+                map.dragging.enable();
+                console.log('[DRAG END] Re-enabled map dragging');
+            } catch (e) {}
+        }
         
         // Record when drag ended to prevent false map moveend triggers
         if (typeof lastDragEndTime !== 'undefined') {
