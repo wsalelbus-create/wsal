@@ -1760,14 +1760,13 @@ function showDistanceCircles() {
     // Average walking speed: ~5 km/h = ~83 m/min
     const times = [5, 15, 60]; // minutes
     
-    for (let i = 0; i < times.length; i++) {
-        const minutes = times[i];
+    times.forEach((minutes, i) => {
         const approxMeters = minutes * 83; // rough estimate
         
-        console.log(`[showDistanceCircles] Drawing circle ${i}: ${minutes} min, ${approxMeters}m`);
+        console.log(`[showDistanceCircles] Creating circle ${i + 1}/3: ${minutes} min, radius: ${approxMeters}m`);
         
         // Draw circle
-        L.circle([userLat, userLon], {
+        const circle = L.circle([userLat, userLon], {
             radius: approxMeters,
             color: '#6B7C93',
             fillColor: 'transparent',
@@ -1775,18 +1774,22 @@ function showDistanceCircles() {
             weight: 1.5,
             opacity: 0.6,
             interactive: false
-        }).addTo(distanceCirclesLayer);
+        });
+        circle.addTo(distanceCirclesLayer);
+        console.log(`[showDistanceCircles] Circle ${i + 1} added to layer`);
         
         // Calculate label position at top of circle
         // 1 degree latitude ≈ 111,000 meters
         const latOffset = approxMeters / 111000;
         const labelLat = userLat + latOffset;
         
+        console.log(`[showDistanceCircles] Creating label ${i + 1}/3 at lat: ${labelLat}`);
+        
         // Add text label with walking icon at top of circle
-        L.marker([labelLat, userLon], {
+        const marker = L.marker([labelLat, userLon], {
             icon: L.divIcon({
                 className: 'distance-circle-label',
-                html: `<div style="display: flex; align-items: center; gap: 3px; font-size: 11px; font-weight: 600; color: #6B7C93; white-space: nowrap; pointer-events: none;">
+                html: `<div style="display: flex; align-items: center; gap: 3px; font-size: 11px; font-weight: 600; color: #6B7C93; white-space: nowrap; pointer-events: none; background: transparent;">
                     <svg width="12" height="12" viewBox="0 0 128 128" fill="none" xmlns="http://www.w3.org/2000/svg">
                         <path d="M67.9,22.6c5.7,0.4,10.8-3.8,11.3-9.7c0.4-5.7-3.8-10.8-9.7-11.3c-5.7-0.4-10.8,3.8-11.3,9.7C57.8,17.1,62.2,22.2,67.9,22.6" fill="#6B7C93"/>
                         <path d="M59,26.9c2-1.5,4.5-2.3,7.3-2.2c3.5,0.3,6.6,2.5,8.3,5.1l10.5,20.9l14.3,10c1.2,1,2,2.5,1.9,4.1c-0.1,2.6-2.5,4.5-5.1,4.2 c-0.7,0-1.5-0.3-2.2-0.7L78.6,57.8c-0.4-0.4-0.9-0.9-1.2-1.5l-4-7.8l-4.7,20.8l18.6,22c0.4,0.7,0.7,1.5,0.9,2.2l5,26.5 c0,0.6,0,1,0,1.5c-0.3,4-3.7,6.7-7.6,6.6c-3.2-0.3-5.6-2.6-6.4-5.6l-4.7-24.7L59.4,81l-3.5,16.1c-0.1,0.7-1.2,2.3-1.5,2.9L40,124.5 c-1.5,2.2-3.8,3.7-6.6,3.4c-4-0.3-6.9-3.7-6.6-7.6c0.1-1.2,0.6-2.2,1-3.1l13.5-22.5L52.5,45l-7.3,5.9l-4,17.7c-0.4,2.2-2.6,4.1-5,4 c-2.6-0.1-4.5-2.5-4.4-5.1c0-0.1,0-0.4,0.1-0.6l4.5-20.6c0.3-0.9,0.7-1.6,1.5-2.2L59,26.9z" fill="#6B7C93"/>
@@ -1797,9 +1800,12 @@ function showDistanceCircles() {
                 iconAnchor: [30, 10]
             }),
             interactive: false
-        }).addTo(distanceCirclesLayer);
-    }
-    console.log('[showDistanceCircles] All 3 circles created successfully');
+        });
+        marker.addTo(distanceCirclesLayer);
+        console.log(`[showDistanceCircles] Label ${i + 1} added to layer`);
+    });
+    
+    console.log('[showDistanceCircles] All 3 circles and labels created successfully');
 }
 
 // Hide distance circles
@@ -2409,13 +2415,18 @@ function setupPanelDrag() {
         const delta = startY - y; // drag up -> positive delta, drag down -> negative delta
         const minPx = vhToPx(PANEL_MIN_VH);
         const maxPx = getPanelMaxPx();
+        const circlesHook = vhToPx(30); // Hook position for circles
         console.log('[DRAG MOVE] delta:', delta, 'minPx:', minPx, 'maxPx:', maxPx, 'startVisible:', startVisible);
         const scale = getDragScale();
         let next = startVisible + delta * scale;
         
-        // NO resistance when pulling down - allow smooth pull to circles view
-        // Only apply resistance when pulling up beyond maximum
-        if (next > maxPx) {
+        // Light resistance when pulling below circles hook (30vh) - allows pull but snaps back
+        if (next < circlesHook) {
+            const overPull = circlesHook - next;
+            const resistance = 0.25; // Light resistance to encourage snap to hook
+            next = circlesHook - (overPull * resistance);
+        } else if (next > maxPx) {
+            // Resistance when pulling up beyond maximum
             const overPull = next - maxPx;
             const resistance = 0.3;
             next = maxPx + (overPull * resistance);
