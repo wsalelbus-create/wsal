@@ -2415,43 +2415,40 @@ function setupPanelDrag() {
         const delta = startY - y; // drag up -> positive delta, drag down -> negative delta
         const minPx = vhToPx(PANEL_MIN_VH);
         const maxPx = getPanelMaxPx();
-        const circlesHook = vhToPx(30); // Hook position for circles
-        console.log('[DRAG MOVE] delta:', delta, 'minPx:', minPx, 'maxPx:', maxPx, 'startVisible:', startVisible);
+        const circlesHook = vhToPx(30); // Hook position for circles (30vh = 268px)
+        console.log('[DRAG MOVE] delta:', delta, 'minPx:', minPx, 'maxPx:', maxPx, 'circlesHook:', circlesHook, 'startVisible:', startVisible);
         const scale = getDragScale();
         let next = startVisible + delta * scale;
         
-        // Light resistance when pulling below circles hook (30vh) - allows pull but snaps back
-        if (next < circlesHook) {
-            const overPull = circlesHook - next;
-            const resistance = 0.25; // Light resistance to encourage snap to hook
-            next = circlesHook - (overPull * resistance);
-        } else if (next > maxPx) {
-            // Resistance when pulling up beyond maximum
+        console.log('[DRAG MOVE] next BEFORE resistance:', next);
+        
+        // NO resistance when pulling down - allow smooth pull to circles hook
+        // Only apply resistance when pulling up beyond maximum
+        if (next > maxPx) {
             const overPull = next - maxPx;
             const resistance = 0.3;
             next = maxPx + (overPull * resistance);
         }
         
+        console.log('[DRAG MOVE] next AFTER resistance:', next);
+        
         setPanelVisibleHeight(next);
         
         // Show/hide distance circles based on panel position in idle mode
-        // Circles appear when panel is pulled DOWN (next < initial position)
-        // and stay visible until dragged back UP to initial position
+        // Circles appear when panel is pulled DOWN below circlesHook (30vh)
         if (uiMode === 'idle' && userLat && userLon) {
-            const initialPx = vhToPx(PANEL_MIN_VH); // Initial collapsed position (40vh)
-            const threshold = initialPx - vhToPx(10); // Show circles when pulled 10vh DOWN from initial
-            console.log('[CIRCLES DEBUG] next:', next, 'threshold:', threshold, 'initialPx:', initialPx, 'circlesExist:', !!distanceCirclesLayer);
+            console.log('[CIRCLES DEBUG] next:', next, 'circlesHook:', circlesHook, 'circlesExist:', !!distanceCirclesLayer);
             
-            // Show circles when pulled down past threshold
-            if (next < threshold) {
+            // Show circles when pulled down below circles hook
+            if (next < circlesHook) {
                 if (!distanceCirclesLayer) {
-                    console.log('[CIRCLES] Showing circles - panel pulled down');
+                    console.log('[CIRCLES] Showing circles - panel pulled below hook');
                     showDistanceCircles();
                 }
             } else {
-                // Hide circles when dragged back up to initial position
+                // Hide circles when dragged back up above hook
                 if (distanceCirclesLayer) {
-                    console.log('[CIRCLES] Hiding circles - panel back to initial');
+                    console.log('[CIRCLES] Hiding circles - panel back above hook');
                     hideDistanceCircles();
                 }
             }
