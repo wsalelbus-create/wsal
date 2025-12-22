@@ -14,6 +14,7 @@
         width: 60vw !important;
         height: 100vh !important;
         bottom: 0 !important;
+        z-index: 1 !important; /* Below panel */
     }
     
     #map-container {
@@ -38,7 +39,10 @@
         padding: 16px !important;
         padding-top: 80px !important; /* Space for floating controls */
         overflow-y: auto !important;
-        touch-action: auto !important; /* Allow scrolling */
+        overflow-x: hidden !important;
+        touch-action: pan-y !important; /* Allow vertical scrolling only */
+        -webkit-overflow-scrolling: touch !important; /* Smooth scrolling on iOS */
+        z-index: 1001 !important; /* Above map */
     }
     
     /* Disable sheet grabber in landscape */
@@ -124,6 +128,8 @@
         overflow-y: auto !important;
         max-height: none !important;
         padding-bottom: 40px !important;
+        touch-action: pan-y !important; /* Allow vertical scrolling */
+        -webkit-overflow-scrolling: touch !important;
     }
     
     /* Skyline - hide in landscape to save space */
