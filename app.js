@@ -107,9 +107,19 @@ function getSnapStopsPx() {
 
 function pickSnapTarget(currentH, velocityPxPerMs) {
     const stops = getSnapStopsPx();
+    const circlesHook = vhToPx(20);
+    const minPx = vhToPx(PANEL_MIN_VH); // 40vh
+    
     // Very sensitive fling thresholds like Citymapper - tiny flicks advance stops
     const UP_FLING = 0.25;   // ~250 px/s (much lower)
     const DOWN_FLING = -0.25; // ~250 px/s downward
+    
+    // SPECIAL CASE: If at 20vh and pushing up, ALWAYS go to 40vh first (not 60vh)
+    if (Math.abs(currentH - circlesHook) < 10 && velocityPxPerMs > 0) {
+        console.log('[pickSnapTarget] At 20vh, pushing up → forcing 40vh');
+        return minPx; // Force 40vh
+    }
+    
     if (velocityPxPerMs > UP_FLING) {
         // next stop above current
         let next = stops[stops.length - 1];
@@ -1772,7 +1782,7 @@ function showDistanceCircles() {
         
         console.log(`[showDistanceCircles] ✅ Creating circle ${i + 1}/3: ${minutes} min, radius: ${radiusMeters}m`);
         
-        // Draw circle with vector-effect applied directly to SVG path
+        // Draw circle with NO zoom animation to prevent thickness change
         const circle = L.circle([userLat, userLon], {
             radius: radiusMeters,
             color: '#6B7C93',
@@ -1781,22 +1791,26 @@ function showDistanceCircles() {
             weight: 1.5,
             opacity: 0.6,
             interactive: false,
-            className: 'distance-circle-stable'
+            bubblingMouseEvents: false
         });
+        
+        // Disable zoom animation for this circle
+        circle.options.pane = 'overlayPane';
         circle.addTo(distanceCirclesLayer);
         
-        // Apply vector-effect directly to the SVG path element after adding to map
+        // Force vector-effect on the SVG path
         setTimeout(() => {
             try {
                 const pathElement = circle.getElement();
                 if (pathElement) {
+                    pathElement.setAttribute('vector-effect', 'non-scaling-stroke');
                     pathElement.style.vectorEffect = 'non-scaling-stroke';
-                    console.log(`[showDistanceCircles] Applied vector-effect to circle ${i + 1}`);
+                    console.log(`[showDistanceCircles] ✅ Applied vector-effect to circle ${i + 1}`);
                 }
             } catch (e) {
-                console.log(`[showDistanceCircles] Error applying vector-effect:`, e);
+                console.log(`[showDistanceCircles] Error:`, e);
             }
-        }, 0);
+        }, 10);
         console.log(`[showDistanceCircles] ✅ Circle ${i + 1}/3 ADDED TO MAP`);
         
         // Calculate label position at top of circle
