@@ -2092,7 +2092,7 @@ async function renderOsrmRoute(fromLat, fromLon, toLat, toLon) {
         } catch {}
     }
     if (typeof route.duration === 'number' && walkTimeText) {
-        const mins = Math.max(1, Math.ceil(route.duration / 60));
+        const mins = Math.max(1, Math.round(route.duration / 60));
         walkTimeText.textContent = `${mins}'`;
     }
     // Update calorie estimate based on distance
