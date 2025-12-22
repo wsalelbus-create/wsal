@@ -90,10 +90,10 @@ function getSnapStopsPx() {
     const minPx = vhToPx(PANEL_MIN_VH); // 40vh - initial position
     const maxPx = getPanelMaxPx();
     
-    // Hook position for circles view - 10vh LESS than initial (30vh instead of 40vh)
-    // This is SMALLER value = panel pulled DOWN to show more map
-    const circlesHook = vhToPx(30);
-    const stops = [circlesHook, minPx];
+    // Hook position for circles view - 20vh (only snaps here if pulled all the way down)
+    // Otherwise, panel always returns to minPx (40vh) initial position
+    const circlesHook = vhToPx(20);
+    const stops = [minPx]; // Start with initial position only
     
     // Only 2 mid stops for smoother feel
     const s60 = vhToPx(60);
@@ -1743,10 +1743,10 @@ async function getOsrmWalkingTime(fromLat, fromLon, toLat, toLon) {
 }
 
 // Show distance circles (5, 15, 60 min walking) around user position in idle mode
-async function showDistanceCircles() {
-    console.log('[showDistanceCircles] Called - map:', !!map, 'userLat:', userLat, 'userLon:', userLon);
+function showDistanceCircles() {
+    console.log('[showDistanceCircles] Called - map:', !!map, 'userLat:', userLat, 'userLon:', userLon, 'uiMode:', uiMode);
     if (!map || !userLat || !userLon) {
-        console.log('[showDistanceCircles] Missing requirements');
+        console.log('[showDistanceCircles] Missing requirements - map:', !!map, 'userLat:', userLat, 'userLon:', userLon);
         return;
     }
     
@@ -1756,58 +1756,19 @@ async function showDistanceCircles() {
         return;
     }
     
-    console.log('[showDistanceCircles] Creating NEW circles layer');
+    console.log('[showDistanceCircles] ✅ CREATING NEW CIRCLES LAYER');
     distanceCirclesLayer = L.layerGroup().addTo(map);
     
-    // Use OSRM to calculate actual walking distances for 5, 15, 60 minutes
+    // Create circles immediately with estimated distances
+    // Average walking speed: ~5 km/h = ~83 m/min
     const times = [5, 15, 60]; // minutes
-    const directions = [
-        { lat: 1, lon: 0, name: 'north' },
-        { lat: 0, lon: 1, name: 'east' },
-        { lat: -1, lon: 0, name: 'south' },
-        { lat: 0, lon: -1, name: 'west' }
-    ];
+    const radii = [415, 1245, 4980]; // meters: 5min=415m, 15min=1245m, 60min=4980m
     
-    // For each time, calculate radius by testing OSRM in 4 directions
     for (let i = 0; i < times.length; i++) {
-        const targetMinutes = times[i];
-        let totalRadius = 0;
-        let validSamples = 0;
+        const minutes = times[i];
+        const radiusMeters = radii[i];
         
-        console.log(`[showDistanceCircles] Calculating ${targetMinutes} min circle...`);
-        
-        // Test in 4 directions to get average radius
-        for (const dir of directions) {
-            // Start with estimated distance (5 km/h walking = 83 m/min)
-            const estimatedMeters = targetMinutes * 83;
-            const metersPerDegree = 111000;
-            const testLat = userLat + (dir.lat * estimatedMeters / metersPerDegree);
-            const testLon = userLon + (dir.lon * estimatedMeters / metersPerDegree);
-            
-            try {
-                const url = `https://router.project-osrm.org/route/v1/foot/${userLon},${userLat};${testLon},${testLat}?overview=false`;
-                const res = await fetch(url);
-                const data = await res.json();
-                
-                if (data && data.code === 'Ok' && data.routes && data.routes[0]) {
-                    const actualMinutes = data.routes[0].duration / 60;
-                    // Scale the radius based on actual vs target time
-                    const scaledRadius = estimatedMeters * (targetMinutes / actualMinutes);
-                    totalRadius += scaledRadius;
-                    validSamples++;
-                    console.log(`[showDistanceCircles] ${targetMinutes}min ${dir.name}: ${Math.round(scaledRadius)}m (actual: ${Math.round(actualMinutes)}min)`);
-                }
-            } catch (e) {
-                console.log(`[showDistanceCircles] OSRM error for ${dir.name}:`, e);
-            }
-        }
-        
-        // Use average radius, or fallback to estimate if OSRM failed
-        const radiusMeters = validSamples > 0 
-            ? Math.round(totalRadius / validSamples)
-            : targetMinutes * 83; // fallback
-        
-        console.log(`[showDistanceCircles] Final ${targetMinutes}min radius: ${radiusMeters}m (${validSamples} samples)`);
+        console.log(`[showDistanceCircles] ✅ Creating circle ${i + 1}/3: ${minutes} min, radius: ${radiusMeters}m`);
         
         // Draw circle
         const circle = L.circle([userLat, userLon], {
@@ -1820,11 +1781,14 @@ async function showDistanceCircles() {
             interactive: false
         });
         circle.addTo(distanceCirclesLayer);
-        console.log(`[showDistanceCircles] Circle ${i + 1}/3 added`);
+        console.log(`[showDistanceCircles] ✅ Circle ${i + 1}/3 ADDED TO MAP`);
         
         // Calculate label position at top of circle
+        // 1 degree latitude ≈ 111,000 meters
         const latOffset = radiusMeters / 111000;
         const labelLat = userLat + latOffset;
+        
+        console.log(`[showDistanceCircles] ✅ Creating label ${i + 1}/3: "${minutes} min" at lat: ${labelLat}`);
         
         // Add text label with walking icon at top of circle
         const marker = L.marker([labelLat, userLon], {
@@ -1835,7 +1799,7 @@ async function showDistanceCircles() {
                         <path d="M67.9,22.6c5.7,0.4,10.8-3.8,11.3-9.7c0.4-5.7-3.8-10.8-9.7-11.3c-5.7-0.4-10.8,3.8-11.3,9.7C57.8,17.1,62.2,22.2,67.9,22.6" fill="#6B7C93"/>
                         <path d="M59,26.9c2-1.5,4.5-2.3,7.3-2.2c3.5,0.3,6.6,2.5,8.3,5.1l10.5,20.9l14.3,10c1.2,1,2,2.5,1.9,4.1c-0.1,2.6-2.5,4.5-5.1,4.2 c-0.7,0-1.5-0.3-2.2-0.7L78.6,57.8c-0.4-0.4-0.9-0.9-1.2-1.5l-4-7.8l-4.7,20.8l18.6,22c0.4,0.7,0.7,1.5,0.9,2.2l5,26.5 c0,0.6,0,1,0,1.5c-0.3,4-3.7,6.7-7.6,6.6c-3.2-0.3-5.6-2.6-6.4-5.6l-4.7-24.7L59.4,81l-3.5,16.1c-0.1,0.7-1.2,2.3-1.5,2.9L40,124.5 c-1.5,2.2-3.8,3.7-6.6,3.4c-4-0.3-6.9-3.7-6.6-7.6c0.1-1.2,0.6-2.2,1-3.1l13.5-22.5L52.5,45l-7.3,5.9l-4,17.7c-0.4,2.2-2.6,4.1-5,4 c-2.6-0.1-4.5-2.5-4.4-5.1c0-0.1,0-0.4,0.1-0.6l4.5-20.6c0.3-0.9,0.7-1.6,1.5-2.2L59,26.9z" fill="#6B7C93"/>
                     </svg>
-                    <span>${targetMinutes} min</span>
+                    <span>${minutes} min</span>
                 </div>`,
                 iconSize: [60, 20],
                 iconAnchor: [30, 10]
@@ -1843,10 +1807,18 @@ async function showDistanceCircles() {
             interactive: false
         });
         marker.addTo(distanceCirclesLayer);
-        console.log(`[showDistanceCircles] Label ${i + 1}/3 added`);
+        console.log(`[showDistanceCircles] ✅ Label ${i + 1}/3 ADDED TO MAP`);
     }
     
-    console.log('[showDistanceCircles] ✅ ALL 3 CIRCLES AND LABELS CREATED');
+    console.log('[showDistanceCircles] ✅✅✅ ALL 3 CIRCLES AND LABELS CREATED AND ADDED TO MAP');
+    
+    // Force map to redraw
+    try {
+        map.invalidateSize();
+        console.log('[showDistanceCircles] Map invalidated to force redraw');
+    } catch (e) {
+        console.log('[showDistanceCircles] Error invalidating map:', e);
+    }
 }
 
 // Hide distance circles
@@ -2456,7 +2428,7 @@ function setupPanelDrag() {
         const delta = startY - y; // drag up -> positive delta, drag down -> negative delta
         const minPx = vhToPx(PANEL_MIN_VH); // 40vh - initial position
         const maxPx = getPanelMaxPx();
-        const circlesHook = vhToPx(30); // 30vh - circles view (MINIMUM allowed when pulling down)
+        const circlesHook = vhToPx(20); // 20vh - circles view (MINIMUM allowed when pulling down)
         console.log('[DRAG MOVE] delta:', delta, 'minPx:', minPx, 'maxPx:', maxPx, 'circlesHook:', circlesHook, 'startVisible:', startVisible);
         const scale = getDragScale();
         let next = startVisible + delta * scale;
@@ -2627,15 +2599,19 @@ function setupPanelDrag() {
         } else {
             // No meaningful velocity: snap to nearest stop
             const currentH = getPanelVisibleHeight();
-            const circlesHook = vhToPx(30); // 30vh circles position
+            const circlesHook = vhToPx(20); // 20vh circles position
             
-            // Snap to nearest stop - don't bounce back if at circles hook
+            // Special logic: only snap to circlesHook if very close (within 2vh)
+            // Otherwise always return to minPx (40vh) or higher snap stops
             let target;
             if (currentH > maxPx) {
                 target = maxPx; // bounce back to maximum
+            } else if (currentH <= circlesHook + vhToPx(2)) {
+                // Very close to circles hook - snap to it
+                target = circlesHook;
             } else {
-                // Find nearest snap stop (includes circlesHook at 30vh)
-                const projected = clamp(currentH + velocity * 140, circlesHook, maxPx);
+                // Otherwise snap to normal stops (40vh, 60vh, 85vh, max)
+                const projected = clamp(currentH + velocity * 140, minPx, maxPx);
                 target = pickSnapTarget(projected, velocity);
             }
             
