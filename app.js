@@ -691,13 +691,14 @@ let hasHeadingFix = false;        // True after first heading value observed
 // Simple calorie model: ~55 kcal per km (average adult brisk walk)
 const KCAL_PER_KM = 55;
 
-// Adaptive dashed styling for walking route (finer at low zoom, longer at high zoom)
+// Constant dashed styling for walking route - same thickness at all zoom levels
 function computeWalkDash(zoom) {
     const z = typeof zoom === 'number' ? zoom : 15;
-    if (z <= 13) return { dash: '6,6', weight: 2.5 };
+    // Keep weight constant at 3, only adjust dash pattern for visibility
+    if (z <= 13) return { dash: '6,6', weight: 3 };
     if (z <= 15) return { dash: '10,8', weight: 3 };
-    if (z <= 17) return { dash: '14,10', weight: 3.5 };
-    return { dash: '18,12', weight: 4 };
+    if (z <= 17) return { dash: '14,10', weight: 3 };
+    return { dash: '18,12', weight: 3 };
 }
 
 function applyWalkRouteStyle() {
@@ -1759,10 +1760,10 @@ function showDistanceCircles() {
     console.log('[showDistanceCircles] ✅ CREATING NEW CIRCLES LAYER');
     distanceCirclesLayer = L.layerGroup().addTo(map);
     
-    // Create circles immediately with estimated distances
-    // Average walking speed: ~5 km/h = ~83 m/min
+    // Create circles immediately with realistic walking distances matching Citymapper
+    // Citymapper uses slower walking speed: ~3 km/h = ~50 m/min (not 5 km/h)
     const times = [5, 15, 60]; // minutes
-    const radii = [415, 1245, 4980]; // meters: 5min=415m, 15min=1245m, 60min=4980m
+    const radii = [250, 750, 3000]; // meters: 5min=250m, 15min=750m, 60min=3km
     
     for (let i = 0; i < times.length; i++) {
         const minutes = times[i];
@@ -1770,7 +1771,7 @@ function showDistanceCircles() {
         
         console.log(`[showDistanceCircles] ✅ Creating circle ${i + 1}/3: ${minutes} min, radius: ${radiusMeters}m`);
         
-        // Draw circle
+        // Draw circle with constant weight regardless of zoom
         const circle = L.circle([userLat, userLon], {
             radius: radiusMeters,
             color: '#6B7C93',
@@ -1778,7 +1779,9 @@ function showDistanceCircles() {
             fillOpacity: 0,
             weight: 1.5,
             opacity: 0.6,
-            interactive: false
+            interactive: false,
+            pane: 'overlayPane', // Use overlay pane for stable rendering
+            className: 'distance-circle-stable' // Add class for CSS control
         });
         circle.addTo(distanceCirclesLayer);
         console.log(`[showDistanceCircles] ✅ Circle ${i + 1}/3 ADDED TO MAP`);
