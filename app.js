@@ -1208,6 +1208,8 @@ function startGeoWatch() {
             if (userMarker) {
                 try { userMarker.setLatLng([userLat, userLon]); } catch (e) {}
             }
+            // Update crosshair to follow GPS position
+            updateCrosshairPosition();
         },
         (err) => {
             console.warn('watchPosition error:', err);
@@ -1459,6 +1461,25 @@ stationModal.addEventListener('click', (e) => {
 });
 
 // --- Map Functionality ---
+// Update crosshair position to match GPS blue dot on screen
+function updateCrosshairPosition() {
+    if (!map || !userLat || !userLon) return;
+    
+    const crosshair = document.getElementById('map-crosshair');
+    if (!crosshair) return;
+    
+    try {
+        // Get the pixel position of the GPS coordinate on the map
+        const point = map.latLngToContainerPoint([userLat, userLon]);
+        
+        // Position crosshair at the GPS marker location
+        crosshair.style.left = `${point.x}px`;
+        crosshair.style.top = `${point.y}px`;
+    } catch (e) {
+        console.warn('[Crosshair] Position update failed:', e);
+    }
+}
+
 function initMap() {
     const mapContainer = document.getElementById('map-container');
 
@@ -1613,9 +1634,72 @@ function initMap() {
         } catch {}
     });
     
+    // ALL SCREENS: Collapse panel when user starts dragging the map (like Citymapper)
+    map.on('movestart', () => {
+        try {
+            // Collapse panel when map drag starts
+            const currentH = window._getPanelVisibleHeight ? window._getPanelVisibleHeight() : 0;
+            const minPx = vhToPx(PANEL_MIN_VH); // 40vh
+            const maxPx = getPanelMaxPx();
+            const circlesHook = vhToPx(20); // 20vh
+            
+            // Only collapse if panel is at 40vh or higher (not already collapsed)
+            if (currentH >= minPx - 10) {
+                console.log('[Map Drag] Collapsing panel to 20vh');
+                const panel = document.querySelector('.arrivals-panel');
+                if (panel && window._setPanelVisibleHeight) {
+                    panel.style.transition = 'transform 0.3s ease-out';
+                    window._setPanelVisibleHeight(circlesHook);
+                    
+                    // Apply parallax effect
+                    const mapInner = document.getElementById('map-container');
+                    if (mapInner) {
+                        const parallaxFactor = 0.5;
+                        const panelDelta = circlesHook - currentH;
+                        const panelRange = maxPx - minPx;
+                        const progress = panelDelta / panelRange;
+                        const scaleAmount = 1 + (progress * 0.08);
+                        const translateAmount = -panelDelta * parallaxFactor;
+                        const maxTranslate = 200;
+                        const clampedTranslate = Math.max(-maxTranslate, Math.min(maxTranslate, translateAmount));
+                        
+                        mapInner.style.transition = 'transform 0.3s ease-out';
+                        mapInner.style.transform = `translateY(${clampedTranslate}px) scale(${scaleAmount})`;
+                        mapInner.style.transformOrigin = 'center center';
+                    }
+                    
+                    // Apply same transform to crosshair
+                    const crosshair = document.getElementById('map-crosshair');
+                    if (crosshair) {
+                        const translateAmount = -panelDelta * parallaxFactor;
+                        const maxTranslate = 200;
+                        const clampedTranslate = Math.max(-maxTranslate, Math.min(maxTranslate, translateAmount));
+                        crosshair.style.transition = 'transform 0.3s ease-out';
+                        crosshair.style.transform = `translateY(${clampedTranslate}px)`;
+                    }
+                    
+                    // Show circles only in idle mode
+                    if (uiMode === 'idle' && userLat && userLon) {
+                        showDistanceCircles();
+                    }
+                }
+            }
+            
+            // Show crosshair in bus mode when map starts moving
+            if (uiMode === 'bus' && !busDetailActive) {
+                const crosshair = document.getElementById('map-crosshair');
+                if (crosshair) crosshair.classList.add('visible');
+            }
+        } catch {}
+    });
+    
     map.on('moveend', () => {
         try {
-            if (uiMode === 'bus' && !busDetailActive) {
+            // Update crosshair position after map movement
+            updateCrosshairPosition();
+            
+            // ONLY reorder if in bus mode AND panel is NOT being dragged
+            if (uiMode === 'bus' && !busDetailActive && !panelDragging) {
                 // Keep crosshair visible (don't hide it)
                 
                 // Debounce reordering - wait 300ms after map stops moving
@@ -1624,6 +1708,13 @@ function initMap() {
                     renderBusStations(true); // reorder with loading spinner
                 }, 300);
             }
+        } catch {}
+    });
+    
+    // Update crosshair during zoom
+    map.on('zoom', () => {
+        try {
+            updateCrosshairPosition();
         } catch {}
     });
 
@@ -1707,6 +1798,8 @@ function updateMap() {
         if (userMarker && !map.hasLayer(userMarker)) {
             try { userMarker.addTo(map); } catch (e) {}
         }
+        // Update crosshair to GPS position
+        updateCrosshairPosition();
         // Ensure rotor reflects the latest heading
         const el = userMarker.getElement();
         if (el) {
