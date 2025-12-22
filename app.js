@@ -90,9 +90,8 @@ function getSnapStopsPx() {
     const minPx = vhToPx(PANEL_MIN_VH); // 40vh - initial position
     const maxPx = getPanelMaxPx();
     
-    // Include 20vh circles hook in stops so it's considered during snap
-    const circlesHook = vhToPx(20);
-    const stops = [circlesHook, minPx]; // Include both 20vh and 40vh
+    // DON'T include 20vh in normal stops - it's only for circles in idle mode
+    const stops = [minPx]; // Start with 40vh
     
     // Only 2 mid stops for smoother feel
     const s60 = vhToPx(60);
@@ -1603,9 +1602,19 @@ function initMap() {
         } catch {}
     });
     
+    // Track if we're in a mode change to prevent auto-collapse
+    let inModeChange = false;
+    window._setInModeChange = (val) => { inModeChange = val; };
+    
     // ALL SCREENS: Collapse panel when user starts dragging the map (like Citymapper)
     map.on('movestart', () => {
         try {
+            // DON'T collapse if this is from a mode change
+            if (inModeChange) {
+                console.log('[Map Drag] Skipping collapse - mode change in progress');
+                return;
+            }
+            
             // Collapse panel when map drag starts - SAME effect as tap
             const currentH = window._getPanelVisibleHeight ? window._getPanelVisibleHeight() : 0;
             const minPx = vhToPx(PANEL_MIN_VH); // 40vh
@@ -2130,6 +2139,9 @@ function setUIMode(mode) {
     previousMode = uiMode;
     uiMode = mode;
     
+    // Set flag to prevent movestart from collapsing panel during mode change
+    if (window._setInModeChange) window._setInModeChange(true);
+    
     // Hide distance circles when leaving idle mode
     if (mode !== 'idle') {
         hideDistanceCircles();
@@ -2168,9 +2180,18 @@ function setUIMode(mode) {
             map.setView([userLat, userLon], 14, { animate: true, duration: 0.3 });
             setTimeout(() => {
                 map.panBy([-offsetX, -offsetY], { animate: false });
+                // Clear flag after map movement completes
+                setTimeout(() => {
+                    if (window._setInModeChange) window._setInModeChange(false);
+                }, 100);
             }, 50);
         }
     }
+    
+    // Clear flag after a delay if no map movement
+    setTimeout(() => {
+        if (window._setInModeChange) window._setInModeChange(false);
+    }, 500);
     
     // Reset panel to 40vh for idle and walk modes only
     // Bus mode keeps current panel position
