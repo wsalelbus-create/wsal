@@ -2746,10 +2746,13 @@ function setupPanelDrag() {
                         } else if (!isAt20vh && distanceCirclesLayer) {
                             console.log('[CIRCLES] ❌ Hiding circles - not at 20vh (inertia)');
                             hideDistanceCircles();
-                            // Re-center map on GPS when leaving 20vh (going back up)
-                            console.log('[MAP] Re-centering on GPS after leaving 20vh');
-                            map.setView([userLat, userLon], map.getZoom(), { animate: true, duration: 0.3 });
                         }
+                    }
+                    
+                    // Re-center map on GPS when pulling up from 20vh (ALL screens)
+                    if (userLat && userLon && target > circlesHook + 10) {
+                        console.log('[MAP] Re-centering on GPS after pulling up from 20vh');
+                        map.setView([userLat, userLon], map.getZoom(), { animate: true, duration: 0.3 });
                     }
                     
                     lastMoves = [];
@@ -2812,10 +2815,13 @@ function setupPanelDrag() {
                 } else if (!isAt20vh && distanceCirclesLayer) {
                     console.log('[CIRCLES] ❌ Hiding circles - not at 20vh');
                     hideDistanceCircles();
-                    // Re-center map on GPS when leaving 20vh (going back up)
-                    console.log('[MAP] Re-centering on GPS after leaving 20vh');
-                    map.setView([userLat, userLon], map.getZoom(), { animate: true, duration: 0.3 });
                 }
+            }
+            
+            // Re-center map on GPS when pulling up from 20vh (ALL screens)
+            if (userLat && userLon && target > circlesHook + 10) {
+                console.log('[MAP] Re-centering on GPS after pulling up from 20vh');
+                map.setView([userLat, userLon], map.getZoom(), { animate: true, duration: 0.3 });
             }
             
             lastMoves = [];
