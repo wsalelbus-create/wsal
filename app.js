@@ -1849,19 +1849,43 @@ function showDistanceCircles() {
     
     console.log('[showDistanceCircles] ✅✅✅ ALL 3 CIRCLES AND LABELS CREATED AND ADDED TO MAP');
     
-    // Force map to redraw
-    try {
-        map.invalidateSize();
-        console.log('[showDistanceCircles] Map invalidated to force redraw');
-    } catch (e) {
-        console.log('[showDistanceCircles] Error invalidating map:', e);
-    }
+    // Disable zoom animation transform on circles to prevent thickness change
+    // The issue is Leaflet applies CSS transform scale during zoom which makes strokes thick
+    const fixCirclesDuringZoom = () => {
+        if (!distanceCirclesLayer) return;
+        distanceCirclesLayer.eachLayer(layer => {
+            try {
+                const el = layer.getElement ? layer.getElement() : null;
+                if (el && el.parentElement) {
+                    // Remove the zoom animation class that causes scaling
+                    el.parentElement.classList.remove('leaflet-zoom-animated');
+                    // Force no transform on the SVG group
+                    el.parentElement.style.transform = 'none';
+                }
+            } catch (e) {}
+        });
+    };
+    
+    // Apply fix after each zoom
+    map.on('zoomend', fixCirclesDuringZoom);
+    map.on('moveend', fixCirclesDuringZoom);
+    
+    // Apply immediately
+    setTimeout(fixCirclesDuringZoom, 100);
+    
+    // Store reference for cleanup
+    distanceCirclesLayer._fixZoom = fixCirclesDuringZoom;
 }
 
 // Hide distance circles
 function hideDistanceCircles() {
     if (distanceCirclesLayer && map) {
         try {
+            // Remove zoom listeners
+            if (distanceCirclesLayer._fixZoom) {
+                map.off('zoomend', distanceCirclesLayer._fixZoom);
+                map.off('moveend', distanceCirclesLayer._fixZoom);
+            }
             map.removeLayer(distanceCirclesLayer);
             distanceCirclesLayer = null;
         } catch (e) {}
@@ -2553,10 +2577,13 @@ function setupPanelDrag() {
             velocity = (b.h - a.h) / dt; // px/ms (positive = upward growth)
         }
         const absV = Math.abs(velocity);
+        const circlesHook = vhToPx(20); // 20vh position
+        
         // Very sensitive flick detection like Citymapper - even tiny flicks should advance
         if (absV > 0.015) { // ~15 px/s threshold (much lower for sensitivity)
             inertiaActive = true;
             let h = getPanelVisibleHeight();
+            const startH = h; // Remember starting position
             const dir = velocity >= 0 ? 1 : -1;
             const DECEL = 0.0008; // slower decel for longer, smoother glide
             const MIN_GLIDE_MS = 450; // longer glide for buttery feel
@@ -2569,7 +2596,15 @@ function setupPanelDrag() {
                 const elapsed = ts - startTs;
                 // Speed decreases linearly with time until it hits 0
                 const vNow = Math.max(0, absV - DECEL * elapsed);
-                h = clamp(h + dir * vNow * dt, minPx, maxPx);
+                
+                // IMPORTANT: If started at 20vh and pushing up, clamp to 40vh max (not higher)
+                let clampMin = circlesHook;
+                let clampMax = maxPx;
+                if (Math.abs(startH - circlesHook) < 20 && dir > 0) {
+                    // Started at 20vh, pushing up - stop at 40vh
+                    clampMax = minPx;
+                }
+                h = clamp(h + dir * vNow * dt, clampMin, clampMax);
                 
                 // Use transform directly with GPU acceleration for buttery smooth 60fps animation
                 const offset = Math.max(0, maxPx - h);
