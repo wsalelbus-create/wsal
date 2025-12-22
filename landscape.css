@@ -1,0 +1,106 @@
+/* Landscape Mode Support for iOS Safari */
+/* Safari ignores manifest orientation lock, so we make the app work in landscape */
+
+@media screen and (orientation: landscape) and (max-height: 500px) {
+    /* In landscape, show map and panel side-by-side */
+    .map-view-container {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 50%; /* Take left half */
+        bottom: 0;
+        height: 100vh;
+        width: 50%;
+    }
+    
+    #map-container {
+        height: 100% !important;
+        width: 100% !important;
+    }
+    
+    /* Panel takes right half */
+    .arrivals-panel {
+        position: fixed !important;
+        top: 0 !important;
+        left: 50% !important;
+        right: 0 !important;
+        bottom: 0 !important;
+        width: 50% !important;
+        height: 100vh !important;
+        transform: none !important; /* No sliding in landscape */
+        border-radius: 0 !important;
+        padding-top: 60px !important;
+        overflow-y: auto !important;
+    }
+    
+    /* Header stays at top left */
+    .glass-header {
+        top: calc(8px + env(safe-area-inset-top));
+        left: 8px;
+        right: auto;
+        z-index: 10200;
+    }
+    
+    /* Settings gear - top left of map area */
+    .settings-badge {
+        top: calc(8px + env(safe-area-inset-top)) !important;
+        left: 8px !important;
+    }
+    
+    /* Back button - top left of map area */
+    .back-badge {
+        top: calc(8px + env(safe-area-inset-top)) !important;
+        left: 8px !important;
+    }
+    
+    /* Map controls - right side of map area (left half of screen) */
+    .map-controls-stack {
+        top: calc(8px + env(safe-area-inset-top)) !important;
+        right: calc(50% + 8px) !important; /* 8px from center divider */
+    }
+    
+    /* Walking badge - above map controls */
+    #walking-time {
+        right: calc(50% + 8px) !important;
+    }
+    
+    /* Calorie badge */
+    #calorie-badge {
+        right: calc(50% + 8px) !important;
+    }
+    
+    /* Floating controls (station selector) - top of panel area */
+    #floating-controls {
+        position: fixed !important;
+        top: 8px !important;
+        left: calc(50% + 16px) !important;
+        right: 16px !important;
+        z-index: 10100;
+    }
+    
+    /* Quick actions - in panel area */
+    .quick-actions-panel {
+        margin-top: 0 !important;
+    }
+    
+    /* Routes list - scrollable in panel */
+    .routes-list {
+        overflow-y: auto !important;
+        max-height: calc(100vh - 200px) !important;
+    }
+    
+    /* Skyline - bottom of panel */
+    .skyline-inline {
+        display: none !important; /* Hide skyline in landscape to save space */
+    }
+    
+    /* Crosshair - center of map area (left half) */
+    .map-crosshair {
+        left: 25% !important; /* Center of left half */
+    }
+    
+    /* Distance circles - adjust for map area */
+    .distance-circle-label {
+        font-size: 10px !important;
+    }
+}
