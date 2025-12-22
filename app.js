@@ -1562,22 +1562,36 @@ function initMap() {
         try {
             const currentH = window._getPanelVisibleHeight ? window._getPanelVisibleHeight() : 0;
             const minPx = vhToPx(PANEL_MIN_VH); // 40vh
+            const maxPx = getPanelMaxPx();
             const circlesHook = vhToPx(20); // 20vh
             
             // Only collapse if panel is at 40vh or higher (not already collapsed)
             if (currentH >= minPx - 10) {
-                console.log('[Map Click] Collapsing panel to 20vh with elastic bounce');
+                console.log('[Map Click] Collapsing panel to 20vh with elastic bounce and parallax');
                 const panel = document.querySelector('.arrivals-panel');
                 if (panel && window._setPanelVisibleHeight) {
                     // Use ELASTIC BOUNCE easing for satisfying overshoot effect (same as pull down)
                     panel.style.transition = 'transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)';
                     window._setPanelVisibleHeight(circlesHook);
                     
-                    // Reset map parallax synchronized with panel snap
+                    // Apply parallax effect to map (same as manual drag)
                     const mapInner = document.getElementById('map-container');
                     if (mapInner) {
+                        const parallaxFactor = 0.5; // 50% of panel movement
+                        const panelDelta = circlesHook - currentH; // negative (moving down)
+                        const panelRange = maxPx - minPx;
+                        const progress = panelDelta / panelRange;
+                        
+                        // Calculate parallax transform
+                        const scaleAmount = 1 + (progress * 0.08); // 8% scale
+                        const translateAmount = -panelDelta * parallaxFactor;
+                        const maxTranslate = 200;
+                        const clampedTranslate = Math.max(-maxTranslate, Math.min(maxTranslate, translateAmount));
+                        
+                        // Apply with elastic bounce animation
                         mapInner.style.transition = 'transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)';
-                        mapInner.style.transform = 'translateY(0) scale(1)';
+                        mapInner.style.transform = `translateY(${clampedTranslate}px) scale(${scaleAmount})`;
+                        mapInner.style.transformOrigin = 'center center';
                     }
                     
                     // Show circles only in idle mode
