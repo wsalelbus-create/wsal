@@ -117,7 +117,7 @@ html, body {
     /* Below status bar */
     left: 16px;
     right: 16px;
-    z-index: 999; /* below arrivals panel (1000) so it goes under when panel dragged up */
+    z-index: 999; /* below arrivals panel (1000) so logo goes under when panel dragged up */
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -144,7 +144,7 @@ html, body {
     margin-top: -5px; /* Nudge Arabic badge up by total 5px */
 }
 
-/* Settings badge (gear) placed below the Arabic title - FIXED position to stay above panel */
+/* Settings badge (gear) placed below the Arabic title - ONLY THIS stays above panel */
 .settings-badge {
     appearance: none;
     border: none;
@@ -158,10 +158,8 @@ html, body {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    position: fixed; /* Fixed position like back button */
-    top: calc(60px + env(safe-area-inset-top)); /* Below Arabic title */
-    left: 16px;
-    z-index: 10050; /* Stay above arrivals panel (z-index: 1000) */
+    position: relative;
+    z-index: 10100; /* ONLY gear stays above panel, not logo */
 }
 .settings-badge:active { transform: scale(0.98); }
 
