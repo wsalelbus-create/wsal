@@ -1750,24 +1750,29 @@ function showDistanceCircles() {
         return;
     }
     
-    // Remove existing circles
-    hideDistanceCircles();
+    // Don't recreate if already exists
+    if (distanceCirclesLayer) {
+        console.log('[showDistanceCircles] Circles already exist, skipping');
+        return;
+    }
     
-    console.log('[showDistanceCircles] Creating circles layer');
+    console.log('[showDistanceCircles] Creating NEW circles layer');
     distanceCirclesLayer = L.layerGroup().addTo(map);
     
     // Calculate approximate radius for each time (5, 15, 60 min)
     // Average walking speed: ~5 km/h = ~83 m/min
     const times = [5, 15, 60]; // minutes
+    const radii = [415, 1245, 4980]; // meters: 5min=415m, 15min=1245m, 60min=4980m
     
-    times.forEach((minutes, i) => {
-        const approxMeters = minutes * 83; // rough estimate
+    for (let i = 0; i < times.length; i++) {
+        const minutes = times[i];
+        const radiusMeters = radii[i];
         
-        console.log(`[showDistanceCircles] Creating circle ${i + 1}/3: ${minutes} min, radius: ${approxMeters}m`);
+        console.log(`[showDistanceCircles] Creating circle ${i + 1}/3: ${minutes} min, radius: ${radiusMeters}m`);
         
         // Draw circle
         const circle = L.circle([userLat, userLon], {
-            radius: approxMeters,
+            radius: radiusMeters,
             color: '#6B7C93',
             fillColor: 'transparent',
             fillOpacity: 0,
@@ -1776,14 +1781,14 @@ function showDistanceCircles() {
             interactive: false
         });
         circle.addTo(distanceCirclesLayer);
-        console.log(`[showDistanceCircles] Circle ${i + 1} added to layer`);
+        console.log(`[showDistanceCircles] Circle ${i + 1} added`);
         
         // Calculate label position at top of circle
         // 1 degree latitude ≈ 111,000 meters
-        const latOffset = approxMeters / 111000;
+        const latOffset = radiusMeters / 111000;
         const labelLat = userLat + latOffset;
         
-        console.log(`[showDistanceCircles] Creating label ${i + 1}/3 at lat: ${labelLat}`);
+        console.log(`[showDistanceCircles] Creating label ${i + 1}/3: "${minutes} min" at lat: ${labelLat}`);
         
         // Add text label with walking icon at top of circle
         const marker = L.marker([labelLat, userLon], {
@@ -1802,10 +1807,10 @@ function showDistanceCircles() {
             interactive: false
         });
         marker.addTo(distanceCirclesLayer);
-        console.log(`[showDistanceCircles] Label ${i + 1} added to layer`);
-    });
+        console.log(`[showDistanceCircles] Label ${i + 1} added`);
+    }
     
-    console.log('[showDistanceCircles] All 3 circles and labels created successfully');
+    console.log('[showDistanceCircles] ✅ ALL 3 CIRCLES AND LABELS CREATED');
 }
 
 // Hide distance circles
@@ -2413,42 +2418,45 @@ function setupPanelDrag() {
         }
         if (!dragging) return;
         const delta = startY - y; // drag up -> positive delta, drag down -> negative delta
-        const minPx = vhToPx(PANEL_MIN_VH);
+        const minPx = vhToPx(PANEL_MIN_VH); // 40vh - initial position
         const maxPx = getPanelMaxPx();
-        const circlesHook = vhToPx(30); // Hook position for circles (30vh = 268px)
+        const circlesHook = vhToPx(30); // 30vh - circles view (MINIMUM allowed when pulling down)
         console.log('[DRAG MOVE] delta:', delta, 'minPx:', minPx, 'maxPx:', maxPx, 'circlesHook:', circlesHook, 'startVisible:', startVisible);
         const scale = getDragScale();
         let next = startVisible + delta * scale;
         
-        console.log('[DRAG MOVE] next BEFORE resistance:', next);
+        console.log('[DRAG MOVE] next BEFORE clamp:', next);
         
-        // NO resistance when pulling down - allow smooth pull to circles hook
-        // Only apply resistance when pulling up beyond maximum
-        if (next > maxPx) {
+        // HARD LIMIT: Don't allow panel to go below circlesHook (30vh) when pulling down
+        // This creates a hard stop at 30vh
+        if (next < circlesHook) {
+            next = circlesHook; // STOP at circles hook, can't go lower
+        } else if (next > maxPx) {
+            // Resistance when pulling up beyond maximum
             const overPull = next - maxPx;
             const resistance = 0.3;
             next = maxPx + (overPull * resistance);
         }
         
-        console.log('[DRAG MOVE] next AFTER resistance:', next);
+        console.log('[DRAG MOVE] next AFTER clamp:', next);
         
         setPanelVisibleHeight(next);
         
         // Show/hide distance circles based on panel position in idle mode
-        // Circles appear when panel is pulled DOWN below circlesHook (30vh)
+        // Circles appear when panel reaches circlesHook (30vh)
         if (uiMode === 'idle' && userLat && userLon) {
             console.log('[CIRCLES DEBUG] next:', next, 'circlesHook:', circlesHook, 'circlesExist:', !!distanceCirclesLayer);
             
-            // Show circles when pulled down below circles hook
-            if (next < circlesHook) {
+            // Show circles when at or below circles hook (30vh or less)
+            if (next <= circlesHook) {
                 if (!distanceCirclesLayer) {
-                    console.log('[CIRCLES] Showing circles - panel pulled below hook');
+                    console.log('[CIRCLES] Showing circles - panel at hook');
                     showDistanceCircles();
                 }
             } else {
                 // Hide circles when dragged back up above hook
                 if (distanceCirclesLayer) {
-                    console.log('[CIRCLES] Hiding circles - panel back above hook');
+                    console.log('[CIRCLES] Hiding circles - panel above hook');
                     hideDistanceCircles();
                 }
             }
