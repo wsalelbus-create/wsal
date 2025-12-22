@@ -1771,7 +1771,7 @@ function showDistanceCircles() {
         
         console.log(`[showDistanceCircles] ✅ Creating circle ${i + 1}/3: ${minutes} min, radius: ${radiusMeters}m`);
         
-        // Draw circle with constant weight regardless of zoom
+        // Draw circle with SVG renderer for stable rendering (no thickness change during zoom)
         const circle = L.circle([userLat, userLon], {
             radius: radiusMeters,
             color: '#6B7C93',
@@ -1780,8 +1780,8 @@ function showDistanceCircles() {
             weight: 1.5,
             opacity: 0.6,
             interactive: false,
-            pane: 'overlayPane', // Use overlay pane for stable rendering
-            className: 'distance-circle-stable' // Add class for CSS control
+            renderer: L.svg(), // Force SVG renderer for stable lines
+            smoothFactor: 0 // Disable smoothing to prevent jumping
         });
         circle.addTo(distanceCirclesLayer);
         console.log(`[showDistanceCircles] ✅ Circle ${i + 1}/3 ADDED TO MAP`);
@@ -2453,25 +2453,8 @@ function setupPanelDrag() {
         
         setPanelVisibleHeight(next);
         
-        // Show/hide distance circles based on panel position in idle mode
-        // Circles appear when panel reaches circlesHook (30vh)
-        if (uiMode === 'idle' && userLat && userLon) {
-            console.log('[CIRCLES DEBUG] next:', next, 'circlesHook:', circlesHook, 'circlesExist:', !!distanceCirclesLayer);
-            
-            // Show circles when at or below circles hook (30vh or less)
-            if (next <= circlesHook) {
-                if (!distanceCirclesLayer) {
-                    console.log('[CIRCLES] Showing circles - panel at hook');
-                    showDistanceCircles();
-                }
-            } else {
-                // Hide circles when dragged back up above hook
-                if (distanceCirclesLayer) {
-                    console.log('[CIRCLES] Hiding circles - panel above hook');
-                    hideDistanceCircles();
-                }
-            }
-        }
+        // DON'T show/hide circles during drag - only after release in handleEnd
+        // This prevents circles from appearing while dragging
         
         // Citymapper-style parallax: VISUAL effect only, don't actually move map tiles
         // Apply transform to map-container (the visual layer), not map-view-container
@@ -2641,10 +2624,13 @@ function setupPanelDrag() {
             }
             
             // Show/hide distance circles based on final position in idle mode
+            // Only show at EXACTLY 20vh (circlesHook), not during drag
             if (uiMode === 'idle' && userLat && userLon) {
-                if (target <= circlesHook && !distanceCirclesLayer) {
+                if (target === circlesHook && !distanceCirclesLayer) {
+                    console.log('[CIRCLES] Showing circles - snapped to 20vh');
                     showDistanceCircles();
-                } else if (target > circlesHook && distanceCirclesLayer) {
+                } else if (target !== circlesHook && distanceCirclesLayer) {
+                    console.log('[CIRCLES] Hiding circles - not at 20vh');
                     hideDistanceCircles();
                 }
             }
