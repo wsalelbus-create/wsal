@@ -90,10 +90,9 @@ function getSnapStopsPx() {
     const minPx = vhToPx(PANEL_MIN_VH); // 40vh - initial position
     const maxPx = getPanelMaxPx();
     
-    // Hook position for circles view - 20vh (only snaps here if pulled all the way down)
-    // Otherwise, panel always returns to minPx (40vh) initial position
+    // Include 20vh circles hook in stops so it's considered during snap
     const circlesHook = vhToPx(20);
-    const stops = [minPx]; // Start with initial position only
+    const stops = [circlesHook, minPx]; // Include both 20vh and 40vh
     
     // Only 2 mid stops for smoother feel
     const s60 = vhToPx(60);
@@ -1773,7 +1772,7 @@ function showDistanceCircles() {
         
         console.log(`[showDistanceCircles] ✅ Creating circle ${i + 1}/3: ${minutes} min, radius: ${radiusMeters}m`);
         
-        // Draw circle with vector-effect to keep constant stroke width during zoom
+        // Draw circle with vector-effect applied directly to SVG path
         const circle = L.circle([userLat, userLon], {
             radius: radiusMeters,
             color: '#6B7C93',
@@ -1782,9 +1781,22 @@ function showDistanceCircles() {
             weight: 1.5,
             opacity: 0.6,
             interactive: false,
-            className: 'distance-circle-stable' // Add class for CSS vector-effect
+            className: 'distance-circle-stable'
         });
         circle.addTo(distanceCirclesLayer);
+        
+        // Apply vector-effect directly to the SVG path element after adding to map
+        setTimeout(() => {
+            try {
+                const pathElement = circle.getElement();
+                if (pathElement) {
+                    pathElement.style.vectorEffect = 'non-scaling-stroke';
+                    console.log(`[showDistanceCircles] Applied vector-effect to circle ${i + 1}`);
+                }
+            } catch (e) {
+                console.log(`[showDistanceCircles] Error applying vector-effect:`, e);
+            }
+        }, 0);
         console.log(`[showDistanceCircles] ✅ Circle ${i + 1}/3 ADDED TO MAP`);
         
         // Calculate label position at top of circle
