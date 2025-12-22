@@ -3071,10 +3071,10 @@ try {
 try {
     const isPWA = (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) || !!window.navigator.standalone;
     if (!isPWA) {
-        // In browser: use arrival panel green color
+        // In browser: use arrival panel color rgb(64, 115, 148)
         const themeColorMeta = document.querySelector('meta[name="theme-color"]');
         if (themeColorMeta) {
-            themeColorMeta.setAttribute('content', '#4A9B7F');
+            themeColorMeta.setAttribute('content', 'rgb(64, 115, 148)');
         }
     }
     // In PWA: keep default theme-color (already set in manifest)

@@ -1143,16 +1143,16 @@ html, body {
     transition: none !important;
 }
 
-/* Portrait mode only - no landscape support */
-@media screen and (orientation: landscape) {
-    html {
-        transform: rotate(-90deg);
-        transform-origin: left top;
-        width: 100vh;
-        height: 100vw;
-        overflow-x: hidden;
-        position: absolute;
-        top: 100%;
-        left: 0;
-    }
+/* Portrait mode only - disable landscape completely */
+html {
+    width: 100vw;
+    height: 100vh;
+    overflow: hidden;
+}
+
+body {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    position: fixed;
 }
