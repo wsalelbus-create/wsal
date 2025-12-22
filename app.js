@@ -1608,6 +1608,13 @@ function initMap() {
             if (uiMode === 'bus' && !busDetailActive) {
                 // Keep crosshair visible (don't hide it)
                 
+                // IMPORTANT: Don't reorder if map movement was caused by panel dragging (parallax)
+                // Only reorder when user manually pans the map
+                if (panelDragging) {
+                    console.log('[moveend] Skipping reorder - panel is being dragged');
+                    return;
+                }
+                
                 // Debounce reordering - wait 300ms after map stops moving
                 clearTimeout(reorderTimeout);
                 reorderTimeout = setTimeout(() => {
