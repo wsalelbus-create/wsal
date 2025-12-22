@@ -1457,10 +1457,12 @@ function initMap() {
     map = L.map(mapContainer, {
         zoomControl: false,
         attributionControl: false,
-        preferCanvas: true, // use Canvas renderer instead of SVG - much faster
+        preferCanvas: false, // Use SVG for stable line rendering (no thickness change during zoom)
         zoomAnimation: true,
         fadeAnimation: true,
-        markerZoomAnimation: true
+        markerZoomAnimation: true,
+        zoomSnap: 0.5, // Smoother zoom
+        zoomDelta: 0.5
     }).setView([36.7700, 3.0553], 14); // Slightly closer zoom
 
     // Pane for labels overlay (above routes but does not block interactions)
@@ -1771,7 +1773,7 @@ function showDistanceCircles() {
         
         console.log(`[showDistanceCircles] ✅ Creating circle ${i + 1}/3: ${minutes} min, radius: ${radiusMeters}m`);
         
-        // Draw circle with SVG renderer for stable rendering (no thickness change during zoom)
+        // Draw circle with stable rendering (no thickness change during zoom)
         const circle = L.circle([userLat, userLon], {
             radius: radiusMeters,
             color: '#6B7C93',
@@ -1779,9 +1781,7 @@ function showDistanceCircles() {
             fillOpacity: 0,
             weight: 1.5,
             opacity: 0.6,
-            interactive: false,
-            renderer: L.svg(), // Force SVG renderer for stable lines
-            smoothFactor: 0 // Disable smoothing to prevent jumping
+            interactive: false
         });
         circle.addTo(distanceCirclesLayer);
         console.log(`[showDistanceCircles] ✅ Circle ${i + 1}/3 ADDED TO MAP`);
@@ -2624,13 +2624,16 @@ function setupPanelDrag() {
             }
             
             // Show/hide distance circles based on final position in idle mode
-            // Only show at EXACTLY 20vh (circlesHook), not during drag
+            // Only show at 20vh, hide at all other positions
             if (uiMode === 'idle' && userLat && userLon) {
-                if (target === circlesHook && !distanceCirclesLayer) {
-                    console.log('[CIRCLES] Showing circles - snapped to 20vh');
+                const isAt20vh = Math.abs(target - circlesHook) < 1; // Within 1px of 20vh
+                console.log('[CIRCLES] target:', target, 'circlesHook:', circlesHook, 'isAt20vh:', isAt20vh, 'circlesExist:', !!distanceCirclesLayer);
+                
+                if (isAt20vh && !distanceCirclesLayer) {
+                    console.log('[CIRCLES] ✅ Showing circles - at 20vh');
                     showDistanceCircles();
-                } else if (target !== circlesHook && distanceCirclesLayer) {
-                    console.log('[CIRCLES] Hiding circles - not at 20vh');
+                } else if (!isAt20vh && distanceCirclesLayer) {
+                    console.log('[CIRCLES] ❌ Hiding circles - not at 20vh');
                     hideDistanceCircles();
                 }
             }
