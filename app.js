@@ -1594,6 +1594,16 @@ function initMap() {
                         mapInner.style.transformOrigin = 'center center';
                     }
                     
+                    // Apply same transform to crosshair
+                    const crosshair = document.getElementById('map-crosshair');
+                    if (crosshair) {
+                        const translateAmount = -panelDelta * parallaxFactor;
+                        const maxTranslate = 200;
+                        const clampedTranslate = Math.max(-maxTranslate, Math.min(maxTranslate, translateAmount));
+                        crosshair.style.transition = 'transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)';
+                        crosshair.style.transform = `translateY(${clampedTranslate}px)`;
+                    }
+                    
                     // Show circles only in idle mode
                     if (uiMode === 'idle' && userLat && userLon) {
                         showDistanceCircles();
@@ -2618,6 +2628,17 @@ function setupPanelDrag() {
                 mapInner.style.transformOrigin = 'center center'; // scale from center
                 mapInner.style.transition = 'none'; // no transition during drag
             }
+            
+            // IMPORTANT: Apply same transform to crosshair so it stays fixed relative to map center
+            // This prevents crosshair from moving and triggering station reordering
+            const crosshair = document.getElementById('map-crosshair');
+            if (crosshair) {
+                const translateAmount = -panelDelta * parallaxFactor;
+                const maxTranslate = 200;
+                const clampedTranslate = Math.max(-maxTranslate, Math.min(maxTranslate, translateAmount));
+                crosshair.style.transform = `translateY(${clampedTranslate}px)`;
+                crosshair.style.transition = 'none';
+            }
         }
         
         // record movement for velocity calculation
@@ -2727,6 +2748,13 @@ function setupPanelDrag() {
                         mapInner.style.transform = 'translateY(0) scale(1)';
                     }
                     
+                    // Reset crosshair transform
+                    const crosshair = document.getElementById('map-crosshair');
+                    if (crosshair) {
+                        crosshair.style.transition = 'transform 0.24s cubic-bezier(.2,.7,.2,1)';
+                        crosshair.style.transform = 'translateY(0)';
+                    }
+                    
                     if (target >= (minPx + maxPx) / 2) {
                         arrivalsPanel.classList.add('expanded');
                     } else {
@@ -2795,6 +2823,13 @@ function setupPanelDrag() {
             if (mapInner) {
                 mapInner.style.transition = easing; // use same easing as panel
                 mapInner.style.transform = 'translateY(0) scale(1)';
+            }
+            
+            // Reset crosshair transform
+            const crosshair = document.getElementById('map-crosshair');
+            if (crosshair) {
+                crosshair.style.transition = easing;
+                crosshair.style.transform = 'translateY(0)';
             }
             
             if (target >= (minPx + maxPx) / 2) {
