@@ -158,6 +158,8 @@ html, body {
     display: inline-flex;
     align-items: center;
     justify-content: center;
+    position: relative;
+    z-index: 1000; /* Above arrival panel */
 }
 .settings-badge:active { transform: scale(0.98); }
 
@@ -1139,4 +1141,18 @@ html, body {
 /* Disable zoom animation on distance circles */
 .leaflet-overlay-pane .leaflet-zoom-animated {
     transition: none !important;
+}
+
+/* Portrait mode only - no landscape support */
+@media screen and (orientation: landscape) {
+    html {
+        transform: rotate(-90deg);
+        transform-origin: left top;
+        width: 100vh;
+        height: 100vw;
+        overflow-x: hidden;
+        position: absolute;
+        top: 100%;
+        left: 0;
+    }
 }

@@ -3056,6 +3056,32 @@ if (window.WeatherModule) {
     WeatherModule.init();
 }
 
+// Lock screen orientation to portrait (PWA and browser)
+try {
+    if (screen.orientation && screen.orientation.lock) {
+        screen.orientation.lock('portrait').catch(err => {
+            console.log('Orientation lock not supported or failed:', err);
+        });
+    }
+} catch (e) {
+    console.log('Screen orientation API not available');
+}
+
+// Update theme-color for browser status bar (only in browser, not PWA)
+try {
+    const isPWA = (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) || !!window.navigator.standalone;
+    if (!isPWA) {
+        // In browser: use arrival panel green color
+        const themeColorMeta = document.querySelector('meta[name="theme-color"]');
+        if (themeColorMeta) {
+            themeColorMeta.setAttribute('content', '#4A9B7F');
+        }
+    }
+    // In PWA: keep default theme-color (already set in manifest)
+} catch (e) {
+    console.log('Theme color update failed');
+}
+
 // Refresh every minute depending on UI mode
 setInterval(() => {
     try {
