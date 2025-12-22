@@ -664,6 +664,7 @@ let userLon = null;
 // Layer to hold the OSRM route so we can clear/update it
 let routeLayer = null;
 let busStationsLayer = null; // LayerGroup for all bus stop markers (bus mode)
+let distanceCirclesLayer = null; // LayerGroup for 5/15/60 min walking circles (idle mode expanded)
 let uiMode = 'idle'; // 'idle' | 'walk' | 'bus'
 let previousMode = 'idle'; // track previous mode for Back button
 let busDetailActive = false; // true when showing Bus card design in Walk mode (drill-down)
@@ -1736,6 +1737,59 @@ async function getOsrmWalkingTime(fromLat, fromLon, toLat, toLon) {
     }
 }
 
+// Show distance circles (5, 15, 60 min walking) around user position in idle mode
+async function showDistanceCircles() {
+    if (!map || !userLat || !userLon || uiMode !== 'idle') return;
+    
+    // Remove existing circles
+    hideDistanceCircles();
+    
+    distanceCirclesLayer = L.layerGroup().addTo(map);
+    
+    // Calculate approximate radius for each time (5, 15, 60 min)
+    // Average walking speed: ~5 km/h = ~83 m/min
+    const times = [5, 15, 60]; // minutes
+    const colors = ['#4A90E2', '#4A90E2', '#4A90E2']; // Citymapper blue
+    
+    for (let i = 0; i < times.length; i++) {
+        const minutes = times[i];
+        const approxMeters = minutes * 83; // rough estimate
+        
+        // Draw circle
+        const circle = L.circle([userLat, userLon], {
+            radius: approxMeters,
+            color: colors[i],
+            fillColor: colors[i],
+            fillOpacity: 0,
+            weight: 2,
+            opacity: 0.5,
+            interactive: false
+        }).addTo(distanceCirclesLayer);
+        
+        // Add label at top of circle
+        const labelLatLng = L.latLng(userLat, userLon).toBounds(approxMeters).getNorth();
+        const label = L.marker([labelLatLng, userLon], {
+            icon: L.divIcon({
+                className: 'distance-circle-label',
+                html: `<div style="background: white; padding: 2px 6px; border-radius: 4px; font-size: 11px; font-weight: 600; color: #4A90E2; box-shadow: 0 1px 3px rgba(0,0,0,0.2); white-space: nowrap;">${minutes} min</div>`,
+                iconSize: [50, 20],
+                iconAnchor: [25, 10]
+            }),
+            interactive: false
+        }).addTo(distanceCirclesLayer);
+    }
+}
+
+// Hide distance circles
+function hideDistanceCircles() {
+    if (distanceCirclesLayer && map) {
+        try {
+            map.removeLayer(distanceCirclesLayer);
+            distanceCirclesLayer = null;
+        } catch (e) {}
+    }
+}
+
 // Fetch a street route from user -> station using OSRM and draw it on the map
 async function renderOsrmRoute(fromLat, fromLon, toLat, toLon) {
     // Sequence guard to avoid stale routes drawing over the current one
@@ -1855,6 +1909,11 @@ function setUIMode(mode) {
     // Track prior mode for Back navigation
     previousMode = uiMode;
     uiMode = mode;
+    
+    // Hide distance circles when leaving idle mode
+    if (mode !== 'idle') {
+        hideDistanceCircles();
+    }
     
     // ALWAYS reset panel to minimum position when changing screens
     // This ensures consistent UX - panel always starts at bottom on every screen
@@ -2449,8 +2508,15 @@ function setupPanelDrag() {
                         mapInner.style.transform = 'translateY(0) scale(1)';
                     }
                     
-                    if (target >= (minPx + maxPx) / 2) arrivalsPanel.classList.add('expanded');
-                    else arrivalsPanel.classList.remove('expanded');
+                    if (target >= (minPx + maxPx) / 2) {
+                        arrivalsPanel.classList.add('expanded');
+                        // Show distance circles in idle mode when expanded
+                        if (uiMode === 'idle') showDistanceCircles();
+                    } else {
+                        arrivalsPanel.classList.remove('expanded');
+                        // Hide distance circles when collapsed
+                        hideDistanceCircles();
+                    }
                     lastMoves = [];
                     setTimeout(() => { try { if (map) map.invalidateSize(); } catch {} }, 260);
                     return;
@@ -2489,8 +2555,15 @@ function setupPanelDrag() {
                 mapInner.style.transform = 'translateY(0) scale(1)';
             }
             
-            if (target >= (minPx + maxPx) / 2) arrivalsPanel.classList.add('expanded');
-            else arrivalsPanel.classList.remove('expanded');
+            if (target >= (minPx + maxPx) / 2) {
+                arrivalsPanel.classList.add('expanded');
+                // Show distance circles in idle mode when expanded
+                if (uiMode === 'idle') showDistanceCircles();
+            } else {
+                arrivalsPanel.classList.remove('expanded');
+                // Hide distance circles when collapsed
+                hideDistanceCircles();
+            }
             lastMoves = [];
             setTimeout(() => { try { if (map) map.invalidateSize(); } catch {} }, 260);
         }
