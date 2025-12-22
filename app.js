@@ -1610,8 +1610,8 @@ function updateMap() {
                     </svg>
                 </div>
                 <!-- Soft halo behind the blue location dot -->
-                <div class="user-dot-halo" style="position:absolute; left:50%; top:50%; width: 44px; height: 44px; border-radius: 50%; transform: translate(-50%, -50%); background: radial-gradient(circle, rgba(0,102,204,0.35) 0%, rgba(0,102,204,0.18) 45%, rgba(0,102,204,0.00) 75%);"></div>
-                <div class="user-dot" style="position:absolute; left:50%; top:50%; width: 22px; height: 22px; background: #0066CC; border-radius: 50%; border: 3px solid white; box-shadow: 0 2px 8px rgba(0,0,0,0.30); transform: translate(-50%, -50%);"></div>
+                <div class="user-dot-halo" style="position:absolute; left:50%; top:50%; width: 40px; height: 40px; border-radius: 50%; transform: translate(-50%, -50%); background: radial-gradient(circle, rgba(0,102,204,0.35) 0%, rgba(0,102,204,0.18) 45%, rgba(0,102,204,0.00) 75%);"></div>
+                <div class="user-dot" style="position:absolute; left:50%; top:50%; width: 20px; height: 20px; background: #0066CC; border-radius: 50%; border: 3.33px solid white; box-shadow: 0 2px 8px rgba(0,0,0,0.30); transform: translate(-50%, -50%);"></div>
             </div>`;
 
         if (userMarker) {
