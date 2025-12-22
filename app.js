@@ -1548,12 +1548,18 @@ function initMap() {
     
     // Auto-reorder stations when map is moved in bus mode
     let reorderTimeout;
+    let crosshairHideTimeout;
+    let isManualMapMove = false; // Track if user is manually moving map
+    
     map.on('movestart', () => {
         try {
             if (uiMode === 'bus' && !busDetailActive) {
-                // Show crosshair when map starts moving
-                const crosshair = document.getElementById('map-crosshair');
-                if (crosshair) crosshair.classList.add('visible');
+                // Only show crosshair if this is a MANUAL map move (not panel drag, not station tap, not GPS recenter)
+                if (!panelDragging && !isGPSRecentering) {
+                    isManualMapMove = true;
+                    const crosshair = document.getElementById('map-crosshair');
+                    if (crosshair) crosshair.classList.add('visible');
+                }
             }
         } catch {}
     });
@@ -1607,7 +1613,13 @@ function initMap() {
     map.on('moveend', () => {
         try {
             if (uiMode === 'bus' && !busDetailActive) {
-                // Keep crosshair visible (don't hide it)
+                // Hide crosshair after map stops moving (with delay)
+                clearTimeout(crosshairHideTimeout);
+                crosshairHideTimeout = setTimeout(() => {
+                    const crosshair = document.getElementById('map-crosshair');
+                    if (crosshair) crosshair.classList.remove('visible');
+                    isManualMapMove = false;
+                }, 800); // Hide after 800ms
                 
                 // SKIP reordering if this moveend was triggered by GPS re-centering
                 if (isGPSRecentering) {
@@ -1761,6 +1773,9 @@ function updateMap() {
                 // Add click handler: tap station to center map and reorder cards
                 marker.on('click', () => {
                     console.log('[Bus Stop Tap] Centering on:', s.name);
+                    // Show crosshair when tapping station
+                    const crosshair = document.getElementById('map-crosshair');
+                    if (crosshair) crosshair.classList.add('visible');
                     map.setView([s.lat, s.lon], map.getZoom(), { animate: true, duration: 0.3 });
                 });
                 
