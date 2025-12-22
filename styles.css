@@ -158,6 +158,8 @@ html, body {
     display: inline-flex;
     align-items: center;
     justify-content: center;
+    position: relative;
+    z-index: 10050; /* Stay above arrivals panel */
 }
 .settings-badge:active { transform: scale(0.98); }
 
@@ -1139,15 +1141,4 @@ html, body {
 /* Disable zoom animation on distance circles */
 .leaflet-overlay-pane .leaflet-zoom-animated {
     transition: none !important;
-}
-
-/* Settings badge - keep above arrival panel */
-.settings-badge {
-    z-index: 1100 !important;
-    position: relative;
-}
-
-.back-badge {
-    z-index: 1100 !important;
-    position: relative;
 }
