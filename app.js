@@ -1547,21 +1547,21 @@ function initMap() {
     
     // Auto-reorder stations when map is moved in bus mode
     let reorderTimeout;
-    // Track if map has been initialized to prevent auto-collapse on load
-    let mapInitialized = false;
-    setTimeout(() => { mapInitialized = true; }, 1000); // Wait 1 second after init
-    
-    map.on('click', () => {
+    map.on('movestart', () => {
         try {
-            if (uiMode === 'idle' && mapInitialized) {
-                // IDLE MODE: Collapse panel to 20vh when user TAPS map
+            if (uiMode === 'bus' && !busDetailActive) {
+                // Show crosshair when map starts moving
+                const crosshair = document.getElementById('map-crosshair');
+                if (crosshair) crosshair.classList.add('visible');
+            } else if (uiMode === 'idle') {
+                // IDLE MODE: Collapse panel to 20vh when user interacts with map
                 const currentH = window._getPanelVisibleHeight ? window._getPanelVisibleHeight() : 0;
                 const minPx = vhToPx(PANEL_MIN_VH); // 40vh
                 const circlesHook = vhToPx(20); // 20vh
                 
                 // Only collapse if panel is at 40vh (not already at 20vh)
                 if (Math.abs(currentH - minPx) < 10) {
-                    console.log('[Map Click] Collapsing panel to 20vh and showing circles');
+                    console.log('[Map Interaction] Collapsing panel to 20vh and showing circles');
                     const panel = document.querySelector('.arrivals-panel');
                     if (panel && window._setPanelVisibleHeight) {
                         panel.style.transition = 'transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
@@ -1573,16 +1573,6 @@ function initMap() {
                         }
                     }
                 }
-            }
-        } catch {}
-    });
-    
-    map.on('movestart', () => {
-        try {
-            if (uiMode === 'bus' && !busDetailActive) {
-                // Show crosshair when map starts moving
-                const crosshair = document.getElementById('map-crosshair');
-                if (crosshair) crosshair.classList.add('visible');
             }
         } catch {}
     });
