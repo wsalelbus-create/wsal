@@ -1557,27 +1557,24 @@ function initMap() {
         } catch {}
     });
     
-    // IDLE MODE: Collapse panel to 20vh when user taps/touches the map
-    let userInteractedWithMap = false;
+    // ALL SCREENS: Collapse panel to 20vh when user taps/touches the map
     map.on('click', () => {
         try {
-            if (uiMode === 'idle') {
-                const currentH = window._getPanelVisibleHeight ? window._getPanelVisibleHeight() : 0;
-                const minPx = vhToPx(PANEL_MIN_VH); // 40vh
-                const circlesHook = vhToPx(20); // 20vh
-                
-                // Only collapse if panel is at 40vh (not already at 20vh)
-                if (Math.abs(currentH - minPx) < 10) {
-                    console.log('[Map Click] Collapsing panel to 20vh and showing circles');
-                    const panel = document.querySelector('.arrivals-panel');
-                    if (panel && window._setPanelVisibleHeight) {
-                        panel.style.transition = 'transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
-                        window._setPanelVisibleHeight(circlesHook);
-                        
-                        // Show circles
-                        if (userLat && userLon) {
-                            showDistanceCircles();
-                        }
+            const currentH = window._getPanelVisibleHeight ? window._getPanelVisibleHeight() : 0;
+            const minPx = vhToPx(PANEL_MIN_VH); // 40vh
+            const circlesHook = vhToPx(20); // 20vh
+            
+            // Only collapse if panel is at 40vh or higher (not already collapsed)
+            if (currentH >= minPx - 10) {
+                console.log('[Map Click] Collapsing panel to 20vh');
+                const panel = document.querySelector('.arrivals-panel');
+                if (panel && window._setPanelVisibleHeight) {
+                    panel.style.transition = 'transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
+                    window._setPanelVisibleHeight(circlesHook);
+                    
+                    // Show circles only in idle mode
+                    if (uiMode === 'idle' && userLat && userLon) {
+                        showDistanceCircles();
                     }
                 }
             }
@@ -2952,6 +2949,26 @@ document.addEventListener('DOMContentLoaded', () => { try { applySkylineSizing()
 // Init
 initMap(); // Initialize map immediately (background)
 initGeolocation();
+
+// PWA: Re-request geolocation when app becomes visible (fixes GPS loss after being closed)
+document.addEventListener('visibilitychange', () => {
+    if (!document.hidden) {
+        console.log('[PWA] App became visible - refreshing geolocation');
+        // Wait a bit for GPS to wake up
+        setTimeout(() => {
+            refreshGeolocation();
+        }, 500);
+    }
+});
+
+// Also handle page focus (for iOS PWA)
+window.addEventListener('focus', () => {
+    console.log('[PWA] App focused - refreshing geolocation');
+    setTimeout(() => {
+        refreshGeolocation();
+    }, 500);
+});
+
 // Default UI mode: idle (only location and quick actions visible)
 if (typeof setUIMode === 'function') {
     setUIMode('idle');
