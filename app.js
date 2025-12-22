@@ -1769,7 +1769,15 @@ function showDistanceCircles() {
     }
     
     console.log('[showDistanceCircles] ✅ CREATING NEW CIRCLES LAYER');
-    distanceCirclesLayer = L.layerGroup().addTo(map);
+    // Create layer group with zoom animation disabled
+    distanceCirclesLayer = L.layerGroup();
+    distanceCirclesLayer.addTo(map);
+    
+    // Disable zoom animation for this layer to prevent thickness changes
+    if (map._zoomAnimated) {
+        distanceCirclesLayer.options = distanceCirclesLayer.options || {};
+        distanceCirclesLayer.options.zoomAnimation = false;
+    }
     
     // Create circles immediately with realistic walking distances matching Citymapper
     // Citymapper uses slower walking speed: ~3 km/h = ~50 m/min (not 5 km/h)
@@ -1782,7 +1790,7 @@ function showDistanceCircles() {
         
         console.log(`[showDistanceCircles] ✅ Creating circle ${i + 1}/3: ${minutes} min, radius: ${radiusMeters}m`);
         
-        // Draw circle with NO zoom animation to prevent thickness change
+        // Draw circle with fixed weight
         const circle = L.circle([userLat, userLon], {
             radius: radiusMeters,
             color: '#6B7C93',
@@ -1790,27 +1798,26 @@ function showDistanceCircles() {
             fillOpacity: 0,
             weight: 1.5,
             opacity: 0.6,
-            interactive: false,
-            bubblingMouseEvents: false
+            interactive: false
         });
         
-        // Disable zoom animation for this circle
-        circle.options.pane = 'overlayPane';
         circle.addTo(distanceCirclesLayer);
         
-        // Force vector-effect on the SVG path
+        // Apply vector-effect and disable zoom animation on the path
         setTimeout(() => {
             try {
                 const pathElement = circle.getElement();
                 if (pathElement) {
                     pathElement.setAttribute('vector-effect', 'non-scaling-stroke');
                     pathElement.style.vectorEffect = 'non-scaling-stroke';
-                    console.log(`[showDistanceCircles] ✅ Applied vector-effect to circle ${i + 1}`);
+                    // Disable transform during zoom
+                    pathElement.style.willChange = 'auto';
+                    console.log(`[showDistanceCircles] ✅ Fixed circle ${i + 1} thickness`);
                 }
             } catch (e) {
                 console.log(`[showDistanceCircles] Error:`, e);
             }
-        }, 10);
+        }, 50); // Longer timeout to ensure DOM is ready
         console.log(`[showDistanceCircles] ✅ Circle ${i + 1}/3 ADDED TO MAP`);
         
         // Calculate label position at top of circle
@@ -2574,8 +2581,19 @@ function setupPanelDrag() {
                 const nearBound = (h <= minPx + 0.5) || (h >= maxPx - 0.5);
                 if ((elapsed >= MIN_GLIDE_MS && vNow <= 0.005) || nearBound) {
                     inertiaActive = false;
-                    // Final snap with a soft easing
-                    const target = pickSnapTarget(h, dir * vNow);
+                    
+                    // FORCE: If at 20vh and moving up, go to 40vh
+                    const circlesHook = vhToPx(20);
+                    let target;
+                    if (Math.abs(h - circlesHook) < 20 && dir > 0) {
+                        console.log('[INERTIA] At 20vh, moving up → FORCING 40vh');
+                        target = minPx; // Force 40vh
+                    } else {
+                        target = pickSnapTarget(h, dir * vNow);
+                    }
+                    
+                    console.log('[INERTIA] Final snap: h=', h, 'target=', target, 'dir=', dir);
+                    
                     arrivalsPanel.style.transition = 'transform 0.22s cubic-bezier(0.25, 0.46, 0.45, 0.94)'; // iOS-like easing
                     setPanelVisibleHeight(target);
                     
