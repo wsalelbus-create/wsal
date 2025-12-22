@@ -2017,6 +2017,12 @@ function setUIMode(mode) {
         hideDistanceCircles();
     }
     
+    // Re-center map on GPS location when switching to idle or walk mode
+    if ((mode === 'idle' || mode === 'walk') && userLat && userLon && map) {
+        console.log('[setUIMode] Re-centering map on GPS:', userLat, userLon);
+        map.setView([userLat, userLon], map.getZoom(), { animate: true, duration: 0.3 });
+    }
+    
     // ALWAYS reset panel to minimum position when changing screens
     // This ensures consistent UX - panel always starts at bottom on every screen
     const minPx = vhToPx(PANEL_MIN_VH);
@@ -2579,8 +2585,15 @@ function setupPanelDrag() {
         const absV = Math.abs(velocity);
         const circlesHook = vhToPx(20); // 20vh position
         
+        console.log('[handleEnd] velocity:', velocity, 'absV:', absV, 'currentH:', getPanelVisibleHeight());
+        
+        // Adjust velocity threshold for Chrome mobile (more sensitive than Safari)
+        // Chrome reports higher velocities, so we need a higher threshold
+        const isChrome = /Chrome/.test(navigator.userAgent) && /Mobile/.test(navigator.userAgent);
+        const velocityThreshold = isChrome ? 0.03 : 0.015; // Chrome: 30px/s, Safari: 15px/s
+        
         // Very sensitive flick detection like Citymapper - even tiny flicks should advance
-        if (absV > 0.015) { // ~15 px/s threshold (much lower for sensitivity)
+        if (absV > velocityThreshold) {
             inertiaActive = true;
             let h = getPanelVisibleHeight();
             const startH = h; // Remember starting position
