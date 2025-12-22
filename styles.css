@@ -159,7 +159,7 @@ html, body {
     align-items: center;
     justify-content: center;
     position: fixed; /* Fixed like back button */
-    top: calc(11px + env(safe-area-inset-top) + 1.4rem + 12px + 6px); /* header top + title height + title padding + gap */
+    top: calc(11px + env(safe-area-inset-top) + 40px + 6px); /* header top (11px) + arabic badge height (~40px) + gap (6px) */
     left: 16px;
     z-index: 10100; /* Above arrivals panel (1000) */
 }
