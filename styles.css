@@ -435,10 +435,9 @@ html, body {
     height: calc(var(--vh, 1vh) * 100);
     max-height: none;
     background: white;
-    /* Cross-browser border-radius with webkit prefix */
+    /* Cross-browser border-radius */
     border-radius: 16px 16px 0 0;
     -webkit-border-radius: 16px 16px 0 0;
-    -moz-border-radius: 16px 16px 0 0;
     box-shadow: none;
     z-index: 1000;
     --skyline-max-height: 180px;
@@ -449,12 +448,8 @@ html, body {
     display: flex;
     flex-direction: column;
     align-items: stretch;
-    /* CRITICAL: overflow hidden with webkit prefix for proper border-radius clipping */
-    overflow: hidden;
-    -webkit-overflow: hidden;
-    /* Mask to force clipping at border-radius in all browsers */
-    -webkit-mask-image: -webkit-radial-gradient(white, black);
-    mask-image: radial-gradient(white, black);
+    /* Allow content to overflow for grabber bar visibility */
+    overflow: visible;
     touch-action: none;
     /* CRITICAL: Force GPU compositing layer for native-smooth dragging */
     will-change: transform;
@@ -468,9 +463,6 @@ html, body {
     /* Initial position: collapsed (40vh visible) */
     transition: transform 0.25s ease;
     -webkit-transition: -webkit-transform 0.25s ease;
-    /* Force anti-aliasing for smoother edges */
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
 }
 
 /* Expanded sheet height (drag up) */
