@@ -2789,8 +2789,8 @@ function setupPanelDrag() {
                         }
                     }
                     
-                    // Re-center map on GPS when pulling up from 20vh (ALL screens)
-                    if (userLat && userLon && target > circlesHook + 10) {
+                    // Re-center map on GPS when pulling up from 20vh (idle and walk modes only, NOT bus)
+                    if (uiMode !== 'bus' && userLat && userLon && target > circlesHook + 10) {
                         console.log('[MAP] Re-centering on GPS after pulling up from 20vh');
                         map.setView([userLat, userLon], map.getZoom(), { animate: true, duration: 0.3 });
                     }
@@ -2858,8 +2858,8 @@ function setupPanelDrag() {
                 }
             }
             
-            // Re-center map on GPS when pulling up from 20vh (ALL screens)
-            if (userLat && userLon && target > circlesHook + 10) {
+            // Re-center map on GPS when pulling up from 20vh (idle and walk modes only, NOT bus)
+            if (uiMode !== 'bus' && userLat && userLon && target > circlesHook + 10) {
                 console.log('[MAP] Re-centering on GPS after pulling up from 20vh');
                 map.setView([userLat, userLon], map.getZoom(), { animate: true, duration: 0.3 });
             }
