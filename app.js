@@ -1566,17 +1566,17 @@ function initMap() {
             
             // Only collapse if panel is at 40vh or higher (not already collapsed)
             if (currentH >= minPx - 10) {
-                console.log('[Map Click] Collapsing panel to 20vh with bounce effect');
+                console.log('[Map Click] Collapsing panel to 20vh with elastic bounce');
                 const panel = document.querySelector('.arrivals-panel');
                 if (panel && window._setPanelVisibleHeight) {
-                    // Use the SAME easing as manual drag snap for satisfying bounce
-                    panel.style.transition = 'transform 0.24s cubic-bezier(.2,.7,.2,1)';
+                    // Use ELASTIC BOUNCE easing for satisfying overshoot effect (same as pull down)
+                    panel.style.transition = 'transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)';
                     window._setPanelVisibleHeight(circlesHook);
                     
                     // Reset map parallax synchronized with panel snap
                     const mapInner = document.getElementById('map-container');
                     if (mapInner) {
-                        mapInner.style.transition = 'transform 0.24s cubic-bezier(.2,.7,.2,1)';
+                        mapInner.style.transition = 'transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)';
                         mapInner.style.transform = 'translateY(0) scale(1)';
                     }
                     
