@@ -1624,10 +1624,12 @@ function initMap() {
 function updateMap() {
     if (!map) return;
 
-    // Clear existing layers except the persistent user marker
+    // Clear existing layers except the persistent user marker and distance circles
     map.eachLayer(layer => {
         if ((layer instanceof L.Marker || layer instanceof L.Polyline)) {
             if (userMarker && layer === userMarker) return; // keep user marker persistent
+            // Keep distance circles layer and its contents
+            if (distanceCirclesLayer && distanceCirclesLayer.hasLayer(layer)) return;
             map.removeLayer(layer);
         }
     });
