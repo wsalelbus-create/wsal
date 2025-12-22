@@ -1547,6 +1547,8 @@ function initMap() {
     
     // Auto-reorder stations when map is moved in bus mode
     let reorderTimeout;
+    let lastDragEndTime = 0; // Track when panel drag ended to avoid false triggers
+    
     map.on('movestart', () => {
         try {
             if (uiMode === 'bus' && !busDetailActive) {
@@ -1612,6 +1614,14 @@ function initMap() {
                 // Only reorder when user manually pans the map
                 if (panelDragging) {
                     console.log('[moveend] Skipping reorder - panel is being dragged');
+                    return;
+                }
+                
+                // Also skip if panel drag just ended (within 500ms) to avoid false triggers
+                const lastEnd = window._lastPanelDragEnd || 0;
+                const timeSinceDragEnd = Date.now() - lastEnd;
+                if (lastEnd > 0 && timeSinceDragEnd < 500) {
+                    console.log('[moveend] Skipping reorder - panel drag just ended:', timeSinceDragEnd, 'ms ago');
                     return;
                 }
                 
@@ -2648,6 +2658,13 @@ function setupPanelDrag() {
         pendingDrag = false;
         panelDragging = false;
         startTarget = null;
+        
+        // Record when drag ended to prevent false map moveend triggers
+        if (typeof lastDragEndTime !== 'undefined') {
+            lastDragEndTime = Date.now();
+        }
+        // Also expose globally for map event handlers
+        try { window._lastPanelDragEnd = Date.now(); } catch {}
         
         // DON'T reset map immediately - let it animate together with panel snap
         // Map will be reset after we determine the snap target
