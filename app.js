@@ -1553,15 +1553,22 @@ function initMap() {
                 // Show crosshair when map starts moving
                 const crosshair = document.getElementById('map-crosshair');
                 if (crosshair) crosshair.classList.add('visible');
-            } else if (uiMode === 'idle') {
-                // IDLE MODE: Collapse panel to 20vh when user interacts with map
+            }
+        } catch {}
+    });
+    
+    // IDLE MODE: Collapse panel to 20vh when user taps/touches the map
+    let userInteractedWithMap = false;
+    map.on('click', () => {
+        try {
+            if (uiMode === 'idle') {
                 const currentH = window._getPanelVisibleHeight ? window._getPanelVisibleHeight() : 0;
                 const minPx = vhToPx(PANEL_MIN_VH); // 40vh
                 const circlesHook = vhToPx(20); // 20vh
                 
                 // Only collapse if panel is at 40vh (not already at 20vh)
                 if (Math.abs(currentH - minPx) < 10) {
-                    console.log('[Map Interaction] Collapsing panel to 20vh and showing circles');
+                    console.log('[Map Click] Collapsing panel to 20vh and showing circles');
                     const panel = document.querySelector('.arrivals-panel');
                     if (panel && window._setPanelVisibleHeight) {
                         panel.style.transition = 'transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
