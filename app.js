@@ -2878,76 +2878,86 @@ function setupPanelDrag() {
         // Invalidate map size handled after snap where appropriate
     };
 
-    // Touch events (mobile)
-    grabber.addEventListener('touchstart', (e) => {
-        const t = e.touches[0];
-        handleStart(t.clientY, e.target);
-        e.preventDefault(); // ensure we capture drag from handle
-    }, { passive: false, capture: true });
-    grabber.addEventListener('touchmove', (e) => {
-        const t = e.touches[0];
-        handleMove(t.clientY);
-        if (pendingDrag || panelDragging) e.preventDefault();
-    }, { passive: false, capture: true });
-    grabber.addEventListener('touchend', () => handleEnd(), { capture: true });
-    // Tap-to-toggle for reliability on iOS
-    grabber.addEventListener('click', (e) => {
-        e.preventDefault();
-        const minPx = vhToPx(PANEL_MIN_VH);
-        const maxPx = getPanelMaxPx();
-        const mid = (minPx + maxPx) / 2;
-        arrivalsPanel.style.transition = 'transform 0.25s ease';
-        if (getPanelVisibleHeight() < mid) {
-            setPanelVisibleHeight(maxPx);
-            arrivalsPanel.classList.add('expanded');
-        } else {
-            setPanelVisibleHeight(minPx);
-            arrivalsPanel.classList.remove('expanded');
-        }
+    // Touch events (mobile) - ONLY in portrait mode
+    if (!isLandscape()) {
+        grabber.addEventListener('touchstart', (e) => {
+            const t = e.touches[0];
+            handleStart(t.clientY, e.target);
+            e.preventDefault(); // ensure we capture drag from handle
+        }, { passive: false, capture: true });
+        grabber.addEventListener('touchmove', (e) => {
+            const t = e.touches[0];
+            handleMove(t.clientY);
+            if (pendingDrag || panelDragging) e.preventDefault();
+        }, { passive: false, capture: true });
+        grabber.addEventListener('touchend', () => handleEnd(), { capture: true });
+    }
+    
+    // Tap-to-toggle for reliability on iOS - ONLY in portrait
+    if (!isLandscape()) {
+        grabber.addEventListener('click', (e) => {
+            e.preventDefault();
+            const minPx = vhToPx(PANEL_MIN_VH);
+            const maxPx = getPanelMaxPx();
+            const mid = (minPx + maxPx) / 2;
+            arrivalsPanel.style.transition = 'transform 0.25s ease';
+            if (getPanelVisibleHeight() < mid) {
+                setPanelVisibleHeight(maxPx);
+                arrivalsPanel.classList.add('expanded');
+            } else {
+                setPanelVisibleHeight(minPx);
+                arrivalsPanel.classList.remove('expanded');
+            }
+        });
+    }
+
+    // Panel touch events - ONLY in portrait
+    if (!isLandscape()) {
+        arrivalsPanel.addEventListener('touchstart', (e) => {
+            const t = e.touches[0];
+            handleStart(t.clientY, e.target);
+            // do NOT preventDefault on touchstart; allow taps to become clicks
+        }, { passive: false, capture: true });
+        arrivalsPanel.addEventListener('touchmove', (e) => {
+            if (!pendingDrag && !dragging) return; // safety: only handle move if we started a gesture
+            const t = e.touches[0];
+            if (!t) return;
+            handleMove(t.clientY);
+            if (dragging) e.preventDefault();
+        }, { passive: false, capture: true });
+        arrivalsPanel.addEventListener('touchend', () => handleEnd());
+
+        // Document-level capture to guarantee drag from anywhere inside the panel
+        document.addEventListener('touchstart', (e) => {
+            const inPanel = e.target && e.target.closest && e.target.closest('.arrivals-panel');
+            if (!inPanel) return;
+            
+            // Don't capture if touch is on the map (even if map is behind panel)
+            const onMap = e.target && (
+                e.target.closest('.leaflet-container') || 
+                e.target.closest('#map-container') ||
+                e.target.closest('.map-view-container')
+            );
+            if (onMap) return;
+            
+            const t = e.touches && e.touches[0];
+            if (!t) return;
+            handleStart(t.clientY, e.target);
+        }, { passive: false, capture: true });
+        document.addEventListener('touchmove', (e) => {
+            if (!panelDragging) return;
+            const t = e.touches && e.touches[0];
+            if (!t) return;
+            handleMove(t.clientY);
+            e.preventDefault();
+        }, { passive: false, capture: true });
+        document.addEventListener('touchend', () => { if (panelDragging) handleEnd(); }, { capture: true });
+    }
+
+    // Pointer events (desktop/testing) - works in both orientations
+    arrivalsPanel.addEventListener('pointerdown', (e) => { 
+        if (!isLandscape()) handleStart(e.clientY, e.target); 
     });
-
-    arrivalsPanel.addEventListener('touchstart', (e) => {
-        const t = e.touches[0];
-        handleStart(t.clientY, e.target);
-        // do NOT preventDefault on touchstart; allow taps to become clicks
-    }, { passive: false, capture: true });
-    arrivalsPanel.addEventListener('touchmove', (e) => {
-        if (!pendingDrag && !dragging) return; // safety: only handle move if we started a gesture
-        const t = e.touches[0];
-        if (!t) return;
-        handleMove(t.clientY);
-        if (dragging) e.preventDefault();
-    }, { passive: false, capture: true });
-    arrivalsPanel.addEventListener('touchend', () => handleEnd());
-
-    // Document-level capture to guarantee drag from anywhere inside the panel
-    document.addEventListener('touchstart', (e) => {
-        const inPanel = e.target && e.target.closest && e.target.closest('.arrivals-panel');
-        if (!inPanel) return;
-        
-        // Don't capture if touch is on the map (even if map is behind panel)
-        const onMap = e.target && (
-            e.target.closest('.leaflet-container') || 
-            e.target.closest('#map-container') ||
-            e.target.closest('.map-view-container')
-        );
-        if (onMap) return;
-        
-        const t = e.touches && e.touches[0];
-        if (!t) return;
-        handleStart(t.clientY, e.target);
-    }, { passive: false, capture: true });
-    document.addEventListener('touchmove', (e) => {
-        if (!panelDragging) return;
-        const t = e.touches && e.touches[0];
-        if (!t) return;
-        handleMove(t.clientY);
-        e.preventDefault();
-    }, { passive: false, capture: true });
-    document.addEventListener('touchend', () => { if (panelDragging) handleEnd(); }, { capture: true });
-
-    // Pointer events (desktop/testing)
-    arrivalsPanel.addEventListener('pointerdown', (e) => { handleStart(e.clientY, e.target); });
     window.addEventListener('pointermove', (e) => { handleMove(e.clientY); });
     window.addEventListener('pointerup', () => handleEnd());
 
