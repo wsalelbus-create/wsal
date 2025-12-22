@@ -89,7 +89,11 @@ function getDragScale() {
 function getSnapStopsPx() {
     const minPx = vhToPx(PANEL_MIN_VH);
     const maxPx = getPanelMaxPx();
-    const stops = [minPx];
+    
+    // Add a hook position below minPx for circles view (30vh - pulled down 10vh from initial 40vh)
+    const circlesHook = vhToPx(30);
+    const stops = [circlesHook, minPx];
+    
     // Only 2 mid stops for smoother feel
     const s60 = vhToPx(60);
     const s85 = vhToPx(85);
@@ -1738,7 +1742,7 @@ async function getOsrmWalkingTime(fromLat, fromLon, toLat, toLon) {
 }
 
 // Show distance circles (5, 15, 60 min walking) around user position in idle mode
-async function showDistanceCircles() {
+function showDistanceCircles() {
     console.log('[showDistanceCircles] Called - map:', !!map, 'userLat:', userLat, 'userLon:', userLon);
     if (!map || !userLat || !userLon) {
         console.log('[showDistanceCircles] Missing requirements');
@@ -1754,7 +1758,6 @@ async function showDistanceCircles() {
     // Calculate approximate radius for each time (5, 15, 60 min)
     // Average walking speed: ~5 km/h = ~83 m/min
     const times = [5, 15, 60]; // minutes
-    const colors = ['#6B7C93', '#6B7C93', '#6B7C93']; // Citymapper gray-blue
     
     for (let i = 0; i < times.length; i++) {
         const minutes = times[i];
@@ -1763,9 +1766,9 @@ async function showDistanceCircles() {
         console.log(`[showDistanceCircles] Drawing circle ${i}: ${minutes} min, ${approxMeters}m`);
         
         // Draw circle
-        const circle = L.circle([userLat, userLon], {
+        L.circle([userLat, userLon], {
             radius: approxMeters,
-            color: colors[i],
+            color: '#6B7C93',
             fillColor: 'transparent',
             fillOpacity: 0,
             weight: 1.5,
@@ -1773,13 +1776,16 @@ async function showDistanceCircles() {
             interactive: false
         }).addTo(distanceCirclesLayer);
         
-        // Add text label with walking icon at top of circle - NO white background
-        const bounds = L.latLng(userLat, userLon).toBounds(approxMeters);
-        const labelLat = bounds.getNorth();
-        const label = L.marker([labelLat, userLon], {
+        // Calculate label position at top of circle
+        // 1 degree latitude ≈ 111,000 meters
+        const latOffset = approxMeters / 111000;
+        const labelLat = userLat + latOffset;
+        
+        // Add text label with walking icon at top of circle
+        L.marker([labelLat, userLon], {
             icon: L.divIcon({
                 className: 'distance-circle-label',
-                html: `<div style="display: flex; align-items: center; gap: 3px; font-size: 11px; font-weight: 600; color: #6B7C93; white-space: nowrap;">
+                html: `<div style="display: flex; align-items: center; gap: 3px; font-size: 11px; font-weight: 600; color: #6B7C93; white-space: nowrap; pointer-events: none;">
                     <svg width="12" height="12" viewBox="0 0 128 128" fill="none" xmlns="http://www.w3.org/2000/svg">
                         <path d="M67.9,22.6c5.7,0.4,10.8-3.8,11.3-9.7c0.4-5.7-3.8-10.8-9.7-11.3c-5.7-0.4-10.8,3.8-11.3,9.7C57.8,17.1,62.2,22.2,67.9,22.6" fill="#6B7C93"/>
                         <path d="M59,26.9c2-1.5,4.5-2.3,7.3-2.2c3.5,0.3,6.6,2.5,8.3,5.1l10.5,20.9l14.3,10c1.2,1,2,2.5,1.9,4.1c-0.1,2.6-2.5,4.5-5.1,4.2 c-0.7,0-1.5-0.3-2.2-0.7L78.6,57.8c-0.4-0.4-0.9-0.9-1.2-1.5l-4-7.8l-4.7,20.8l18.6,22c0.4,0.7,0.7,1.5,0.9,2.2l5,26.5 c0,0.6,0,1,0,1.5c-0.3,4-3.7,6.7-7.6,6.6c-3.2-0.3-5.6-2.6-6.4-5.6l-4.7-24.7L59.4,81l-3.5,16.1c-0.1,0.7-1.2,2.3-1.5,2.9L40,124.5 c-1.5,2.2-3.8,3.7-6.6,3.4c-4-0.3-6.9-3.7-6.6-7.6c0.1-1.2,0.6-2.2,1-3.1l13.5-22.5L52.5,45l-7.3,5.9l-4,17.7c-0.4,2.2-2.6,4.1-5,4 c-2.6-0.1-4.5-2.5-4.4-5.1c0-0.1,0-0.4,0.1-0.6l4.5-20.6c0.3-0.9,0.7-1.6,1.5-2.2L59,26.9z" fill="#6B7C93"/>
@@ -1792,7 +1798,7 @@ async function showDistanceCircles() {
             interactive: false
         }).addTo(distanceCirclesLayer);
     }
-    console.log('[showDistanceCircles] Circles created successfully');
+    console.log('[showDistanceCircles] All 3 circles created successfully');
 }
 
 // Hide distance circles
@@ -2409,7 +2415,7 @@ function setupPanelDrag() {
         // Elastic bounce: allow pulling below minimum with resistance (rubber band effect)
         if (next < minPx) {
             const overPull = minPx - next; // how much below minimum
-            const resistance = 0.3; // 30% resistance - harder to pull down
+            const resistance = 0.15; // 15% resistance - easy to pull down for circles view
             next = minPx - (overPull * resistance); // apply resistance
         } else if (next > maxPx) {
             // Also apply resistance when pulling above maximum
