@@ -1591,10 +1591,10 @@ function updateMap() {
         const markerHtml = `
             <div class="user-orientation" style="position: relative; pointer-events: none; width: 100%; height: 100%;">
                 <div class="user-heading-rotor" style="position:absolute; left:50%; top:50%; transform: translate(-50%, -50%) rotate(${currentHeading ?? 0}deg); transform-origin: 50% 50%; opacity:${showCone?1:0};">
-                    <svg width="140" height="140" viewBox="0 0 140 140" xmlns="http://www.w3.org/2000/svg" style="overflow: visible;">
+                    <svg width="163" height="163" viewBox="0 0 163 163" xmlns="http://www.w3.org/2000/svg" style="overflow: visible;">
                         <defs>
                             <!-- Green fog (bold until mid-cone, then fades) -->
-                            <linearGradient id="coneGrad" x1="70" y1="70" x2="70" y2="34" gradientUnits="userSpaceOnUse">
+                            <linearGradient id="coneGrad" x1="81.5" y1="81.5" x2="81.5" y2="39.7" gradientUnits="userSpaceOnUse">
                                 <stop offset="0%"  stop-color="rgba(53,199,89,0.60)"/>
                                 <stop offset="35%" stop-color="rgba(53,199,89,0.50)"/>
                                 <stop offset="55%" stop-color="rgba(53,199,89,0.30)"/>
@@ -1602,16 +1602,16 @@ function updateMap() {
                                 <stop offset="100%" stop-color="rgba(53,199,89,0.00)"/>
                             </linearGradient>
                         </defs>
-                        <!-- Shorter, wider, Citymapper-like wedge (no base stroke) -->
-                        <path d="M70 70 L46 34 L94 34 Z" fill="url(#coneGrad)" stroke="none"/>
+                        <!-- Shorter, wider, Citymapper-like wedge (no base stroke) - scaled 1.167x -->
+                        <path d="M81.5 81.5 L53.7 39.7 L109.7 39.7 Z" fill="url(#coneGrad)" stroke="none"/>
                         <!-- Thinner edge bars, green -->
-                        <line x1="70" y1="70" x2="46" y2="34" stroke="rgba(53,199,89,0.60)" stroke-width="1.2" stroke-linecap="round"/>
-                        <line x1="70" y1="70" x2="94" y2="34" stroke="rgba(53,199,89,0.60)" stroke-width="1.2" stroke-linecap="round"/>
+                        <line x1="81.5" y1="81.5" x2="53.7" y2="39.7" stroke="rgba(53,199,89,0.60)" stroke-width="1.4" stroke-linecap="round"/>
+                        <line x1="81.5" y1="81.5" x2="109.7" y2="39.7" stroke="rgba(53,199,89,0.60)" stroke-width="1.4" stroke-linecap="round"/>
                     </svg>
                 </div>
                 <!-- Soft halo behind the blue location dot -->
-                <div class="user-dot-halo" style="position:absolute; left:50%; top:50%; width: 40px; height: 40px; border-radius: 50%; transform: translate(-50%, -50%); background: radial-gradient(circle, rgba(0,102,204,0.35) 0%, rgba(0,102,204,0.18) 45%, rgba(0,102,204,0.00) 75%);"></div>
-                <div class="user-dot" style="position:absolute; left:50%; top:50%; width: 20px; height: 20px; background: #0066CC; border-radius: 50%; border: 3.33px solid white; box-shadow: 0 2px 8px rgba(0,0,0,0.30); transform: translate(-50%, -50%);"></div>
+                <div class="user-dot-halo" style="position:absolute; left:50%; top:50%; width: 42px; height: 42px; border-radius: 50%; transform: translate(-50%, -50%); background: radial-gradient(circle, rgba(0,102,204,0.35) 0%, rgba(0,102,204,0.18) 45%, rgba(0,102,204,0.00) 75%);"></div>
+                <div class="user-dot" style="position:absolute; left:50%; top:50%; width: 21px; height: 21px; background: #0066CC; border-radius: 50%; border: 3px solid white; box-shadow: 0 2px 8px rgba(0,0,0,0.30); transform: translate(-50%, -50%);"></div>
             </div>`;
 
         if (userMarker) {
@@ -1622,8 +1622,8 @@ function updateMap() {
                 icon: L.divIcon({
                     className: 'custom-marker user-orientation-icon',
                     html: markerHtml,
-                    iconSize: [140, 140],
-                    iconAnchor: [70, 70]
+                    iconSize: [163, 163],
+                    iconAnchor: [81.5, 81.5]
                 })
             }).addTo(map);
         }
