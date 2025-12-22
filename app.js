@@ -2224,8 +2224,12 @@ function setupPanelDrag() {
         // Allow elastic bounce: don't clamp during drag, only clamp offset calculation
         const vis = visiblePx; // use raw value to allow over-pull
         const offset = Math.max(0, maxPx - vis); // how far to push the panel down
-        arrivalsPanel.style.transform = `translateY(${offset}px)`;
+        
+        // Force GPU acceleration with translateZ(0) for 60fps
+        arrivalsPanel.style.transform = `translateY(${offset}px) translateZ(0)`;
+        arrivalsPanel.style.webkitTransform = `translateY(${offset}px) translateZ(0)`;
         arrivalsPanel.style.height = `${maxPx}px`; // keep the panel sized to its max
+        
         // Expose sizes to CSS for consistent PWA/Safari proportions
         arrivalsPanel.style.setProperty('--panel-visible', `${vis}px`);
         arrivalsPanel.style.setProperty('--panel-max', `${maxPx}px`);
@@ -2423,9 +2427,10 @@ function setupPanelDrag() {
                 const vNow = Math.max(0, absV - DECEL * elapsed);
                 h = clamp(h + dir * vNow * dt, minPx, maxPx);
                 
-                // Use transform directly for buttery smooth animation (no layout thrashing)
+                // Use transform directly with GPU acceleration for buttery smooth 60fps animation
                 const offset = Math.max(0, maxPx - h);
-                arrivalsPanel.style.transform = `translateY(${offset}px)`;
+                arrivalsPanel.style.transform = `translateY(${offset}px) translateZ(0)`;
+                arrivalsPanel.style.webkitTransform = `translateY(${offset}px) translateZ(0)`;
                 arrivalsPanel.dataset.visibleH = String(h);
                 
                 // Stop if speed nearly zero or bounds reached

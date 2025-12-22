@@ -1,0 +1,19 @@
+/* GPU Acceleration for 60fps smooth animations */
+.arrivals-panel {
+    will-change: transform;
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+    perspective: 1000px;
+    -webkit-perspective: 1000px;
+}
+
+.station-card {
+    will-change: transform, opacity;
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+}
+
+.routes-list {
+    will-change: scroll-position;
+    -webkit-overflow-scrolling: touch;
+}
