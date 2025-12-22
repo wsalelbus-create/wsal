@@ -1553,6 +1553,26 @@ function initMap() {
                 // Show crosshair when map starts moving
                 const crosshair = document.getElementById('map-crosshair');
                 if (crosshair) crosshair.classList.add('visible');
+            } else if (uiMode === 'idle') {
+                // IDLE MODE: Collapse panel to 20vh when user interacts with map
+                const currentH = window._getPanelVisibleHeight ? window._getPanelVisibleHeight() : 0;
+                const minPx = vhToPx(PANEL_MIN_VH); // 40vh
+                const circlesHook = vhToPx(20); // 20vh
+                
+                // Only collapse if panel is at 40vh (not already at 20vh)
+                if (Math.abs(currentH - minPx) < 10) {
+                    console.log('[Map Interaction] Collapsing panel to 20vh and showing circles');
+                    const panel = document.querySelector('.arrivals-panel');
+                    if (panel && window._setPanelVisibleHeight) {
+                        panel.style.transition = 'transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
+                        window._setPanelVisibleHeight(circlesHook);
+                        
+                        // Show circles
+                        if (userLat && userLon) {
+                            showDistanceCircles();
+                        }
+                    }
+                }
             }
         } catch {}
     });
@@ -1687,6 +1707,24 @@ function updateMap() {
             renderOsrmRoute(userLat, userLon, station.lat, station.lon);
         } else if (uiMode === 'bus') {
             // Show all stations as badge-only markers (no stick, no shadows)
+            const markers = STATIONS.map(s => {
+                const badge = stationBadgeFor(s.name);
+                return L.marker([s.lat, s.lon], {
+                    icon: L.divIcon({
+                        className: 'custom-marker',
+                        html: `<svg width="24" height="24" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <rect x="1" y="1" width="22" height="22" rx="6" fill="${badge.color}" stroke="#ffffff" stroke-width="2"/>
+                            <text x="12" y="12" text-anchor="middle" font-size="11" font-weight="900" fill="#ffffff" font-family="Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial" dy="0.32em">${badge.abbr}</text>
+                        </svg>`,
+                        iconSize: [24, 24],
+                        iconAnchor: [12, 12]
+                    }),
+                    zIndexOffset: 900
+                });
+            });
+            busStationsLayer = L.layerGroup(markers).addTo(map);
+        } else if (uiMode === 'idle') {
+            // IDLE MODE: Show all bus stops like in bus mode
             const markers = STATIONS.map(s => {
                 const badge = stationBadgeFor(s.name);
                 return L.marker([s.lat, s.lon], {
@@ -2006,8 +2044,24 @@ async function renderOsrmRoute(fromLat, fromLon, toLat, toLon) {
     }
 }
 
+// Store map state for each mode to restore when switching back
+let mapStates = {
+    idle: { center: null, zoom: 16 },
+    walk: { center: null, zoom: 15 },
+    bus: { center: null, zoom: 14 }
+};
+
 // --- UI Mode switching (idle | walk | bus) ---
 function setUIMode(mode) {
+    // Save current map state before switching
+    if (map && uiMode) {
+        mapStates[uiMode] = {
+            center: map.getCenter(),
+            zoom: map.getZoom()
+        };
+        console.log('[setUIMode] Saved', uiMode, 'map state:', mapStates[uiMode]);
+    }
+    
     // Track prior mode for Back navigation
     previousMode = uiMode;
     uiMode = mode;
@@ -2017,10 +2071,26 @@ function setUIMode(mode) {
         hideDistanceCircles();
     }
     
-    // Re-center map on GPS location when switching to idle or walk mode
-    if ((mode === 'idle' || mode === 'walk') && userLat && userLon && map) {
-        console.log('[setUIMode] Re-centering map on GPS:', userLat, userLon);
-        map.setView([userLat, userLon], map.getZoom(), { animate: true, duration: 0.3 });
+    // Restore map state for the new mode
+    if (map) {
+        if (mode === 'idle' && userLat && userLon) {
+            // Idle: center on GPS
+            console.log('[setUIMode] Idle mode - centering on GPS');
+            map.setView([userLat, userLon], 16, { animate: true, duration: 0.3 });
+        } else if (mode === 'walk' && userLat && userLon) {
+            // Walk: center on GPS (will be adjusted by renderMap to fit route)
+            console.log('[setUIMode] Walk mode - centering on GPS');
+            map.setView([userLat, userLon], 15, { animate: true, duration: 0.3 });
+        } else if (mode === 'bus') {
+            // Bus: restore saved bus map state or center on GPS
+            if (mapStates.bus.center) {
+                console.log('[setUIMode] Bus mode - restoring saved state');
+                map.setView(mapStates.bus.center, mapStates.bus.zoom, { animate: true, duration: 0.3 });
+            } else if (userLat && userLon) {
+                console.log('[setUIMode] Bus mode - initial center on GPS');
+                map.setView([userLat, userLon], 14, { animate: true, duration: 0.3 });
+            }
+        }
     }
     
     // ALWAYS reset panel to minimum position when changing screens
