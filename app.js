@@ -2051,24 +2051,8 @@ async function renderOsrmRoute(fromLat, fromLon, toLat, toLon) {
     }
 }
 
-// Store map state for each mode to restore when switching back
-let mapStates = {
-    idle: { center: null, zoom: 16 },
-    walk: { center: null, zoom: 15 },
-    bus: { center: null, zoom: 14 }
-};
-
 // --- UI Mode switching (idle | walk | bus) ---
 function setUIMode(mode) {
-    // Save current map state before switching
-    if (map && uiMode) {
-        mapStates[uiMode] = {
-            center: map.getCenter(),
-            zoom: map.getZoom()
-        };
-        console.log('[setUIMode] Saved', uiMode, 'map state:', mapStates[uiMode]);
-    }
-    
     // Track prior mode for Back navigation
     previousMode = uiMode;
     uiMode = mode;
@@ -2078,25 +2062,18 @@ function setUIMode(mode) {
         hideDistanceCircles();
     }
     
-    // Restore map state for the new mode
-    if (map) {
-        if (mode === 'idle' && userLat && userLon) {
-            // Idle: center on GPS
+    // ALWAYS center map on GPS location when switching screens
+    // This ensures user always sees where they are (blue dot centered)
+    if (map && userLat && userLon) {
+        if (mode === 'idle') {
             console.log('[setUIMode] Idle mode - centering on GPS');
             map.setView([userLat, userLon], 16, { animate: true, duration: 0.3 });
-        } else if (mode === 'walk' && userLat && userLon) {
-            // Walk: center on GPS (will be adjusted by renderMap to fit route)
+        } else if (mode === 'walk') {
             console.log('[setUIMode] Walk mode - centering on GPS');
             map.setView([userLat, userLon], 15, { animate: true, duration: 0.3 });
         } else if (mode === 'bus') {
-            // Bus: restore saved bus map state or center on GPS
-            if (mapStates.bus.center) {
-                console.log('[setUIMode] Bus mode - restoring saved state');
-                map.setView(mapStates.bus.center, mapStates.bus.zoom, { animate: true, duration: 0.3 });
-            } else if (userLat && userLon) {
-                console.log('[setUIMode] Bus mode - initial center on GPS');
-                map.setView([userLat, userLon], 14, { animate: true, duration: 0.3 });
-            }
+            console.log('[setUIMode] Bus mode - centering on GPS');
+            map.setView([userLat, userLon], 14, { animate: true, duration: 0.3 });
         }
     }
     
