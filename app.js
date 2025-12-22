@@ -1739,11 +1739,16 @@ async function getOsrmWalkingTime(fromLat, fromLon, toLat, toLon) {
 
 // Show distance circles (5, 15, 60 min walking) around user position in idle mode
 async function showDistanceCircles() {
-    if (!map || !userLat || !userLon) return;
+    console.log('[showDistanceCircles] Called - map:', !!map, 'userLat:', userLat, 'userLon:', userLon);
+    if (!map || !userLat || !userLon) {
+        console.log('[showDistanceCircles] Missing requirements');
+        return;
+    }
     
     // Remove existing circles
     hideDistanceCircles();
     
+    console.log('[showDistanceCircles] Creating circles layer');
     distanceCirclesLayer = L.layerGroup().addTo(map);
     
     // Calculate approximate radius for each time (5, 15, 60 min)
@@ -1754,6 +1759,8 @@ async function showDistanceCircles() {
     for (let i = 0; i < times.length; i++) {
         const minutes = times[i];
         const approxMeters = minutes * 83; // rough estimate
+        
+        console.log(`[showDistanceCircles] Drawing circle ${i}: ${minutes} min, ${approxMeters}m`);
         
         // Draw circle
         const circle = L.circle([userLat, userLon], {
@@ -1785,6 +1792,7 @@ async function showDistanceCircles() {
             interactive: false
         }).addTo(distanceCirclesLayer);
     }
+    console.log('[showDistanceCircles] Circles created successfully');
 }
 
 // Hide distance circles
@@ -2417,10 +2425,17 @@ function setupPanelDrag() {
         if (uiMode === 'idle' && userLat && userLon) {
             const minPx = vhToPx(PANEL_MIN_VH);
             const threshold = minPx + vhToPx(10); // Show circles when pulled 10vh above minimum
+            console.log('[CIRCLES DEBUG] next:', next, 'threshold:', threshold, 'minPx:', minPx, 'circlesExist:', !!distanceCirclesLayer);
             if (next > threshold) {
-                if (!distanceCirclesLayer) showDistanceCircles();
+                if (!distanceCirclesLayer) {
+                    console.log('[CIRCLES] Showing circles');
+                    showDistanceCircles();
+                }
             } else {
-                if (distanceCirclesLayer) hideDistanceCircles();
+                if (distanceCirclesLayer) {
+                    console.log('[CIRCLES] Hiding circles');
+                    hideDistanceCircles();
+                }
             }
         }
         
