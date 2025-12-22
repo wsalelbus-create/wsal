@@ -1,106 +1,166 @@
-/* Landscape Mode Support for iOS Safari */
-/* Safari ignores manifest orientation lock, so we make the app work in landscape */
+/* =============================================
+   LANDSCAPE MODE SUPPORT
+   iOS Safari ignores manifest orientation lock
+   ============================================= */
 
-@media screen and (orientation: landscape) and (max-height: 500px) {
-    /* In landscape, show map and panel side-by-side */
+@media screen and (orientation: landscape) {
+    /* Split screen: 60% map, 40% panel */
+    
+    /* Container max-width for desktop */
+    .app-container {
+        max-width: 1400px;
+        margin: 0 auto;
+    }
+    
+    /* Map takes left 60% */
     .map-view-container {
         position: fixed;
         top: 0;
         left: 0;
-        right: 50%; /* Take left half */
-        bottom: 0;
-        height: 100vh;
-        width: 50%;
+        width: 60vw !important;
+        height: 100vh !important;
+        bottom: auto !important;
+        max-width: 840px; /* 60% of 1400px */
     }
     
     #map-container {
-        height: 100% !important;
         width: 100% !important;
+        height: 100% !important;
     }
     
-    /* Panel takes right half */
+    /* Panel takes right 40% - static, no dragging */
     .arrivals-panel {
         position: fixed !important;
         top: 0 !important;
-        left: 50% !important;
+        left: 60vw !important;
         right: 0 !important;
         bottom: 0 !important;
-        width: 50% !important;
+        width: 40vw !important;
         height: 100vh !important;
-        transform: none !important; /* No sliding in landscape */
+        transform: none !important; /* No sliding */
         border-radius: 0 !important;
-        padding-top: 60px !important;
+        padding: 16px !important;
+        padding-top: 80px !important; /* Space for floating controls */
         overflow-y: auto !important;
+        touch-action: auto !important; /* Allow scrolling */
     }
     
-    /* Header stays at top left */
+    /* Disable sheet grabber in landscape */
+    .sheet-grabber {
+        display: none !important;
+    }
+    
+    /* Header - top left of map */
     .glass-header {
+        position: fixed;
         top: calc(8px + env(safe-area-inset-top));
         left: 8px;
         right: auto;
+        width: auto;
         z-index: 10200;
     }
     
-    /* Settings gear - top left of map area */
-    .settings-badge {
-        top: calc(8px + env(safe-area-inset-top)) !important;
-        left: 8px !important;
+    /* Arabic title smaller in landscape */
+    .arabic-title {
+        font-size: 1.1rem !important;
     }
     
-    /* Back button - top left of map area */
+    /* Settings gear - top left */
+    .settings-badge {
+        top: calc(8px + env(safe-area-inset-top)) !important;
+        left: calc(8px + 120px) !important; /* After logo */
+    }
+    
+    /* Back button - top left */
     .back-badge {
         top: calc(8px + env(safe-area-inset-top)) !important;
         left: 8px !important;
     }
     
-    /* Map controls - right side of map area (left half of screen) */
+    /* Map controls - bottom right of map area */
     .map-controls-stack {
-        top: calc(8px + env(safe-area-inset-top)) !important;
-        right: calc(50% + 8px) !important; /* 8px from center divider */
+        position: fixed !important;
+        top: auto !important;
+        bottom: calc(16px + env(safe-area-inset-bottom)) !important;
+        right: calc(40vw + 16px) !important; /* 16px from panel edge */
+        left: auto !important;
     }
     
-    /* Walking badge - above map controls */
+    /* Walking time badge - above map controls */
     #walking-time {
-        right: calc(50% + 8px) !important;
+        position: fixed !important;
+        top: auto !important;
+        bottom: calc(80px + env(safe-area-inset-bottom)) !important;
+        right: calc(40vw + 16px) !important;
+        left: auto !important;
     }
     
-    /* Calorie badge */
+    /* Calorie badge - above walking time */
     #calorie-badge {
-        right: calc(50% + 8px) !important;
+        position: fixed !important;
+        top: auto !important;
+        bottom: calc(130px + env(safe-area-inset-bottom)) !important;
+        right: calc(40vw + 16px) !important;
+        left: auto !important;
     }
     
-    /* Floating controls (station selector) - top of panel area */
+    /* Floating controls - top of panel */
     #floating-controls {
         position: fixed !important;
-        top: 8px !important;
-        left: calc(50% + 16px) !important;
+        top: calc(8px + env(safe-area-inset-top)) !important;
+        left: calc(60vw + 16px) !important;
         right: 16px !important;
+        width: auto !important;
         z-index: 10100;
     }
     
-    /* Quick actions - in panel area */
+    /* Quick actions - in panel, always visible */
     .quick-actions-panel {
+        position: relative !important;
         margin-top: 0 !important;
     }
     
-    /* Routes list - scrollable in panel */
+    /* Routes list - scrollable */
     .routes-list {
         overflow-y: auto !important;
-        max-height: calc(100vh - 200px) !important;
+        max-height: none !important;
+        padding-bottom: 40px !important;
     }
     
-    /* Skyline - bottom of panel */
+    /* Skyline - hide in landscape to save space */
     .skyline-inline {
-        display: none !important; /* Hide skyline in landscape to save space */
+        display: none !important;
     }
     
-    /* Crosshair - center of map area (left half) */
+    /* Crosshair - center of map (30vw from left) */
     .map-crosshair {
-        left: 25% !important; /* Center of left half */
+        left: 30vw !important;
+        right: auto !important;
     }
     
-    /* Distance circles - adjust for map area */
+    /* Distance circles - adjust for map width */
     .distance-circle-label {
-        font-size: 10px !important;
+        font-size: 9px !important;
+    }
+    
+    /* Station cards - adjust for narrower panel */
+    .station-card {
+        padding: 12px !important;
+    }
+    
+    .station-name {
+        font-size: 0.9rem !important;
+    }
+    
+    /* Routes header */
+    .routes-header {
+        padding: 12px 0 !important;
+    }
+    
+    /* Detail overlay - adjust for panel */
+    .detail-bus-overlay-panel {
+        left: calc(60vw + 16px) !important;
+        right: 16px !important;
+        width: auto !important;
     }
 }

@@ -2461,6 +2461,21 @@ function getPanelMaxPx() {
 
 function setupPanelDrag() {
     if (!arrivalsPanel) return;
+    
+    // Check if landscape mode - disable dragging
+    const isLandscape = () => window.matchMedia("(orientation: landscape)").matches;
+    
+    if (isLandscape()) {
+        console.log('[Panel] Landscape mode - dragging disabled');
+        // In landscape, panel is static sidebar - no dragging
+        const minPx = vhToPx(PANEL_MIN_VH);
+        arrivalsPanel.style.transition = 'none';
+        arrivalsPanel.style.transform = 'none';
+        arrivalsPanel.style.height = '100vh';
+        arrivalsPanel.dataset.visibleH = String(minPx);
+        return; // Exit - no drag setup
+    }
+    
     // Inject a visible grabber handle for reliability on iOS
     let grabber = arrivalsPanel.querySelector('.sheet-grabber');
     if (!grabber) {
@@ -2964,6 +2979,29 @@ function installBounceGuard() {
 
 // Install viewport polyfill FIRST before any layout calculations
 installViewportPolyfill();
+
+// Handle orientation changes
+window.addEventListener('orientationchange', () => {
+    console.log('[Orientation] Changed - reinitializing layout');
+    setTimeout(() => {
+        installViewportPolyfill();
+        // Reinitialize panel drag (will disable in landscape)
+        setupPanelDrag();
+        // Invalidate map size
+        if (map) map.invalidateSize();
+    }, 300);
+});
+
+// Also handle resize (for desktop testing)
+let resizeTimeout;
+window.addEventListener('resize', () => {
+    clearTimeout(resizeTimeout);
+    resizeTimeout = setTimeout(() => {
+        const isLandscape = window.matchMedia("(orientation: landscape)").matches;
+        console.log('[Resize] Orientation:', isLandscape ? 'landscape' : 'portrait');
+        if (map) map.invalidateSize();
+    }, 300);
+});
 
 // IMMEDIATELY position panel to prevent flash - don't wait for requestAnimationFrame
 if (arrivalsPanel) {
