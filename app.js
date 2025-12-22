@@ -3059,13 +3059,50 @@ if (window.WeatherModule) {
 // Lock screen orientation to portrait (PWA and browser)
 try {
     if (screen.orientation && screen.orientation.lock) {
-        screen.orientation.lock('portrait').catch(err => {
+        screen.orientation.lock('portrait-primary').catch(err => {
             console.log('Orientation lock not supported or failed:', err);
         });
     }
 } catch (e) {
     console.log('Screen orientation API not available');
 }
+
+// BLOCK orientation change events - prevent layout from responding to rotation
+window.addEventListener('orientationchange', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    // Force back to portrait
+    if (window.orientation !== 0 && window.orientation !== 180) {
+        document.documentElement.style.transform = 'rotate(-90deg)';
+        document.documentElement.style.transformOrigin = 'left top';
+        document.documentElement.style.width = '100vh';
+        document.documentElement.style.height = '100vw';
+        document.documentElement.style.position = 'absolute';
+        document.documentElement.style.top = '100%';
+        document.documentElement.style.left = '0';
+    } else {
+        document.documentElement.style.transform = '';
+        document.documentElement.style.transformOrigin = '';
+        document.documentElement.style.width = '';
+        document.documentElement.style.height = '';
+        document.documentElement.style.position = '';
+        document.documentElement.style.top = '';
+        document.documentElement.style.left = '';
+    }
+}, true);
+
+// Block resize events during orientation change
+let resizeTimeout;
+window.addEventListener('resize', (e) => {
+    clearTimeout(resizeTimeout);
+    resizeTimeout = setTimeout(() => {
+        // Only allow resize if in portrait
+        if (window.innerWidth > window.innerHeight) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+    }, 100);
+}, true);
 
 // Update theme-color for browser status bar (only in browser, not PWA)
 try {
