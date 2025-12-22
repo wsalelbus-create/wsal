@@ -1594,24 +1594,25 @@ function updateMap() {
                     <svg width="140" height="140" viewBox="0 0 140 140" xmlns="http://www.w3.org/2000/svg" style="overflow: visible;">
                         <defs>
                             <!-- Green fog (bold until mid-cone, then fades) -->
-                            <linearGradient id="coneGrad" x1="70" y1="70" x2="70" y2="34" gradientUnits="userSpaceOnUse">
-                                <stop offset="0%"  stop-color="rgba(53,199,89,0.60)"/>
-                                <stop offset="35%" stop-color="rgba(53,199,89,0.50)"/>
-                                <stop offset="55%" stop-color="rgba(53,199,89,0.30)"/>
-                                <stop offset="80%" stop-color="rgba(53,199,89,0.08)"/>
+                            <linearGradient id="coneGrad" x1="70" y1="70" x2="70" y2="28" gradientUnits="userSpaceOnUse">
+                                <stop offset="0%"  stop-color="rgba(53,199,89,0.65)"/>
+                                <stop offset="35%" stop-color="rgba(53,199,89,0.55)"/>
+                                <stop offset="55%" stop-color="rgba(53,199,89,0.35)"/>
+                                <stop offset="80%" stop-color="rgba(53,199,89,0.10)"/>
                                 <stop offset="100%" stop-color="rgba(53,199,89,0.00)"/>
                             </linearGradient>
                         </defs>
-                        <!-- Shorter, wider, Citymapper-like wedge (no base stroke) -->
-                        <path d="M70 70 L46 34 L94 34 Z" fill="url(#coneGrad)" stroke="none"/>
+                        <!-- Bigger, wider cone like Citymapper -->
+                        <path d="M70 70 L40 28 L100 28 Z" fill="url(#coneGrad)" stroke="none"/>
                         <!-- Thinner edge bars, green -->
-                        <line x1="70" y1="70" x2="46" y2="34" stroke="rgba(53,199,89,0.60)" stroke-width="1.2" stroke-linecap="round"/>
-                        <line x1="70" y1="70" x2="94" y2="34" stroke="rgba(53,199,89,0.60)" stroke-width="1.2" stroke-linecap="round"/>
+                        <line x1="70" y1="70" x2="40" y2="28" stroke="rgba(53,199,89,0.65)" stroke-width="1.4" stroke-linecap="round"/>
+                        <line x1="70" y1="70" x2="100" y2="28" stroke="rgba(53,199,89,0.65)" stroke-width="1.4" stroke-linecap="round"/>
                     </svg>
                 </div>
-                <!-- Soft halo behind the blue location dot -->
-                <div class="user-dot-halo" style="position:absolute; left:50%; top:50%; width: 36px; height: 36px; border-radius: 50%; transform: translate(-50%, -50%); background: radial-gradient(circle, rgba(0,102,204,0.35) 0%, rgba(0,102,204,0.18) 45%, rgba(0,102,204,0.00) 75%);"></div>
-                <div class="user-dot" style="position:absolute; left:50%; top:50%; width: 18px; height: 18px; background: #0066CC; border-radius: 50%; border: 3px solid white; box-shadow: 0 2px 8px rgba(0,0,0,0.30); transform: translate(-50%, -50%);"></div>
+                <!-- Bigger soft halo behind the blue location dot (Citymapper size) -->
+                <div class="user-dot-halo" style="position:absolute; left:50%; top:50%; width: 52px; height: 52px; border-radius: 50%; transform: translate(-50%, -50%); background: radial-gradient(circle, rgba(0,102,204,0.40) 0%, rgba(0,102,204,0.22) 45%, rgba(0,102,204,0.00) 75%);"></div>
+                <!-- Bigger blue dot (Citymapper size) -->
+                <div class="user-dot" style="position:absolute; left:50%; top:50%; width: 24px; height: 24px; background: #0066CC; border-radius: 50%; border: 4px solid white; box-shadow: 0 2px 10px rgba(0,0,0,0.35); transform: translate(-50%, -50%);"></div>
             </div>`;
 
         if (userMarker) {
