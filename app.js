@@ -697,6 +697,7 @@ let geoWatchId = null;            // Geolocation watch ID
 let deviceOrientationActive = false;
 let orientationPermissionGranted = false;
 let hasHeadingFix = false;        // True after first heading value observed
+let isGPSRecentering = false;     // Flag to prevent reordering during GPS re-center
 // Simple calorie model: ~55 kcal per km (average adult brisk walk)
 const KCAL_PER_KM = 55;
 
@@ -1547,8 +1548,6 @@ function initMap() {
     
     // Auto-reorder stations when map is moved in bus mode
     let reorderTimeout;
-    let lastDragEndTime = 0; // Track when panel drag ended to avoid false triggers
-    
     map.on('movestart', () => {
         try {
             if (uiMode === 'bus' && !busDetailActive) {
@@ -1610,18 +1609,10 @@ function initMap() {
             if (uiMode === 'bus' && !busDetailActive) {
                 // Keep crosshair visible (don't hide it)
                 
-                // IMPORTANT: Don't reorder if map movement was caused by panel dragging (parallax)
-                // Only reorder when user manually pans the map
-                if (panelDragging) {
-                    console.log('[moveend] Skipping reorder - panel is being dragged');
-                    return;
-                }
-                
-                // Also skip if panel drag just ended (within 500ms) to avoid false triggers
-                const lastEnd = window._lastPanelDragEnd || 0;
-                const timeSinceDragEnd = Date.now() - lastEnd;
-                if (lastEnd > 0 && timeSinceDragEnd < 500) {
-                    console.log('[moveend] Skipping reorder - panel drag just ended:', timeSinceDragEnd, 'ms ago');
+                // SKIP reordering if this moveend was triggered by GPS re-centering
+                if (isGPSRecentering) {
+                    console.log('[moveend] Skipping reorder - GPS re-center in progress');
+                    isGPSRecentering = false; // reset flag
                     return;
                 }
                 
@@ -2578,14 +2569,6 @@ function setupPanelDrag() {
                 dragging = true;
                 panelDragging = true;
                 arrivalsPanel.style.transition = 'none';
-                
-                // CRITICAL: Disable Leaflet map dragging to prevent moveend events during panel drag
-                if (map && map.dragging) {
-                    try {
-                        map.dragging.disable();
-                        console.log('[DRAG START] Disabled map dragging to prevent false moveend events');
-                    } catch (e) {}
-                }
                 console.log('[DRAG START] dy:', dy, 'uiMode:', uiMode, 'busDetailActive:', busDetailActive, 'expanded:', arrivalsPanel.classList.contains('expanded'), 'startVisible:', startVisible, 'startY:', startY, 'currentY:', y);
             } else {
                 return; // not enough movement yet
@@ -2666,21 +2649,6 @@ function setupPanelDrag() {
         pendingDrag = false;
         panelDragging = false;
         startTarget = null;
-        
-        // Re-enable Leaflet map dragging after panel drag ends
-        if (map && map.dragging) {
-            try {
-                map.dragging.enable();
-                console.log('[DRAG END] Re-enabled map dragging');
-            } catch (e) {}
-        }
-        
-        // Record when drag ended to prevent false map moveend triggers
-        if (typeof lastDragEndTime !== 'undefined') {
-            lastDragEndTime = Date.now();
-        }
-        // Also expose globally for map event handlers
-        try { window._lastPanelDragEnd = Date.now(); } catch {}
         
         // DON'T reset map immediately - let it animate together with panel snap
         // Map will be reset after we determine the snap target
@@ -2789,9 +2757,10 @@ function setupPanelDrag() {
                         }
                     }
                     
-                    // Re-center map on GPS when pulling up from 20vh (idle and walk modes only, NOT bus)
-                    if (uiMode !== 'bus' && userLat && userLon && target > circlesHook + 10) {
+                    // Re-center map on GPS when pulling up from 20vh (ALL screens)
+                    if (userLat && userLon && target > circlesHook + 10) {
                         console.log('[MAP] Re-centering on GPS after pulling up from 20vh');
+                        isGPSRecentering = true; // Set flag to prevent reordering
                         map.setView([userLat, userLon], map.getZoom(), { animate: true, duration: 0.3 });
                     }
                     
@@ -2858,9 +2827,10 @@ function setupPanelDrag() {
                 }
             }
             
-            // Re-center map on GPS when pulling up from 20vh (idle and walk modes only, NOT bus)
-            if (uiMode !== 'bus' && userLat && userLon && target > circlesHook + 10) {
+            // Re-center map on GPS when pulling up from 20vh (ALL screens)
+            if (userLat && userLon && target > circlesHook + 10) {
                 console.log('[MAP] Re-centering on GPS after pulling up from 20vh');
+                isGPSRecentering = true; // Set flag to prevent reordering
                 map.setView([userLat, userLon], map.getZoom(), { animate: true, duration: 0.3 });
             }
             
