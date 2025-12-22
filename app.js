@@ -1759,14 +1759,17 @@ function showDistanceCircles() {
     console.log('[showDistanceCircles] ✅ CREATING NEW CIRCLES LAYER');
     distanceCirclesLayer = L.layerGroup().addTo(map);
     
-    // Create circles immediately with estimated distances
-    // Average walking speed: ~5 km/h = ~83 m/min
+    // Start with estimated circles, then refine with OSRM
     const times = [5, 15, 60]; // minutes
-    const radii = [415, 1245, 4980]; // meters: 5min=415m, 15min=1245m, 60min=4980m
+    const estimatedRadii = [350, 1200, 5000]; // initial estimates
+    
+    // Create circles immediately with estimates
+    const circles = [];
+    const labels = [];
     
     for (let i = 0; i < times.length; i++) {
         const minutes = times[i];
-        const radiusMeters = radii[i];
+        const radiusMeters = estimatedRadii[i];
         
         console.log(`[showDistanceCircles] ✅ Creating circle ${i + 1}/3: ${minutes} min, radius: ${radiusMeters}m`);
         
@@ -1781,14 +1784,12 @@ function showDistanceCircles() {
             interactive: false
         });
         circle.addTo(distanceCirclesLayer);
+        circles.push(circle);
         console.log(`[showDistanceCircles] ✅ Circle ${i + 1}/3 ADDED TO MAP`);
         
         // Calculate label position at top of circle
-        // 1 degree latitude ≈ 111,000 meters
         const latOffset = radiusMeters / 111000;
         const labelLat = userLat + latOffset;
-        
-        console.log(`[showDistanceCircles] ✅ Creating label ${i + 1}/3: "${minutes} min" at lat: ${labelLat}`);
         
         // Add text label with walking icon at top of circle
         const marker = L.marker([labelLat, userLon], {
@@ -1807,6 +1808,7 @@ function showDistanceCircles() {
             interactive: false
         });
         marker.addTo(distanceCirclesLayer);
+        labels.push(marker);
         console.log(`[showDistanceCircles] ✅ Label ${i + 1}/3 ADDED TO MAP`);
     }
     
@@ -1819,6 +1821,73 @@ function showDistanceCircles() {
     } catch (e) {
         console.log('[showDistanceCircles] Error invalidating map:', e);
     }
+    
+    // Now refine with OSRM in background (async)
+    refineCirclesWithOSRM(times, circles, labels);
+}
+
+// Refine circle radii using OSRM real walking routes
+async function refineCirclesWithOSRM(times, circles, labels) {
+    console.log('[refineCirclesWithOSRM] Starting OSRM refinement...');
+    
+    // Test in 8 directions for better accuracy
+    const directions = [
+        { lat: 1, lon: 0 },      // north
+        { lat: 0.7, lon: 0.7 },  // northeast
+        { lat: 0, lon: 1 },      // east
+        { lat: -0.7, lon: 0.7 }, // southeast
+        { lat: -1, lon: 0 },     // south
+        { lat: -0.7, lon: -0.7 },// southwest
+        { lat: 0, lon: -1 },     // west
+        { lat: 0.7, lon: -0.7 }  // northwest
+    ];
+    
+    for (let i = 0; i < times.length; i++) {
+        const targetMinutes = times[i];
+        let totalRadius = 0;
+        let validSamples = 0;
+        
+        // Test each direction
+        for (const dir of directions) {
+            // Start with small estimate and iterate
+            let testRadius = targetMinutes * 70; // conservative start (70m/min)
+            
+            try {
+                const metersPerDegree = 111000;
+                const testLat = userLat + (dir.lat * testRadius / metersPerDegree);
+                const testLon = userLon + (dir.lon * testRadius / metersPerDegree);
+                
+                const url = `https://router.project-osrm.org/route/v1/foot/${userLon},${userLat};${testLon},${testLat}?overview=false`;
+                const res = await fetch(url);
+                const data = await res.json();
+                
+                if (data && data.code === 'Ok' && data.routes && data.routes[0]) {
+                    const actualMinutes = data.routes[0].duration / 60;
+                    // Scale radius based on actual vs target
+                    const scaledRadius = testRadius * (targetMinutes / actualMinutes);
+                    totalRadius += scaledRadius;
+                    validSamples++;
+                }
+            } catch (e) {
+                // Ignore errors, use estimate
+            }
+        }
+        
+        if (validSamples > 0) {
+            const refinedRadius = Math.round(totalRadius / validSamples);
+            console.log(`[refineCirclesWithOSRM] ${targetMinutes}min: ${refinedRadius}m (${validSamples} samples)`);
+            
+            // Update circle radius
+            circles[i].setRadius(refinedRadius);
+            
+            // Update label position
+            const latOffset = refinedRadius / 111000;
+            const labelLat = userLat + latOffset;
+            labels[i].setLatLng([labelLat, userLon]);
+        }
+    }
+    
+    console.log('[refineCirclesWithOSRM] ✅ Refinement complete');
 }
 
 // Hide distance circles
@@ -2549,7 +2618,7 @@ function setupPanelDrag() {
                 const elapsed = ts - startTs;
                 // Speed decreases linearly with time until it hits 0
                 const vNow = Math.max(0, absV - DECEL * elapsed);
-                h = clamp(h + dir * vNow * dt, minPx, maxPx);
+                h = clamp(h + dir * vNow * dt, circlesHook, maxPx); // Allow down to circles hook, not just minPx
                 
                 // Use transform directly with GPU acceleration for buttery smooth 60fps animation
                 const offset = Math.max(0, maxPx - h);
@@ -2558,11 +2627,20 @@ function setupPanelDrag() {
                 arrivalsPanel.dataset.visibleH = String(h);
                 
                 // Stop if speed nearly zero or bounds reached
-                const nearBound = (h <= minPx + 0.5) || (h >= maxPx - 0.5);
+                const nearBound = (h <= circlesHook + 0.5) || (h >= maxPx - 0.5);
                 if ((elapsed >= MIN_GLIDE_MS && vNow <= 0.005) || nearBound) {
                     inertiaActive = false;
-                    // Final snap with a soft easing
-                    const target = pickSnapTarget(h, dir * vNow);
+                    
+                    // Special snap logic for circles hook
+                    let target;
+                    if (h <= circlesHook + vhToPx(2)) {
+                        // Very close to circles hook - snap to it
+                        target = circlesHook;
+                    } else {
+                        // Otherwise use normal snap stops
+                        target = pickSnapTarget(h, dir * vNow);
+                    }
+                    
                     arrivalsPanel.style.transition = 'transform 0.22s cubic-bezier(0.25, 0.46, 0.45, 0.94)'; // iOS-like easing
                     setPanelVisibleHeight(target);
                     
@@ -2581,10 +2659,10 @@ function setupPanelDrag() {
                     
                     // Show/hide distance circles based on final position in idle mode
                     if (uiMode === 'idle' && userLat && userLon) {
-                        const threshold = minPx + vhToPx(10);
-                        if (target > threshold && !distanceCirclesLayer) {
+                        const circlesHook = vhToPx(20);
+                        if (target <= circlesHook && !distanceCirclesLayer) {
                             showDistanceCircles();
-                        } else if (target <= threshold && distanceCirclesLayer) {
+                        } else if (target > circlesHook && distanceCirclesLayer) {
                             hideDistanceCircles();
                         }
                     }
