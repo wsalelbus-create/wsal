@@ -993,8 +993,8 @@ html, body {
 
 /* Map Crosshair (Citymapper style) */
 .map-crosshair {
-    position: fixed; /* fixed to viewport center */
-    top: 30vh; /* center in visible map area */
+    position: fixed; /* fixed to viewport, not map-view */
+    top: 30vh; /* center in visible map area (not oversized map) */
     left: 50%;
     transform: translate(-50%, -50%);
     z-index: 1001; /* above map (1), below panel (1003) */
