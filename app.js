@@ -2373,8 +2373,11 @@ if (busMapContainer && busMapImage) {
     let isPanning = false;
 
     function applyTransform() {
-        busMapImage.style.transform = `translate(${posX}px, ${posY}px) scale(${scale})`;
+        const transformValue = `translate(${posX}px, ${posY}px) scale(${scale})`;
+        busMapImage.style.transform = transformValue;
         busMapImage.style.transformOrigin = 'center center';
+        console.log('🔵 TRANSFORM APPLIED:', transformValue);
+        console.log('🔵 IMAGE ELEMENT:', busMapImage);
     }
 
     function getDistance(t1, t2) {
