@@ -2330,6 +2330,31 @@ if (actionBusBtn) {
     actionBusBtn.addEventListener('pointerup', () => { setUIMode('bus'); });
 }
 
+// Map button - show full-screen bus map
+const actionMapBtn = document.getElementById('action-map');
+const busMapScreen = document.getElementById('bus-map-screen');
+const busMapBackBtn = document.getElementById('bus-map-back-btn');
+
+if (actionMapBtn && busMapScreen) {
+    actionMapBtn.addEventListener('click', () => {
+        busMapScreen.classList.remove('hidden');
+    });
+    actionMapBtn.addEventListener('touchend', (e) => {
+        e.preventDefault();
+        busMapScreen.classList.remove('hidden');
+    }, { passive: false });
+}
+
+if (busMapBackBtn && busMapScreen) {
+    busMapBackBtn.addEventListener('click', () => {
+        busMapScreen.classList.add('hidden');
+    });
+    busMapBackBtn.addEventListener('touchend', (e) => {
+        e.preventDefault();
+        busMapScreen.classList.add('hidden');
+    }, { passive: false });
+}
+
 // Back button navigation rules:
 // - If on 3rd screen (walk + busDetailActive), go back to Bus list.
 // - Else if on Bus list, go back to Home (idle).
