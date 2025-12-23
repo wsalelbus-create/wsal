@@ -2980,13 +2980,6 @@ function installBounceGuard() {
         '#action-bus', '#action-walk', '.back-badge', '#settings-btn'
     ];
     document.addEventListener('touchmove', (e) => {
-        // In landscape, ALWAYS allow panel scrolling
-        const isLandscape = window.matchMedia("(orientation: landscape)").matches;
-        if (isLandscape) {
-            const inPanel = e.target.closest('.arrivals-panel');
-            if (inPanel) return; // Allow panel scrolling in landscape
-        }
-        
         if (panelDragging) { e.preventDefault(); return; }
         const ok = allowSelectors.some(sel => e.target.closest(sel));
         if (ok) return; // allow default touchmove
