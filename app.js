@@ -2374,10 +2374,11 @@ if (busMapContainer && busMapImage) {
     let panDirection = null;
 
     function applyTransform() {
-        const transformValue = `translate(${posX}px, ${posY}px) scale(${scale})`;
-        // Try multiple methods for Safari compatibility
+        // Use both transform and zoom for maximum compatibility
+        const transformValue = `translate(${posX}px, ${posY}px)`;
         busMapImage.style.setProperty('transform', transformValue, 'important');
         busMapImage.style.setProperty('-webkit-transform', transformValue, 'important');
+        busMapImage.style.setProperty('zoom', scale, 'important');
         busMapImage.style.setProperty('transform-origin', 'center center', 'important');
         busMapImage.style.setProperty('-webkit-transform-origin', 'center center', 'important');
     }
@@ -2386,6 +2387,22 @@ if (busMapContainer && busMapImage) {
         const dx = t1.clientX - t2.clientX;
         const dy = t1.clientY - t2.clientY;
         return Math.sqrt(dx * dx + dy * dy);
+    }
+
+    function canPanVertically() {
+        if (scale <= 1) return false;
+        const rect = busMapImage.getBoundingClientRect();
+        const containerRect = busMapContainer.getBoundingClientRect();
+        // Can pan if image is taller than container
+        return rect.height > containerRect.height;
+    }
+
+    function canPanHorizontally() {
+        if (scale <= 1) return false;
+        const rect = busMapImage.getBoundingClientRect();
+        const containerRect = busMapContainer.getBoundingClientRect();
+        // Can pan if image is wider than container
+        return rect.width > containerRect.width;
     }
 
     busMapContainer.addEventListener('touchstart', function(e) {
@@ -2397,7 +2414,6 @@ if (busMapContainer && busMapImage) {
             isPanning = false;
             panDirection = null;
         } else if (e.touches.length === 1) {
-            // Only allow panning if zoomed in
             if (scale > 1) {
                 startX = e.touches[0].clientX;
                 startY = e.touches[0].clientY;
@@ -2416,7 +2432,6 @@ if (busMapContainer && busMapImage) {
             const currentDistance = getDistance(e.touches[0], e.touches[1]);
             scale = Math.max(1, Math.min(4, (currentDistance / initialDistance) * initialScale));
             
-            // Reset position when zooming back to 1
             if (scale === 1) {
                 posX = 0;
                 posY = 0;
@@ -2424,25 +2439,26 @@ if (busMapContainer && busMapImage) {
             
             applyTransform();
         } else if (e.touches.length === 1 && isPanning && scale > 1) {
-            // Pan - only when zoomed, lock to one direction
             const deltaX = e.touches[0].clientX - startX;
             const deltaY = e.touches[0].clientY - startY;
             
+            // Determine direction
             if (!panDirection) {
                 if (Math.abs(deltaX) > 10 || Math.abs(deltaY) > 10) {
                     panDirection = Math.abs(deltaX) > Math.abs(deltaY) ? 'horizontal' : 'vertical';
                 }
             }
             
-            if (panDirection === 'horizontal') {
+            // Only allow pan if map edges exceed screen edges
+            if (panDirection === 'horizontal' && canPanHorizontally()) {
                 posX += deltaX;
                 startX = e.touches[0].clientX;
-            } else if (panDirection === 'vertical') {
+                applyTransform();
+            } else if (panDirection === 'vertical' && canPanVertically()) {
                 posY += deltaY;
                 startY = e.touches[0].clientY;
+                applyTransform();
             }
-            
-            applyTransform();
         }
     }, { passive: false, capture: true });
 
