@@ -1564,9 +1564,13 @@ function initMap() {
         } catch {}
     });
     
-    // ALL SCREENS: Collapse panel to 20vh when user taps/touches the map
+    // ALL SCREENS: Collapse panel to 20vh when user taps/touches the map (PORTRAIT ONLY)
     map.on('click', () => {
         try {
+            // Disable in landscape mode - panel is static sidebar
+            const isLandscape = window.matchMedia('(orientation: landscape)').matches;
+            if (isLandscape) return;
+            
             const currentH = window._getPanelVisibleHeight ? window._getPanelVisibleHeight() : 0;
             const minPx = vhToPx(PANEL_MIN_VH); // 40vh
             const maxPx = getPanelMaxPx();
