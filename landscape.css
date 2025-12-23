@@ -3,50 +3,7 @@
    iOS Safari ignores manifest orientation lock
    ============================================= */
 
-/* Tablets and larger screens in landscape */
-@media screen and (orientation: landscape) and (min-width: 768px) {
-    /* Adjust split for tablets: 65% map, 35% panel for better balance */
-    .map-view-container {
-        width: 65vw !important;
-    }
-    
-    .arrivals-panel {
-        left: 65vw !important;
-        width: 35vw !important;
-    }
-    
-    /* Adjust button positions for 65/35 split */
-    .settings-badge {
-        right: calc(35vw + 16px) !important;
-    }
-    
-    .map-controls-stack {
-        right: calc(35vw + 16px) !important;
-    }
-    
-    #walking-time {
-        right: calc(35vw + 16px) !important;
-    }
-    
-    #calorie-badge {
-        right: calc(35vw + 16px) !important;
-    }
-    
-    #floating-controls {
-        left: calc(65vw + 16px) !important;
-    }
-    
-    .map-crosshair {
-        left: 32.5vw !important; /* Center of 65vw map */
-    }
-    
-    .detail-bus-overlay-panel {
-        left: calc(65vw + 16px) !important;
-    }
-}
-
-/* Phones and small tablets in landscape */
-@media screen and (orientation: landscape) and (max-width: 767px) {
+@media screen and (orientation: landscape) {
     /* Split screen: 60% map, 40% panel */
     
     /* Map takes left 60% - FULL HEIGHT */
@@ -208,65 +165,5 @@
         left: calc(60vw + 16px) !important;
         right: 16px !important;
         width: auto !important;
-    }
-}
-
-/* Tablets in portrait mode - wider panel for better readability */
-@media screen and (orientation: portrait) and (min-width: 768px) {
-    /* Ensure map container works properly in tablet portrait */
-    .map-view-container {
-        position: relative !important;
-        width: 100% !important;
-        height: calc(var(--vh, 1vh) * 100) !important;
-        top: 0 !important;
-        left: 0 !important;
-    }
-    
-    #map-container {
-        width: 100% !important;
-        height: 180% !important; /* Oversized for parallax */
-        position: absolute !important;
-        top: -50% !important;
-        left: 0 !important;
-    }
-    
-    /* Panel stays at bottom like mobile, but with wider padding */
-    .arrivals-panel {
-        position: fixed !important;
-        left: 0 !important;
-        right: 0 !important;
-        bottom: 0 !important;
-        width: 100% !important;
-        padding-left: 10vw !important;
-        padding-right: 10vw !important;
-    }
-    
-    /* Station cards larger on tablets */
-    .station-card {
-        padding: 16px !important;
-    }
-    
-    .station-name {
-        font-size: 1.1rem !important;
-    }
-    
-    /* Larger buttons on tablets */
-    .settings-badge,
-    .back-badge,
-    .map-control-btn {
-        width: 52px !important;
-        height: 52px !important;
-    }
-    
-    /* Larger quick action buttons */
-    .qa-btn {
-        width: 90px !important;
-        height: 90px !important;
-    }
-    
-    /* Ensure map tiles load properly */
-    .leaflet-container {
-        width: 100% !important;
-        height: 100% !important;
     }
 }
