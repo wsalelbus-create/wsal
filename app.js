@@ -2360,75 +2360,101 @@ const busMapContainer = document.querySelector('.bus-map-container');
 const busMapImage = document.getElementById('bus-map-image');
 
 if (busMapContainer && busMapImage) {
+    console.log('Bus map zoom initialized');
+    
     let scale = 1;
-    let translateX = 0;
-    let translateY = 0;
-    let initialDistance = 0;
-    let initialScale = 1;
-    let lastTouchX = 0;
-    let lastTouchY = 0;
-    let isPanning = false;
+    let posX = 0;
+    let posY = 0;
+    let startDistance = 0;
+    let startScale = 1;
+    let startX = 0;
+    let startY = 0;
+    let lastX = 0;
+    let lastY = 0;
+    let isDragging = false;
 
-    function updateTransform() {
-        busMapImage.style.transform = `translate(${translateX}px, ${translateY}px) scale(${scale})`;
+    function applyTransform() {
+        busMapImage.style.transform = `translate(${posX}px, ${posY}px) scale(${scale})`;
+        console.log(`Transform applied: scale=${scale}, x=${posX}, y=${posY}`);
     }
 
-    function getDistance(touches) {
-        const dx = touches[0].clientX - touches[1].clientX;
-        const dy = touches[0].clientY - touches[1].clientY;
+    function getTouchDistance(touch1, touch2) {
+        const dx = touch1.clientX - touch2.clientX;
+        const dy = touch1.clientY - touch2.clientY;
         return Math.sqrt(dx * dx + dy * dy);
     }
 
-    busMapContainer.addEventListener('touchstart', (e) => {
-        if (e.touches.length === 2) {
-            // Pinch zoom
-            initialDistance = getDistance(e.touches);
-            initialScale = scale;
-            isPanning = false;
-        } else if (e.touches.length === 1) {
-            // Pan
-            lastTouchX = e.touches[0].clientX;
-            lastTouchY = e.touches[0].clientY;
-            isPanning = true;
-        }
-    }, { passive: true });
+    function getTouchCenter(touch1, touch2) {
+        return {
+            x: (touch1.clientX + touch2.clientX) / 2,
+            y: (touch1.clientY + touch2.clientY) / 2
+        };
+    }
 
-    busMapContainer.addEventListener('touchmove', (e) => {
+    busMapContainer.addEventListener('touchstart', function(e) {
+        console.log('Touch start:', e.touches.length, 'touches');
+        
         if (e.touches.length === 2) {
-            // Pinch zoom
+            // Two finger pinch
             e.preventDefault();
-            const currentDistance = getDistance(e.touches);
-            const scaleChange = currentDistance / initialDistance;
-            scale = Math.max(0.5, Math.min(5, initialScale * scaleChange));
-            updateTransform();
-        } else if (e.touches.length === 1 && isPanning) {
-            // Pan
-            e.preventDefault();
-            const deltaX = e.touches[0].clientX - lastTouchX;
-            const deltaY = e.touches[0].clientY - lastTouchY;
-            translateX += deltaX;
-            translateY += deltaY;
-            lastTouchX = e.touches[0].clientX;
-            lastTouchY = e.touches[0].clientY;
-            updateTransform();
+            startDistance = getTouchDistance(e.touches[0], e.touches[1]);
+            startScale = scale;
+            isDragging = false;
+            console.log('Pinch started, distance:', startDistance);
+        } else if (e.touches.length === 1) {
+            // One finger pan
+            startX = e.touches[0].clientX - posX;
+            startY = e.touches[0].clientY - posY;
+            lastX = e.touches[0].clientX;
+            lastY = e.touches[0].clientY;
+            isDragging = true;
+            console.log('Pan started');
         }
     }, { passive: false });
 
-    busMapContainer.addEventListener('touchend', (e) => {
-        if (e.touches.length === 0) {
-            isPanning = false;
+    busMapContainer.addEventListener('touchmove', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        if (e.touches.length === 2) {
+            // Pinch zoom
+            const currentDistance = getTouchDistance(e.touches[0], e.touches[1]);
+            const newScale = (currentDistance / startDistance) * startScale;
+            scale = Math.max(0.5, Math.min(4, newScale));
+            applyTransform();
+        } else if (e.touches.length === 1 && isDragging) {
+            // Pan
+            posX = e.touches[0].clientX - startX;
+            posY = e.touches[0].clientY - startY;
+            applyTransform();
         }
-    }, { passive: true });
+    }, { passive: false });
 
-    // Reset transform when opening map
+    busMapContainer.addEventListener('touchend', function(e) {
+        console.log('Touch end');
+        if (e.touches.length === 0) {
+            isDragging = false;
+        }
+    }, { passive: false });
+
+    busMapContainer.addEventListener('touchcancel', function(e) {
+        console.log('Touch cancel');
+        isDragging = false;
+    }, { passive: false });
+
+    // Reset when opening
     if (actionMapBtn) {
-        actionMapBtn.addEventListener('click', () => {
+        const resetMap = () => {
             scale = 1;
-            translateX = 0;
-            translateY = 0;
-            updateTransform();
-        });
+            posX = 0;
+            posY = 0;
+            applyTransform();
+            console.log('Map reset');
+        };
+        actionMapBtn.addEventListener('click', resetMap);
+        actionMapBtn.addEventListener('touchend', resetMap);
     }
+}
 }
 
 // Back button navigation rules:
