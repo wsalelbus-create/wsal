@@ -2829,9 +2829,10 @@ function setupPanelDrag() {
                 target = pickSnapTarget(projected, velocity);
             }
             
-            // Use elastic bounce easing if bouncing back from over-pull
+            // Use elastic bounce easing for over-pull OR when snapping to 20vh
             const isBouncingBack = (currentH > maxPx);
-            const easing = isBouncingBack 
+            const isSnappingTo20vh = (target === circlesHook);
+            const easing = (isBouncingBack || isSnappingTo20vh)
                 ? 'transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)' // elastic bounce with overshoot
                 : 'transform 0.24s cubic-bezier(.2,.7,.2,1)'; // normal snap
             
