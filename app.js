@@ -2356,7 +2356,7 @@ if (busMapBackBtn && busMapScreen) {
 }
 
 
-// Bus Map Zoom and Pan - Citymapper style with boundaries
+// Bus Map Zoom and Pan - NO boundaries, free scrolling
 const busMapContainer = document.querySelector('.bus-map-container');
 const busMapWrapper = document.getElementById('bus-map-wrapper');
 const busMapImage = document.getElementById('bus-map-image');
@@ -2367,15 +2367,12 @@ if (busMapContainer && busMapWrapper && busMapImage) {
     let posY = 0;
     let initialDistance = null;
     let initialScale = 1;
-    let initialPosX = 0;
-    let initialPosY = 0;
     let startX = 0;
     let startY = 0;
     let isPanning = false;
     let panDirection = null;
 
     function applyTransform() {
-        // Simple transform without any fancy properties
         busMapWrapper.style.transform = 'translate(' + posX + 'px, ' + posY + 'px) scale(' + scale + ')';
         busMapWrapper.style.webkitTransform = 'translate(' + posX + 'px, ' + posY + 'px) scale(' + scale + ')';
     }
@@ -2386,39 +2383,17 @@ if (busMapContainer && busMapWrapper && busMapImage) {
         return Math.sqrt(dx * dx + dy * dy);
     }
 
-    function constrainPosition() {
-        // Allow more scrolling as zoom increases
-        // At scale 1: no scroll
-        // At scale 4: can scroll quite far
-        const imageWidth = busMapImage.offsetWidth;
-        const imageHeight = busMapImage.offsetHeight;
-        const containerWidth = busMapContainer.offsetWidth;
-        const containerHeight = busMapContainer.offsetHeight;
-        
-        // Calculate how much the scaled image exceeds the container
-        const scaledWidth = imageWidth * scale;
-        const scaledHeight = imageHeight * scale;
-        
-        // Max scroll is half the difference (so edges can reach center)
-        const maxX = Math.max(0, (scaledWidth - containerWidth) / 2);
-        const maxY = Math.max(0, (scaledHeight - containerHeight) / 2);
-        
-        // Constrain but allow generous boundaries
-        posX = Math.max(-maxX, Math.min(maxX, posX));
-        posY = Math.max(-maxY, Math.min(maxY, posY));
-    }
-
-    // Attach directly to container with NO capture
     busMapContainer.addEventListener('touchstart', function(e) {
         if (e.touches.length === 2) {
             e.preventDefault();
+            e.stopPropagation();
             initialDistance = getDistance(e.touches[0], e.touches[1]);
             initialScale = scale;
-            initialPosX = posX;
-            initialPosY = posY;
             isPanning = false;
             panDirection = null;
         } else if (e.touches.length === 1 && scale > 1) {
+            e.preventDefault();
+            e.stopPropagation();
             startX = e.touches[0].clientX;
             startY = e.touches[0].clientY;
             isPanning = true;
@@ -2428,21 +2403,21 @@ if (busMapContainer && busMapWrapper && busMapImage) {
 
     busMapContainer.addEventListener('touchmove', function(e) {
         e.preventDefault();
+        e.stopPropagation();
         
         if (e.touches.length === 2 && initialDistance) {
-            // Pinch zoom
+            // Pinch zoom - NO LIMITS
             const currentDistance = getDistance(e.touches[0], e.touches[1]);
-            scale = Math.max(1, Math.min(4, (currentDistance / initialDistance) * initialScale));
+            scale = Math.max(1, Math.min(10, (currentDistance / initialDistance) * initialScale));
             
             if (scale === 1) {
                 posX = 0;
                 posY = 0;
-            } else {
-                constrainPosition();
             }
             
             applyTransform();
         } else if (e.touches.length === 1 && isPanning && scale > 1) {
+            // Pan - NO BOUNDARIES
             const deltaX = e.touches[0].clientX - startX;
             const deltaY = e.touches[0].clientY - startY;
             
@@ -2458,7 +2433,6 @@ if (busMapContainer && busMapWrapper && busMapImage) {
                 startY = e.touches[0].clientY;
             }
             
-            constrainPosition();
             applyTransform();
         }
     }, false);
