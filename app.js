@@ -2371,12 +2371,15 @@ if (busMapContainer && busMapImage) {
     let startX = 0;
     let startY = 0;
     let isPanning = false;
-    let panDirection = null; // 'horizontal', 'vertical', or null
+    let panDirection = null;
 
     function applyTransform() {
         const transformValue = `translate(${posX}px, ${posY}px) scale(${scale})`;
+        // Try multiple methods for Safari compatibility
         busMapImage.style.setProperty('transform', transformValue, 'important');
+        busMapImage.style.setProperty('-webkit-transform', transformValue, 'important');
         busMapImage.style.setProperty('transform-origin', 'center center', 'important');
+        busMapImage.style.setProperty('-webkit-transform-origin', 'center center', 'important');
     }
 
     function getDistance(t1, t2) {
@@ -2385,7 +2388,6 @@ if (busMapContainer && busMapImage) {
         return Math.sqrt(dx * dx + dy * dy);
     }
 
-    // Use CAPTURE phase so these run BEFORE the global document handler
     busMapContainer.addEventListener('touchstart', function(e) {
         if (e.touches.length === 2) {
             e.preventDefault();
@@ -2395,10 +2397,13 @@ if (busMapContainer && busMapImage) {
             isPanning = false;
             panDirection = null;
         } else if (e.touches.length === 1) {
-            startX = e.touches[0].clientX;
-            startY = e.touches[0].clientY;
-            isPanning = true;
-            panDirection = null; // Will be determined on first move
+            // Only allow panning if zoomed in
+            if (scale > 1) {
+                startX = e.touches[0].clientX;
+                startY = e.touches[0].clientY;
+                isPanning = true;
+                panDirection = null;
+            }
         }
     }, { passive: false, capture: true });
 
@@ -2409,21 +2414,26 @@ if (busMapContainer && busMapImage) {
         if (e.touches.length === 2 && initialDistance) {
             // Pinch zoom
             const currentDistance = getDistance(e.touches[0], e.touches[1]);
-            scale = Math.max(0.5, Math.min(4, (currentDistance / initialDistance) * initialScale));
+            scale = Math.max(1, Math.min(4, (currentDistance / initialDistance) * initialScale));
+            
+            // Reset position when zooming back to 1
+            if (scale === 1) {
+                posX = 0;
+                posY = 0;
+            }
+            
             applyTransform();
-        } else if (e.touches.length === 1 && isPanning) {
-            // Pan - lock to one direction
+        } else if (e.touches.length === 1 && isPanning && scale > 1) {
+            // Pan - only when zoomed, lock to one direction
             const deltaX = e.touches[0].clientX - startX;
             const deltaY = e.touches[0].clientY - startY;
             
-            // Determine direction on first significant movement
             if (!panDirection) {
                 if (Math.abs(deltaX) > 10 || Math.abs(deltaY) > 10) {
                     panDirection = Math.abs(deltaX) > Math.abs(deltaY) ? 'horizontal' : 'vertical';
                 }
             }
             
-            // Apply movement only in locked direction
             if (panDirection === 'horizontal') {
                 posX += deltaX;
                 startX = e.touches[0].clientX;
