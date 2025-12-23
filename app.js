@@ -2539,6 +2539,12 @@ function setupPanelDrag() {
     window._getPanelVisibleHeight = getPanelVisibleHeight;
 
     const handleStart = (y, target) => {
+        // BLOCK in landscape mode
+        if (isLandscape()) {
+            console.log('[handleStart] BLOCKED - landscape mode');
+            return false;
+        }
+        
         console.log('[handleStart] y:', y, 'target:', target?.className || target?.tagName);
         
         // ONLY exclude actual buttons - everything else in the panel should be draggable
@@ -2585,6 +2591,9 @@ function setupPanelDrag() {
     };
 
     const handleMove = (y) => {
+        // BLOCK in landscape mode
+        if (isLandscape()) return;
+        
         if (!pendingDrag && !dragging) return; // not in a drag gesture at all
         
         if (pendingDrag && !dragging) {
@@ -2674,6 +2683,9 @@ function setupPanelDrag() {
     };
 
     const handleEnd = () => {
+        // BLOCK in landscape mode
+        if (isLandscape()) return;
+        
         if (!dragging && !pendingDrag) return;
         
         // If we never started actually dragging (just pending), reset and allow click
