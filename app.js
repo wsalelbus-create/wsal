@@ -2831,10 +2831,12 @@ function setupPanelDrag() {
             
             // Use elastic bounce easing for over-pull OR when snapping to 20vh
             const isBouncingBack = (currentH > maxPx);
-            const isSnappingTo20vh = (target === circlesHook);
+            const isSnappingTo20vh = Math.abs(target - circlesHook) < 1; // Within 1px of 20vh
             const easing = (isBouncingBack || isSnappingTo20vh)
                 ? 'transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)' // elastic bounce with overshoot
                 : 'transform 0.24s cubic-bezier(.2,.7,.2,1)'; // normal snap
+            
+            console.log('[handleEnd] Snapping to:', target, 'circlesHook:', circlesHook, 'isSnappingTo20vh:', isSnappingTo20vh, 'easing:', easing);
             
             arrivalsPanel.style.transition = easing;
             setPanelVisibleHeight(target);
