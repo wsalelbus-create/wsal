@@ -2461,6 +2461,10 @@ function getPanelMaxPx() {
 
 function setupPanelDrag() {
     if (!arrivalsPanel) return;
+    
+    // Helper: Check if in landscape mode
+    const isLandscape = () => window.matchMedia('(orientation: landscape)').matches;
+    
     // Inject a visible grabber handle for reliability on iOS
     let grabber = arrivalsPanel.querySelector('.sheet-grabber');
     if (!grabber) {
@@ -2524,6 +2528,9 @@ function setupPanelDrag() {
     window._getPanelVisibleHeight = getPanelVisibleHeight;
 
     const handleStart = (y, target) => {
+        // Disable dragging in landscape mode
+        if (isLandscape()) return false;
+        
         console.log('[handleStart] y:', y, 'target:', target?.className || target?.tagName);
         
         // ONLY exclude actual buttons - everything else in the panel should be draggable
@@ -2570,6 +2577,9 @@ function setupPanelDrag() {
     };
 
     const handleMove = (y) => {
+        // Disable dragging in landscape mode
+        if (isLandscape()) return;
+        
         if (!pendingDrag && !dragging) return; // not in a drag gesture at all
         
         if (pendingDrag && !dragging) {
@@ -2659,6 +2669,9 @@ function setupPanelDrag() {
     };
 
     const handleEnd = () => {
+        // Disable dragging in landscape mode
+        if (isLandscape()) return;
+        
         if (!dragging && !pendingDrag) return;
         
         // If we never started actually dragging (just pending), reset and allow click
@@ -3073,3 +3086,20 @@ setInterval(() => {
         }
     } catch (e) { console.warn('refresh error', e); }
 }, 60000);
+
+// Handle orientation changes (portrait ↔ landscape)
+window.addEventListener('orientationchange', () => {
+    console.log('[Orientation] Changed - reinitializing layout');
+    setTimeout(() => {
+        try {
+            // Reinitialize viewport polyfill
+            installViewportPolyfill();
+            // Reinitialize panel drag (will check landscape mode)
+            setupPanelDrag();
+            // Resize map
+            if (map) map.invalidateSize();
+        } catch (e) {
+            console.error('[Orientation] Error:', e);
+        }
+    }, 300); // Wait for orientation to settle
+});
