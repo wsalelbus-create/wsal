@@ -2368,15 +2368,15 @@ if (busMapContainer && busMapImage) {
     let posY = 0;
     let initialDistance = null;
     let initialScale = 1;
-    let lastX = 0;
-    let lastY = 0;
+    let startX = 0;
+    let startY = 0;
     let isPanning = false;
+    let panDirection = null; // 'horizontal', 'vertical', or null
 
     function applyTransform() {
         const transformValue = `translate(${posX}px, ${posY}px) scale(${scale})`;
         busMapImage.style.setProperty('transform', transformValue, 'important');
         busMapImage.style.setProperty('transform-origin', 'center center', 'important');
-        console.log('🔵 TRANSFORM APPLIED:', transformValue);
     }
 
     function getDistance(t1, t2) {
@@ -2387,19 +2387,18 @@ if (busMapContainer && busMapImage) {
 
     // Use CAPTURE phase so these run BEFORE the global document handler
     busMapContainer.addEventListener('touchstart', function(e) {
-        console.log('🔵 TOUCH START:', e.touches.length, 'touches');
         if (e.touches.length === 2) {
             e.preventDefault();
             e.stopPropagation();
             initialDistance = getDistance(e.touches[0], e.touches[1]);
             initialScale = scale;
             isPanning = false;
-            console.log('🔵 PINCH START');
+            panDirection = null;
         } else if (e.touches.length === 1) {
-            lastX = e.touches[0].clientX;
-            lastY = e.touches[0].clientY;
+            startX = e.touches[0].clientX;
+            startY = e.touches[0].clientY;
             isPanning = true;
-            console.log('🔵 PAN START');
+            panDirection = null; // Will be determined on first move
         }
     }, { passive: false, capture: true });
 
@@ -2408,29 +2407,42 @@ if (busMapContainer && busMapImage) {
         e.stopPropagation();
         
         if (e.touches.length === 2 && initialDistance) {
+            // Pinch zoom
             const currentDistance = getDistance(e.touches[0], e.touches[1]);
             scale = Math.max(0.5, Math.min(4, (currentDistance / initialDistance) * initialScale));
             applyTransform();
-            console.log('🔵 ZOOM:', scale.toFixed(2));
         } else if (e.touches.length === 1 && isPanning) {
-            const deltaX = e.touches[0].clientX - lastX;
-            const deltaY = e.touches[0].clientY - lastY;
-            posX += deltaX;
-            posY += deltaY;
-            lastX = e.touches[0].clientX;
-            lastY = e.touches[0].clientY;
+            // Pan - lock to one direction
+            const deltaX = e.touches[0].clientX - startX;
+            const deltaY = e.touches[0].clientY - startY;
+            
+            // Determine direction on first significant movement
+            if (!panDirection) {
+                if (Math.abs(deltaX) > 10 || Math.abs(deltaY) > 10) {
+                    panDirection = Math.abs(deltaX) > Math.abs(deltaY) ? 'horizontal' : 'vertical';
+                }
+            }
+            
+            // Apply movement only in locked direction
+            if (panDirection === 'horizontal') {
+                posX += deltaX;
+                startX = e.touches[0].clientX;
+            } else if (panDirection === 'vertical') {
+                posY += deltaY;
+                startY = e.touches[0].clientY;
+            }
+            
             applyTransform();
-            console.log('🔵 PAN:', posX.toFixed(0), posY.toFixed(0));
         }
     }, { passive: false, capture: true });
 
     busMapContainer.addEventListener('touchend', function(e) {
-        console.log('🔵 TOUCH END');
         if (e.touches.length < 2) {
             initialDistance = null;
         }
         if (e.touches.length === 0) {
             isPanning = false;
+            panDirection = null;
         }
     }, { passive: false, capture: true });
 
@@ -2441,7 +2453,6 @@ if (busMapContainer && busMapImage) {
             posX = 0;
             posY = 0;
             applyTransform();
-            console.log('🔵 MAP RESET');
         });
     }
 }
