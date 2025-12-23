@@ -132,9 +132,9 @@
         -webkit-overflow-scrolling: touch !important;
     }
     
-    /* Skyline - hide in landscape to save space */
+    /* Skyline - visible in landscape, adapts to panel width */
     .skyline-inline {
-        display: none !important;
+        /* SVG scales automatically to panel width */
     }
     
     /* Crosshair - center of map area (30vw horizontal, 50vh vertical) */
