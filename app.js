@@ -3083,11 +3083,14 @@ function installBounceGuard() {
         '.arrivals-panel', '.routes-list',
         '.quick-actions-panel', '.qa-btn',
         '.station-list', '.modal-content',
-        '#action-bus', '#action-walk', '.back-badge', '#settings-btn',
-        '.bus-map-container', '.bus-map-image', '#bus-map-screen'
+        '#action-bus', '#action-walk', '.back-badge', '#settings-btn'
     ];
     document.addEventListener('touchmove', (e) => {
         if (panelDragging) { e.preventDefault(); return; }
+        // Bus map handles its own touchmove, skip global handler
+        if (e.target.closest('.bus-map-container') || e.target.closest('#bus-map-screen')) {
+            return;
+        }
         const ok = allowSelectors.some(sel => e.target.closest(sel));
         if (ok) return; // allow default touchmove
         e.preventDefault(); // block page-level drag/bounce
