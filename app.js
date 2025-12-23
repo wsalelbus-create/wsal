@@ -2361,6 +2361,8 @@ const busMapContainer = document.querySelector('.bus-map-container');
 const busMapImage = document.getElementById('bus-map-image');
 
 if (busMapContainer && busMapImage) {
+    console.log('✅ Bus map elements found');
+    
     let scale = 1;
     let posX = 0;
     let posY = 0;
@@ -2381,21 +2383,25 @@ if (busMapContainer && busMapImage) {
         return Math.sqrt(dx * dx + dy * dy);
     }
 
-    busMapImage.addEventListener('touchstart', function(e) {
+    // Attach to CONTAINER not image
+    busMapContainer.addEventListener('touchstart', function(e) {
+        console.log('🔵 TOUCH START:', e.touches.length, 'touches');
         if (e.touches.length === 2) {
             e.preventDefault();
             e.stopPropagation();
             initialDistance = getDistance(e.touches[0], e.touches[1]);
             initialScale = scale;
             isPanning = false;
+            console.log('🔵 PINCH START');
         } else if (e.touches.length === 1) {
             lastX = e.touches[0].clientX;
             lastY = e.touches[0].clientY;
             isPanning = true;
+            console.log('🔵 PAN START');
         }
     }, { passive: false });
 
-    busMapImage.addEventListener('touchmove', function(e) {
+    busMapContainer.addEventListener('touchmove', function(e) {
         e.preventDefault();
         e.stopPropagation();
         
@@ -2403,6 +2409,7 @@ if (busMapContainer && busMapImage) {
             const currentDistance = getDistance(e.touches[0], e.touches[1]);
             scale = Math.max(0.5, Math.min(4, (currentDistance / initialDistance) * initialScale));
             applyTransform();
+            console.log('🔵 ZOOM:', scale.toFixed(2));
         } else if (e.touches.length === 1 && isPanning) {
             const deltaX = e.touches[0].clientX - lastX;
             const deltaY = e.touches[0].clientY - lastY;
@@ -2411,10 +2418,12 @@ if (busMapContainer && busMapImage) {
             lastX = e.touches[0].clientX;
             lastY = e.touches[0].clientY;
             applyTransform();
+            console.log('🔵 PAN:', posX.toFixed(0), posY.toFixed(0));
         }
     }, { passive: false });
 
-    busMapImage.addEventListener('touchend', function(e) {
+    busMapContainer.addEventListener('touchend', function(e) {
+        console.log('🔵 TOUCH END');
         if (e.touches.length < 2) {
             initialDistance = null;
         }
@@ -2430,6 +2439,7 @@ if (busMapContainer && busMapImage) {
             posX = 0;
             posY = 0;
             applyTransform();
+            console.log('🔵 MAP RESET');
         });
     }
 }
