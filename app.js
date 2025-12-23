@@ -2358,10 +2358,9 @@ if (busMapBackBtn && busMapScreen) {
 
 // Bus Map Zoom and Pan - only zoom the image, not the whole page
 const busMapContainer = document.querySelector('.bus-map-container');
-const busMapWrapper = document.getElementById('bus-map-wrapper');
 const busMapImage = document.getElementById('bus-map-image');
 
-if (busMapContainer && busMapWrapper && busMapImage) {
+if (busMapContainer && busMapImage) {
     console.log('✅ Bus map elements found');
     
     let scale = 1;
@@ -2375,8 +2374,8 @@ if (busMapContainer && busMapWrapper && busMapImage) {
 
     function applyTransform() {
         const transformValue = `translate(${posX}px, ${posY}px) scale(${scale})`;
-        busMapWrapper.style.transform = transformValue;
-        busMapWrapper.style.transformOrigin = 'center center';
+        busMapImage.style.setProperty('transform', transformValue, 'important');
+        busMapImage.style.setProperty('transform-origin', 'center center', 'important');
         console.log('🔵 TRANSFORM APPLIED:', transformValue);
     }
 
