@@ -3070,7 +3070,8 @@ function installBounceGuard() {
         '.arrivals-panel', '.routes-list',
         '.quick-actions-panel', '.qa-btn',
         '.station-list', '.modal-content',
-        '#action-bus', '#action-walk', '.back-badge', '#settings-btn'
+        '#action-bus', '#action-walk', '.back-badge', '#settings-btn',
+        '.bus-map-container', '.bus-map-image', '#bus-map-screen'
     ];
     document.addEventListener('touchmove', (e) => {
         if (panelDragging) { e.preventDefault(); return; }
