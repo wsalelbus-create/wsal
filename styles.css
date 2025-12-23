@@ -1250,13 +1250,18 @@ html, body {
 /* Map Container - light grey background with zoom/scroll */
 .bus-map-container {
     flex: 1;
-    overflow: auto;
-    -webkit-overflow-scrolling: touch;
+    overflow: hidden;
     padding: calc(80px + env(safe-area-inset-top)) 16px calc(16px + env(safe-area-inset-bottom)) 16px;
     background: #f5f5f5;
     display: flex;
     align-items: center;
     justify-content: center;
+}
+
+/* Wrapper for transform */
+.bus-map-wrapper {
+    display: inline-block;
+    touch-action: none;
 }
 
 /* White frame wrapper - centered, zoomable */
@@ -1269,8 +1274,7 @@ html, body {
     width: 90vw;
     max-width: 90vw;
     height: auto;
-    transform-origin: center center;
-    touch-action: none;
+    pointer-events: none;
 }
 
 .bus-map-image:active {

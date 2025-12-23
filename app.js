@@ -2356,13 +2356,12 @@ if (busMapBackBtn && busMapScreen) {
 }
 
 
-// Bus Map Zoom and Pan - only zoom the image, not the whole page
+// Bus Map Zoom and Pan - Citymapper style with boundaries
 const busMapContainer = document.querySelector('.bus-map-container');
+const busMapWrapper = document.getElementById('bus-map-wrapper');
 const busMapImage = document.getElementById('bus-map-image');
 
-if (busMapContainer && busMapImage) {
-    console.log('✅ Bus map elements found');
-    
+if (busMapContainer && busMapWrapper && busMapImage) {
     let scale = 1;
     let posX = 0;
     let posY = 0;
@@ -2374,13 +2373,9 @@ if (busMapContainer && busMapImage) {
     let panDirection = null;
 
     function applyTransform() {
-        // Use both transform and zoom for maximum compatibility
-        const transformValue = `translate(${posX}px, ${posY}px)`;
-        busMapImage.style.setProperty('transform', transformValue, 'important');
-        busMapImage.style.setProperty('-webkit-transform', transformValue, 'important');
-        busMapImage.style.setProperty('zoom', scale, 'important');
-        busMapImage.style.setProperty('transform-origin', 'center center', 'important');
-        busMapImage.style.setProperty('-webkit-transform-origin', 'center center', 'important');
+        // Apply transform to wrapper, not image
+        busMapWrapper.style.transform = `translate(${posX}px, ${posY}px) scale(${scale})`;
+        busMapWrapper.style.transformOrigin = 'center center';
     }
 
     function getDistance(t1, t2) {
@@ -2389,20 +2384,18 @@ if (busMapContainer && busMapImage) {
         return Math.sqrt(dx * dx + dy * dy);
     }
 
-    function canPanVertically() {
-        if (scale <= 1) return false;
-        const rect = busMapImage.getBoundingClientRect();
+    function constrainPosition() {
+        // Get dimensions
         const containerRect = busMapContainer.getBoundingClientRect();
-        // Can pan if image is taller than container
-        return rect.height > containerRect.height;
-    }
-
-    function canPanHorizontally() {
-        if (scale <= 1) return false;
-        const rect = busMapImage.getBoundingClientRect();
-        const containerRect = busMapContainer.getBoundingClientRect();
-        // Can pan if image is wider than container
-        return rect.width > containerRect.width;
+        const wrapperRect = busMapWrapper.getBoundingClientRect();
+        
+        // Calculate max scroll based on how much the scaled map exceeds container
+        const maxX = Math.max(0, (wrapperRect.width - containerRect.width) / 2);
+        const maxY = Math.max(0, (wrapperRect.height - containerRect.height) / 2);
+        
+        // Constrain position so map edges don't go too far off screen
+        posX = Math.max(-maxX, Math.min(maxX, posX));
+        posY = Math.max(-maxY, Math.min(maxY, posY));
     }
 
     busMapContainer.addEventListener('touchstart', function(e) {
@@ -2413,13 +2406,11 @@ if (busMapContainer && busMapImage) {
             initialScale = scale;
             isPanning = false;
             panDirection = null;
-        } else if (e.touches.length === 1) {
-            if (scale > 1) {
-                startX = e.touches[0].clientX;
-                startY = e.touches[0].clientY;
-                isPanning = true;
-                panDirection = null;
-            }
+        } else if (e.touches.length === 1 && scale > 1) {
+            startX = e.touches[0].clientX;
+            startY = e.touches[0].clientY;
+            isPanning = true;
+            panDirection = null;
         }
     }, { passive: false, capture: true });
 
@@ -2435,6 +2426,8 @@ if (busMapContainer && busMapImage) {
             if (scale === 1) {
                 posX = 0;
                 posY = 0;
+            } else {
+                constrainPosition();
             }
             
             applyTransform();
@@ -2442,23 +2435,20 @@ if (busMapContainer && busMapImage) {
             const deltaX = e.touches[0].clientX - startX;
             const deltaY = e.touches[0].clientY - startY;
             
-            // Determine direction
-            if (!panDirection) {
-                if (Math.abs(deltaX) > 10 || Math.abs(deltaY) > 10) {
-                    panDirection = Math.abs(deltaX) > Math.abs(deltaY) ? 'horizontal' : 'vertical';
-                }
+            if (!panDirection && (Math.abs(deltaX) > 10 || Math.abs(deltaY) > 10)) {
+                panDirection = Math.abs(deltaX) > Math.abs(deltaY) ? 'horizontal' : 'vertical';
             }
             
-            // Only allow pan if map edges exceed screen edges
-            if (panDirection === 'horizontal' && canPanHorizontally()) {
+            if (panDirection === 'horizontal') {
                 posX += deltaX;
                 startX = e.touches[0].clientX;
-                applyTransform();
-            } else if (panDirection === 'vertical' && canPanVertically()) {
+            } else if (panDirection === 'vertical') {
                 posY += deltaY;
                 startY = e.touches[0].clientY;
-                applyTransform();
             }
+            
+            constrainPosition();
+            applyTransform();
         }
     }, { passive: false, capture: true });
 
