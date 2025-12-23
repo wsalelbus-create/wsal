@@ -2383,7 +2383,7 @@ if (busMapContainer && busMapImage) {
         return Math.sqrt(dx * dx + dy * dy);
     }
 
-    // Attach to CONTAINER not image
+    // Use CAPTURE phase so these run BEFORE the global document handler
     busMapContainer.addEventListener('touchstart', function(e) {
         console.log('🔵 TOUCH START:', e.touches.length, 'touches');
         if (e.touches.length === 2) {
@@ -2399,7 +2399,7 @@ if (busMapContainer && busMapImage) {
             isPanning = true;
             console.log('🔵 PAN START');
         }
-    }, { passive: false });
+    }, { passive: false, capture: true });
 
     busMapContainer.addEventListener('touchmove', function(e) {
         e.preventDefault();
@@ -2420,7 +2420,7 @@ if (busMapContainer && busMapImage) {
             applyTransform();
             console.log('🔵 PAN:', posX.toFixed(0), posY.toFixed(0));
         }
-    }, { passive: false });
+    }, { passive: false, capture: true });
 
     busMapContainer.addEventListener('touchend', function(e) {
         console.log('🔵 TOUCH END');
@@ -2430,7 +2430,7 @@ if (busMapContainer && busMapImage) {
         if (e.touches.length === 0) {
             isPanning = false;
         }
-    }, { passive: false });
+    }, { passive: false, capture: true });
 
     // Reset on open
     if (actionMapBtn) {
