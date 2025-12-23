@@ -2461,10 +2461,6 @@ function getPanelMaxPx() {
 
 function setupPanelDrag() {
     if (!arrivalsPanel) return;
-    
-    // Check if landscape mode - disable dragging
-    const isLandscape = () => window.matchMedia("(orientation: landscape)").matches;
-    
     // Inject a visible grabber handle for reliability on iOS
     let grabber = arrivalsPanel.querySelector('.sheet-grabber');
     if (!grabber) {
@@ -2528,12 +2524,6 @@ function setupPanelDrag() {
     window._getPanelVisibleHeight = getPanelVisibleHeight;
 
     const handleStart = (y, target) => {
-        // BLOCK in landscape mode
-        if (isLandscape()) {
-            console.log('[handleStart] BLOCKED - landscape mode');
-            return false;
-        }
-        
         console.log('[handleStart] y:', y, 'target:', target?.className || target?.tagName);
         
         // ONLY exclude actual buttons - everything else in the panel should be draggable
@@ -2580,9 +2570,6 @@ function setupPanelDrag() {
     };
 
     const handleMove = (y) => {
-        // BLOCK in landscape mode
-        if (isLandscape()) return;
-        
         if (!pendingDrag && !dragging) return; // not in a drag gesture at all
         
         if (pendingDrag && !dragging) {
@@ -2672,9 +2659,6 @@ function setupPanelDrag() {
     };
 
     const handleEnd = () => {
-        // BLOCK in landscape mode
-        if (isLandscape()) return;
-        
         if (!dragging && !pendingDrag) return;
         
         // If we never started actually dragging (just pending), reset and allow click
@@ -2829,14 +2813,11 @@ function setupPanelDrag() {
                 target = pickSnapTarget(projected, velocity);
             }
             
-            // Use elastic bounce easing for over-pull OR when snapping to 20vh
+            // Use elastic bounce easing if bouncing back from over-pull
             const isBouncingBack = (currentH > maxPx);
-            const isSnappingTo20vh = Math.abs(target - circlesHook) < 1; // Within 1px of 20vh
-            const easing = (isBouncingBack || isSnappingTo20vh)
+            const easing = isBouncingBack 
                 ? 'transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)' // elastic bounce with overshoot
                 : 'transform 0.24s cubic-bezier(.2,.7,.2,1)'; // normal snap
-            
-            console.log('[handleEnd] Snapping to:', target, 'circlesHook:', circlesHook, 'isSnappingTo20vh:', isSnappingTo20vh, 'easing:', easing);
             
             arrivalsPanel.style.transition = easing;
             setPanelVisibleHeight(target);
@@ -2882,86 +2863,76 @@ function setupPanelDrag() {
         // Invalidate map size handled after snap where appropriate
     };
 
-    // Touch events (mobile) - ONLY in portrait mode
-    if (!isLandscape()) {
-        grabber.addEventListener('touchstart', (e) => {
-            const t = e.touches[0];
-            handleStart(t.clientY, e.target);
-            e.preventDefault(); // ensure we capture drag from handle
-        }, { passive: false, capture: true });
-        grabber.addEventListener('touchmove', (e) => {
-            const t = e.touches[0];
-            handleMove(t.clientY);
-            if (pendingDrag || panelDragging) e.preventDefault();
-        }, { passive: false, capture: true });
-        grabber.addEventListener('touchend', () => handleEnd(), { capture: true });
-    }
-    
-    // Tap-to-toggle for reliability on iOS - ONLY in portrait
-    if (!isLandscape()) {
-        grabber.addEventListener('click', (e) => {
-            e.preventDefault();
-            const minPx = vhToPx(PANEL_MIN_VH);
-            const maxPx = getPanelMaxPx();
-            const mid = (minPx + maxPx) / 2;
-            arrivalsPanel.style.transition = 'transform 0.25s ease';
-            if (getPanelVisibleHeight() < mid) {
-                setPanelVisibleHeight(maxPx);
-                arrivalsPanel.classList.add('expanded');
-            } else {
-                setPanelVisibleHeight(minPx);
-                arrivalsPanel.classList.remove('expanded');
-            }
-        });
-    }
-
-    // Panel touch events - ONLY in portrait
-    if (!isLandscape()) {
-        arrivalsPanel.addEventListener('touchstart', (e) => {
-            const t = e.touches[0];
-            handleStart(t.clientY, e.target);
-            // do NOT preventDefault on touchstart; allow taps to become clicks
-        }, { passive: false, capture: true });
-        arrivalsPanel.addEventListener('touchmove', (e) => {
-            if (!pendingDrag && !dragging) return; // safety: only handle move if we started a gesture
-            const t = e.touches[0];
-            if (!t) return;
-            handleMove(t.clientY);
-            if (dragging) e.preventDefault();
-        }, { passive: false, capture: true });
-        arrivalsPanel.addEventListener('touchend', () => handleEnd());
-
-        // Document-level capture to guarantee drag from anywhere inside the panel
-        document.addEventListener('touchstart', (e) => {
-            const inPanel = e.target && e.target.closest && e.target.closest('.arrivals-panel');
-            if (!inPanel) return;
-            
-            // Don't capture if touch is on the map (even if map is behind panel)
-            const onMap = e.target && (
-                e.target.closest('.leaflet-container') || 
-                e.target.closest('#map-container') ||
-                e.target.closest('.map-view-container')
-            );
-            if (onMap) return;
-            
-            const t = e.touches && e.touches[0];
-            if (!t) return;
-            handleStart(t.clientY, e.target);
-        }, { passive: false, capture: true });
-        document.addEventListener('touchmove', (e) => {
-            if (!panelDragging) return;
-            const t = e.touches && e.touches[0];
-            if (!t) return;
-            handleMove(t.clientY);
-            e.preventDefault();
-        }, { passive: false, capture: true });
-        document.addEventListener('touchend', () => { if (panelDragging) handleEnd(); }, { capture: true });
-    }
-
-    // Pointer events (desktop/testing) - works in both orientations
-    arrivalsPanel.addEventListener('pointerdown', (e) => { 
-        if (!isLandscape()) handleStart(e.clientY, e.target); 
+    // Touch events (mobile)
+    grabber.addEventListener('touchstart', (e) => {
+        const t = e.touches[0];
+        handleStart(t.clientY, e.target);
+        e.preventDefault(); // ensure we capture drag from handle
+    }, { passive: false, capture: true });
+    grabber.addEventListener('touchmove', (e) => {
+        const t = e.touches[0];
+        handleMove(t.clientY);
+        if (pendingDrag || panelDragging) e.preventDefault();
+    }, { passive: false, capture: true });
+    grabber.addEventListener('touchend', () => handleEnd(), { capture: true });
+    // Tap-to-toggle for reliability on iOS
+    grabber.addEventListener('click', (e) => {
+        e.preventDefault();
+        const minPx = vhToPx(PANEL_MIN_VH);
+        const maxPx = getPanelMaxPx();
+        const mid = (minPx + maxPx) / 2;
+        arrivalsPanel.style.transition = 'transform 0.25s ease';
+        if (getPanelVisibleHeight() < mid) {
+            setPanelVisibleHeight(maxPx);
+            arrivalsPanel.classList.add('expanded');
+        } else {
+            setPanelVisibleHeight(minPx);
+            arrivalsPanel.classList.remove('expanded');
+        }
     });
+
+    arrivalsPanel.addEventListener('touchstart', (e) => {
+        const t = e.touches[0];
+        handleStart(t.clientY, e.target);
+        // do NOT preventDefault on touchstart; allow taps to become clicks
+    }, { passive: false, capture: true });
+    arrivalsPanel.addEventListener('touchmove', (e) => {
+        if (!pendingDrag && !dragging) return; // safety: only handle move if we started a gesture
+        const t = e.touches[0];
+        if (!t) return;
+        handleMove(t.clientY);
+        if (dragging) e.preventDefault();
+    }, { passive: false, capture: true });
+    arrivalsPanel.addEventListener('touchend', () => handleEnd());
+
+    // Document-level capture to guarantee drag from anywhere inside the panel
+    document.addEventListener('touchstart', (e) => {
+        const inPanel = e.target && e.target.closest && e.target.closest('.arrivals-panel');
+        if (!inPanel) return;
+        
+        // Don't capture if touch is on the map (even if map is behind panel)
+        const onMap = e.target && (
+            e.target.closest('.leaflet-container') || 
+            e.target.closest('#map-container') ||
+            e.target.closest('.map-view-container')
+        );
+        if (onMap) return;
+        
+        const t = e.touches && e.touches[0];
+        if (!t) return;
+        handleStart(t.clientY, e.target);
+    }, { passive: false, capture: true });
+    document.addEventListener('touchmove', (e) => {
+        if (!panelDragging) return;
+        const t = e.touches && e.touches[0];
+        if (!t) return;
+        handleMove(t.clientY);
+        e.preventDefault();
+    }, { passive: false, capture: true });
+    document.addEventListener('touchend', () => { if (panelDragging) handleEnd(); }, { capture: true });
+
+    // Pointer events (desktop/testing)
+    arrivalsPanel.addEventListener('pointerdown', (e) => { handleStart(e.clientY, e.target); });
     window.addEventListener('pointermove', (e) => { handleMove(e.clientY); });
     window.addEventListener('pointerup', () => handleEnd());
 
@@ -2993,29 +2964,6 @@ function installBounceGuard() {
 
 // Install viewport polyfill FIRST before any layout calculations
 installViewportPolyfill();
-
-// Handle orientation changes
-window.addEventListener('orientationchange', () => {
-    console.log('[Orientation] Changed - reinitializing layout');
-    setTimeout(() => {
-        installViewportPolyfill();
-        // Reinitialize panel drag (will disable in landscape)
-        setupPanelDrag();
-        // Invalidate map size
-        if (map) map.invalidateSize();
-    }, 300);
-});
-
-// Also handle resize (for desktop testing)
-let resizeTimeout;
-window.addEventListener('resize', () => {
-    clearTimeout(resizeTimeout);
-    resizeTimeout = setTimeout(() => {
-        const isLandscape = window.matchMedia("(orientation: landscape)").matches;
-        console.log('[Resize] Orientation:', isLandscape ? 'landscape' : 'portrait');
-        if (map) map.invalidateSize();
-    }, 300);
-});
 
 // IMMEDIATELY position panel to prevent flash - don't wait for requestAnimationFrame
 if (arrivalsPanel) {
