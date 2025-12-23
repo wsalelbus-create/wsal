@@ -15,8 +15,6 @@
         height: 100vh !important;
         bottom: 0 !important;
         z-index: 1 !important; /* Below panel */
-        outline: none !important; /* Remove grey outline */
-        border: none !important; /* Remove any border */
     }
     
     #map-container {
@@ -25,14 +23,6 @@
         position: absolute !important;
         top: 0 !important;
         left: 0 !important;
-        outline: none !important; /* Remove grey outline */
-        border: none !important; /* Remove any border */
-    }
-    
-    /* Remove outline from leaflet container */
-    .leaflet-container {
-        outline: none !important;
-        border: none !important;
     }
     
     /* Panel takes right 40% - static, no dragging */
@@ -147,9 +137,10 @@
         display: none !important;
     }
     
-    /* Crosshair - center of map (30vw from left) */
+    /* Crosshair - center of map area (30vw horizontal, 50vh vertical) */
     .map-crosshair {
-        left: 30vw !important;
+        left: 30vw !important; /* Center of 60vw map */
+        top: 50vh !important; /* Center of full-height map */
         right: auto !important;
     }
     
