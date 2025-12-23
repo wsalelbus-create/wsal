@@ -2356,6 +2356,84 @@ if (busMapBackBtn && busMapScreen) {
 }
 
 
+// Bus Map Zoom and Pan - only zoom the image, not the whole page
+const busMapContainer = document.querySelector('.bus-map-container');
+const busMapImage = document.getElementById('bus-map-image');
+
+if (busMapContainer && busMapImage) {
+    let scale = 1;
+    let posX = 0;
+    let posY = 0;
+    let initialDistance = null;
+    let initialScale = 1;
+    let lastX = 0;
+    let lastY = 0;
+    let isPanning = false;
+
+    function applyTransform() {
+        busMapImage.style.transform = `translate(${posX}px, ${posY}px) scale(${scale})`;
+        busMapImage.style.transformOrigin = 'center center';
+    }
+
+    function getDistance(t1, t2) {
+        const dx = t1.clientX - t2.clientX;
+        const dy = t1.clientY - t2.clientY;
+        return Math.sqrt(dx * dx + dy * dy);
+    }
+
+    busMapImage.addEventListener('touchstart', function(e) {
+        if (e.touches.length === 2) {
+            e.preventDefault();
+            e.stopPropagation();
+            initialDistance = getDistance(e.touches[0], e.touches[1]);
+            initialScale = scale;
+            isPanning = false;
+        } else if (e.touches.length === 1) {
+            lastX = e.touches[0].clientX;
+            lastY = e.touches[0].clientY;
+            isPanning = true;
+        }
+    }, { passive: false });
+
+    busMapImage.addEventListener('touchmove', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        if (e.touches.length === 2 && initialDistance) {
+            const currentDistance = getDistance(e.touches[0], e.touches[1]);
+            scale = Math.max(0.5, Math.min(4, (currentDistance / initialDistance) * initialScale));
+            applyTransform();
+        } else if (e.touches.length === 1 && isPanning) {
+            const deltaX = e.touches[0].clientX - lastX;
+            const deltaY = e.touches[0].clientY - lastY;
+            posX += deltaX;
+            posY += deltaY;
+            lastX = e.touches[0].clientX;
+            lastY = e.touches[0].clientY;
+            applyTransform();
+        }
+    }, { passive: false });
+
+    busMapImage.addEventListener('touchend', function(e) {
+        if (e.touches.length < 2) {
+            initialDistance = null;
+        }
+        if (e.touches.length === 0) {
+            isPanning = false;
+        }
+    }, { passive: false });
+
+    // Reset on open
+    if (actionMapBtn) {
+        actionMapBtn.addEventListener('click', function() {
+            scale = 1;
+            posX = 0;
+            posY = 0;
+            applyTransform();
+        });
+    }
+}
+
 // Back button navigation rules:
 // - If on 3rd screen (walk + busDetailActive), go back to Bus list.
 // - Else if on Bus list, go back to Home (idle).
