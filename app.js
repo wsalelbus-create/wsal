@@ -2455,7 +2455,6 @@ if (busMapContainer && busMapImage) {
         actionMapBtn.addEventListener('touchend', resetMap);
     }
 }
-}
 
 // Back button navigation rules:
 // - If on 3rd screen (walk + busDetailActive), go back to Bus list.
