@@ -1071,15 +1071,15 @@ html, body {
     border: none;                   /* no outline */
     background: rgb(60, 107, 139);  /* badge background */
     color: #fff;
-    width: 64px;                    /* square tile */
-    height: 64px;                   /* square tile */
-    padding: 8px;
-    border-radius: 12px;            /* rounded square */
+    width: 70px;                    /* rectangular - wider */
+    height: 56px;                   /* rectangular - shorter */
+    padding: 6px 8px;
+    border-radius: 12px;            /* rounded rectangle */
     display: flex;
     flex-direction: column;         /* icon above label */
     align-items: center;
     justify-content: center;
-    gap: 4px;                       /* bring label closer to icon */
+    gap: 3px;                       /* tight spacing */
     font-weight: 800;
     letter-spacing: 0.2px;
     box-shadow: none;               /* fully flat */
@@ -1088,11 +1088,44 @@ html, body {
 
 .qa-btn:active { transform: scale(0.98); }
 .qa-icon { display: flex; align-items: center; justify-content: center; }
-.qa-icon svg { width: 32px; height: 32px; }
-.qa-icon-walk { color: var(--primary-color); }
-.qa-icon-walk svg { width: 29px; height: 29px; transform: translateY(1px); }
+.qa-icon svg { width: 28px; height: 28px; }
+.qa-icon-walk svg { width: 25px; height: 25px; transform: translateY(1px); }
 .qa-icon-bus svg { transform: translateY(1px); }
 .qa-label { font-size: 0.8rem; font-weight: 700; line-height: 1; transform: translateY(-1px); }
+
+/* Ad Placeholder - Citymapper style */
+.ad-placeholder {
+    background: white;
+    border-radius: 16px;
+    padding: 16px;
+    margin: 0 0 20px 0;
+    min-height: 100px;
+    display: block;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    overflow: hidden;
+}
+
+.ad-demo-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 80px;
+}
+
+.ad-label {
+    color: #999;
+    font-size: 0.7rem;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* Google Ads will style themselves, this just ensures they fit */
+.ad-placeholder ins {
+    display: block !important;
+    width: 100% !important;
+}
 
 /* =============================
    CITY SKYLINE BACKDROP (Algiers-inspired)
