@@ -2365,41 +2365,47 @@ if (busMapContainer && busMapWrapper && busMapImage) {
     let scale = 1;
     let posX = 0;
     let posY = 0;
-    let initialDistance = null;
-    let initialScale = 1;
-    let startX = 0;
-    let startY = 0;
+    let lastTouchDistance = 0;
+    let lastTouchCenter = { x: 0, y: 0 };
+    let lastPanPoint = { x: 0, y: 0 };
+    let isZooming = false;
     let isPanning = false;
-    let panDirection = null;
 
-    function applyTransform() {
-        busMapWrapper.style.transform = 'translate(' + posX + 'px, ' + posY + 'px) scale(' + scale + ')';
-        busMapWrapper.style.webkitTransform = 'translate(' + posX + 'px, ' + posY + 'px) scale(' + scale + ')';
+    function setTransform() {
+        const transform = 'translate(' + posX + 'px, ' + posY + 'px) scale(' + scale + ')';
+        busMapWrapper.style.transform = transform;
+        busMapWrapper.style.webkitTransform = transform;
     }
 
-    function getDistance(t1, t2) {
+    function getTouchDistance(t1, t2) {
         const dx = t1.clientX - t2.clientX;
         const dy = t1.clientY - t2.clientY;
         return Math.sqrt(dx * dx + dy * dy);
     }
 
-    function constrainPosition() {
-        // Smart boundaries: allow scrolling proportional to zoom level
-        // More zoom = more scroll range
-        const imageWidth = busMapImage.offsetWidth;
-        const imageHeight = busMapImage.offsetHeight;
-        const containerWidth = busMapContainer.offsetWidth;
-        const containerHeight = busMapContainer.offsetHeight;
+    function getTouchCenter(t1, t2) {
+        return {
+            x: (t1.clientX + t2.clientX) / 2,
+            y: (t1.clientY + t2.clientY) / 2
+        };
+    }
+
+    function constrainPan() {
+        if (scale <= 1) {
+            posX = 0;
+            posY = 0;
+            return;
+        }
+
+        const rect = busMapContainer.getBoundingClientRect();
+        const imgWidth = busMapImage.offsetWidth;
+        const imgHeight = busMapImage.offsetHeight;
         
-        // At scale 1: no scroll
-        // At higher scales: can scroll to see all parts of the zoomed map
-        const scaledWidth = imageWidth * scale;
-        const scaledHeight = imageHeight * scale;
+        const scaledWidth = imgWidth * scale;
+        const scaledHeight = imgHeight * scale;
         
-        // Allow scrolling up to the point where map edge reaches screen edge
-        // This means you can always see the part of the map you want
-        const maxX = (scaledWidth - containerWidth) / 2 + (containerWidth * 0.2);
-        const maxY = (scaledHeight - containerHeight) / 2 + (containerHeight * 0.2);
+        const maxX = Math.max(0, (scaledWidth - rect.width) / 2);
+        const maxY = Math.max(0, (scaledHeight - rect.height) / 2);
         
         posX = Math.max(-maxX, Math.min(maxX, posX));
         posY = Math.max(-maxY, Math.min(maxY, posY));
@@ -2408,74 +2414,81 @@ if (busMapContainer && busMapWrapper && busMapImage) {
     busMapContainer.addEventListener('touchstart', function(e) {
         if (e.touches.length === 2) {
             e.preventDefault();
-            e.stopPropagation();
-            initialDistance = getDistance(e.touches[0], e.touches[1]);
-            initialScale = scale;
+            isZooming = true;
             isPanning = false;
-            panDirection = null;
-        } else if (e.touches.length === 1 && scale > 1) {
-            e.preventDefault();
-            e.stopPropagation();
-            startX = e.touches[0].clientX;
-            startY = e.touches[0].clientY;
-            isPanning = true;
-            panDirection = null;
+            lastTouchDistance = getTouchDistance(e.touches[0], e.touches[1]);
+            lastTouchCenter = getTouchCenter(e.touches[0], e.touches[1]);
+        } else if (e.touches.length === 1) {
+            if (scale > 1) {
+                e.preventDefault();
+                isPanning = true;
+                isZooming = false;
+                lastPanPoint = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+            }
         }
-    }, { passive: false, capture: true });
+    }, { passive: false });
 
     busMapContainer.addEventListener('touchmove', function(e) {
-        e.preventDefault();
-        e.stopPropagation();
-        
-        if (e.touches.length === 2 && initialDistance) {
-            // Pinch zoom - DON'T constrain during zoom to prevent jumping
-            const currentDistance = getDistance(e.touches[0], e.touches[1]);
-            scale = Math.max(1, Math.min(6, (currentDistance / initialDistance) * initialScale));
+        if (e.touches.length === 2 && isZooming) {
+            e.preventDefault();
             
-            if (scale === 1) {
-                posX = 0;
-                posY = 0;
+            const newDistance = getTouchDistance(e.touches[0], e.touches[1]);
+            const newCenter = getTouchCenter(e.touches[0], e.touches[1]);
+            
+            // Calculate scale change
+            const scaleChange = newDistance / lastTouchDistance;
+            const newScale = scale * scaleChange;
+            
+            // Clamp scale between 1 and 6
+            if (newScale >= 1 && newScale <= 6) {
+                // Zoom towards touch center
+                const rect = busMapContainer.getBoundingClientRect();
+                const centerX = newCenter.x - rect.left - rect.width / 2;
+                const centerY = newCenter.y - rect.top - rect.height / 2;
+                
+                posX = centerX + (posX - centerX) * scaleChange;
+                posY = centerY + (posY - centerY) * scaleChange;
+                scale = newScale;
+                
+                constrainPan();
+                setTransform();
             }
-            // Don't call constrainPosition() here - it causes jumping during zoom
             
-            applyTransform();
+            lastTouchDistance = newDistance;
+            lastTouchCenter = newCenter;
+            
         } else if (e.touches.length === 1 && isPanning && scale > 1) {
-            // Pan with direction locking
-            const deltaX = e.touches[0].clientX - startX;
-            const deltaY = e.touches[0].clientY - startY;
+            e.preventDefault();
             
-            if (!panDirection && (Math.abs(deltaX) > 10 || Math.abs(deltaY) > 10)) {
-                panDirection = Math.abs(deltaX) > Math.abs(deltaY) ? 'horizontal' : 'vertical';
-            }
+            const deltaX = e.touches[0].clientX - lastPanPoint.x;
+            const deltaY = e.touches[0].clientY - lastPanPoint.y;
             
-            if (panDirection === 'horizontal') {
-                posX += deltaX;
-                startX = e.touches[0].clientX;
-            } else if (panDirection === 'vertical') {
-                posY += deltaY;
-                startY = e.touches[0].clientY;
-            }
+            posX += deltaX;
+            posY += deltaY;
             
-            // Only constrain during pan, not during zoom
-            constrainPosition();
-            applyTransform();
+            constrainPan();
+            setTransform();
+            
+            lastPanPoint = { x: e.touches[0].clientX, y: e.touches[0].clientY };
         }
-    }, { passive: false, capture: true });
+    }, { passive: false });
 
     busMapContainer.addEventListener('touchend', function(e) {
         if (e.touches.length < 2) {
-            initialDistance = null;
-            // Constrain position after zoom ends
-            if (scale > 1) {
-                constrainPosition();
-                applyTransform();
-            }
+            isZooming = false;
         }
         if (e.touches.length === 0) {
             isPanning = false;
-            panDirection = null;
+            
+            // Reset if zoomed out completely
+            if (scale <= 1) {
+                scale = 1;
+                posX = 0;
+                posY = 0;
+                setTransform();
+            }
         }
-    }, { passive: false, capture: true });
+    }, { passive: false });
 
     // Reset on open
     if (actionMapBtn) {
@@ -2483,7 +2496,7 @@ if (busMapContainer && busMapWrapper && busMapImage) {
             scale = 1;
             posX = 0;
             posY = 0;
-            applyTransform();
+            setTransform();
         });
     }
 }
