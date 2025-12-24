@@ -1256,12 +1256,21 @@ html, body {
     display: flex;
     align-items: center;
     justify-content: center;
+    position: relative;
+    touch-action: none;
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    user-select: none;
 }
 
 /* Wrapper for transform */
 .bus-map-wrapper {
-    display: inline-block;
+    display: block;
+    position: relative;
+    transform-origin: center center;
+    -webkit-transform-origin: center center;
     touch-action: none;
+    -webkit-touch-callout: none;
 }
 
 /* White frame wrapper - centered, zoomable */
@@ -1274,7 +1283,12 @@ html, body {
     width: 90vw;
     max-width: 90vw;
     height: auto;
-    pointer-events: none;
+    pointer-events: auto;
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-user-drag: none;
+    user-select: none;
+    -webkit-user-select: none;
 }
 
 .bus-map-image:active {

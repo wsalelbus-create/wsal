@@ -2421,23 +2421,22 @@ if (busMapContainer && busMapWrapper && busMapImage) {
             isPanning = true;
             panDirection = null;
         }
-    }, false);
+    }, { passive: false, capture: true });
 
     busMapContainer.addEventListener('touchmove', function(e) {
         e.preventDefault();
         e.stopPropagation();
         
         if (e.touches.length === 2 && initialDistance) {
-            // Pinch zoom
+            // Pinch zoom - DON'T constrain during zoom to prevent jumping
             const currentDistance = getDistance(e.touches[0], e.touches[1]);
             scale = Math.max(1, Math.min(6, (currentDistance / initialDistance) * initialScale));
             
             if (scale === 1) {
                 posX = 0;
                 posY = 0;
-            } else {
-                constrainPosition();
             }
+            // Don't call constrainPosition() here - it causes jumping during zoom
             
             applyTransform();
         } else if (e.touches.length === 1 && isPanning && scale > 1) {
@@ -2457,20 +2456,26 @@ if (busMapContainer && busMapWrapper && busMapImage) {
                 startY = e.touches[0].clientY;
             }
             
+            // Only constrain during pan, not during zoom
             constrainPosition();
             applyTransform();
         }
-    }, false);
+    }, { passive: false, capture: true });
 
     busMapContainer.addEventListener('touchend', function(e) {
         if (e.touches.length < 2) {
             initialDistance = null;
+            // Constrain position after zoom ends
+            if (scale > 1) {
+                constrainPosition();
+                applyTransform();
+            }
         }
         if (e.touches.length === 0) {
             isPanning = false;
             panDirection = null;
         }
-    }, false);
+    }, { passive: false, capture: true });
 
     // Reset on open
     if (actionMapBtn) {
