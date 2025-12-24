@@ -307,6 +307,13 @@ function renderBusStations(withDelay = false, fadeIn = false) {
                         </svg>
                     </div>
                 `;
+            } else if (nextArrival.status === 'Loading') {
+                timeDisplayHtml = `
+                    <div class="route-status" style="color: var(--text-main); font-weight: 600; font-size: 0.8rem; display:flex; align-items:center; gap: 8px;">
+                        <span>Loading</span>
+                        <div class="loader loader-sm" aria-hidden="true"></div>
+                    </div>
+                `;
             } else {
                 timeDisplayHtml = `
                     <div class="route-status" style="color: var(--text-main); font-weight: 600; font-size: 0.8rem; display:flex; align-items:center;">
@@ -487,6 +494,13 @@ function renderBusStationDetail(station, withDelay = false) {
                             <div class="time-big">${arrival.minutes}</div>
                             <div class="time-unit">min</div>
                         </div>
+                    </div>
+                `;
+            } else if (arrival.status === 'Loading') {
+                timeDisplayHtml = `
+                    <div class="route-status" style="color: var(--text-main); font-weight: 600; font-size: 0.8rem; display:flex; align-items:center; gap: 8px;">
+                        <span>Loading</span>
+                        <div class="loader loader-sm" aria-hidden="true"></div>
                     </div>
                 `;
             } else {
@@ -1064,7 +1078,7 @@ function calculateArrivals(station) {
 
         // STEP 4: Calculate DISTANCE using OSRM (real road distance) or GPS fallback
         const routePath = ROUTE_PATHS[route.number];
-        let totalDistance = route.totalDistance || 10; // Fallback to 10 km
+        let totalDistance = 3.5; // Default fallback: 3.5 km (typical Algiers route)
         
         // Try to get REAL driving distance from OSRM (cached per route)
         if (routePath && routePath.length >= 2 && route.osrmDistance === undefined) {
@@ -1089,13 +1103,28 @@ function calculateArrivals(station) {
                 console.warn('OSRM distance fetch error:', e);
                 route.osrmDistance = null;
             });
+            
+            // While OSRM is loading, use GPS fallback immediately
+            if (routePath && routePath.length >= 2) {
+                totalDistance = 0;
+                for (let i = 0; i < routePath.length - 1; i++) {
+                    const dist = getDistanceFromLatLonInKm(
+                        routePath[i].lat, 
+                        routePath[i].lon,
+                        routePath[i + 1].lat,
+                        routePath[i + 1].lon
+                    );
+                    totalDistance += dist;
+                }
+                totalDistance *= 1.6; // Roads are typically 60% longer than straight line
+            }
         }
         
-        // Use OSRM distance if available, otherwise fallback
+        // Use OSRM distance if available, otherwise use GPS fallback
         if (route.osrmDistance && route.osrmDistance > 0) {
             totalDistance = route.osrmDistance;
-        } else if (routePath && routePath.length >= 2) {
-            // Fallback: Calculate straight-line GPS distance and multiply by 1.6 (roads are ~60% longer)
+        } else if (routePath && routePath.length >= 2 && !route.osrmDistance) {
+            // Calculate GPS fallback if not already done
             totalDistance = 0;
             for (let i = 0; i < routePath.length - 1; i++) {
                 const dist = getDistanceFromLatLonInKm(

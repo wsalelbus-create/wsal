@@ -251,15 +251,9 @@ class TrafficSampler {
             const start = routePoints[0];
             const end = routePoints[1];
             
-            // Add 5 evenly-spaced points along the route
-            for (let i = 0; i <= 4; i++) {
-                const ratio = i / 4;
-                samplingPoints.push({
-                    lat: start.lat + (end.lat - start.lat) * ratio,
-                    lon: start.lon + (end.lon - start.lon) * ratio,
-                    name: i === 0 ? start.name : i === 4 ? end.name : `${Math.round(ratio * 100)}% along route`
-                });
-            }
+            // FAST: Sample only START and END (2 points instead of 5)
+            // This makes traffic loading 2.5x faster
+            samplingPoints = [start, end];
         } else {
             samplingPoints = routePoints;
         }
@@ -289,8 +283,8 @@ class TrafficSampler {
                         const normLat = dlat / distance;
                         const normLon = dlon / distance;
                         
-                        // Search at 25m, 50m, 75m, 100m along the route direction
-                        const searchDistances = [0.00025, 0.0005, 0.00075, 0.001];
+                        // Search at 50m, 100m along the route direction (reduced from 4 to 2 searches)
+                        const searchDistances = [0.0005, 0.001];
                         
                         for (const searchDist of searchDistances) {
                             const nearbyColor = await this.sampleColorAt(
