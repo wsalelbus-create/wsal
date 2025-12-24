@@ -514,12 +514,22 @@ function renderBusStationDetail(station, withDelay = false) {
     card.appendChild(arrivalsDiv);
     routesListEl.appendChild(card);
     
-    // In bus/walk modes, move the ad after first card
+    // In bus/walk modes, add ad after first card
     if (routesListEl.children.length === 1) {
-        const homeAd = document.getElementById('home-ad-placeholder');
-        if (homeAd) {
-            // Move the ad from home position to after first card
-            routesListEl.appendChild(homeAd);
+        // Check if ad already exists in routes list
+        const existingAd = routesListEl.querySelector('.ad-placeholder');
+        if (!existingAd) {
+            const adPlaceholder = document.createElement('div');
+            adPlaceholder.className = 'ad-placeholder routes-ad';
+            adPlaceholder.innerHTML = `
+                <!-- Replace this entire div content with your Google Ads code -->
+                <div class="ad-demo-content">
+                    <div class="ad-label">Advertisement</div>
+                    <p style="color: #999; font-size: 0.75rem; margin-top: 8px;">Your Google Ads will appear here</p>
+                </div>
+                <!-- Example: <ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-xxxxx" ...></ins> -->
+            `;
+            routesListEl.appendChild(adPlaceholder);
         }
     }
 }
@@ -2200,16 +2210,6 @@ function setUIMode(mode) {
     if (quickActionsEl) {
         if (mode === 'idle') quickActionsEl.classList.remove('hidden');
         else quickActionsEl.classList.add('hidden');
-    }
-    
-    // Move ad back to home position (below quick actions) when returning to idle mode
-    if (mode === 'idle') {
-        const homeAd = document.getElementById('home-ad-placeholder');
-        const routesHeader = document.querySelector('.routes-header');
-        if (homeAd && routesHeader && routesHeader.parentNode) {
-            // Move ad back to its original position (before routes-header)
-            routesHeader.parentNode.insertBefore(homeAd, routesHeader);
-        }
     }
 
     // Skyline: always visible in all modes (ensure not hidden)
