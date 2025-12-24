@@ -981,6 +981,11 @@ function calculateArrivals(station) {
             usingGoogleTraffic = true;
         } else if (window.TrafficSampler && (route.trafficSpeed === undefined || trafficAge >= TRAFFIC_REFRESH_INTERVAL)) {
             // First load OR traffic data is stale - fetch fresh Google traffic
+            // Mark as loading (not null, not undefined, but 'loading')
+            if (route.trafficSpeed === undefined) {
+                route.trafficSpeed = 'loading'; // Mark as loading
+            }
+            
             // Pass full route object (includes number and dest for direction awareness)
             window.TrafficSampler.getTrafficSpeed(station, route).then(speed => {
                 route.trafficSpeed = speed;
@@ -997,6 +1002,13 @@ function calculateArrivals(station) {
                 route.trafficSpeed = null;
                 route.trafficTimestamp = Date.now(); // Don't retry immediately
             });
+            
+            // Show loading state while fetching
+            return {
+                ...route,
+                status: 'Loading',
+                message: 'Loading traffic...'
+            };
         }
         
         // FALLBACK: Manual time-based speed if Google unavailable
