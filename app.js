@@ -2430,6 +2430,7 @@ if (busMapContainer && busMapWrapper && busMapImage) {
         const transform = 'translate(' + posX + 'px, ' + posY + 'px) scale(' + scale + ')';
         busMapWrapper.style.transform = transform;
         busMapWrapper.style.webkitTransform = transform;
+        globalDebugLog('TRANSFORM: ' + transform);
     }
 
     function getTouchDistance(t1, t2) {
@@ -2563,16 +2564,23 @@ if (busMapContainer && busMapWrapper && busMapImage) {
     }
 
     function handleGestureChange(e) {
-        if (!isZooming) return;
+        if (!isZooming) {
+            globalDebugLog('GESTURE CHANGE but not zooming!');
+            return;
+        }
         
         e.preventDefault();
         globalDebugLog('GESTURE scale=' + e.scale.toFixed(2));
         
         const newScale = initialPinchScale * e.scale;
+        globalDebugLog('newScale=' + newScale.toFixed(2) + ' (init=' + initialPinchScale.toFixed(2) + ')');
+        
         if (newScale >= 1 && newScale <= 6) {
             scale = newScale;
             constrainPan();
             setTransform();
+        } else {
+            globalDebugLog('Scale out of range!');
         }
     }
 
