@@ -2392,13 +2392,6 @@ if (busMapContainer && busMapImage) {
         return Math.sqrt(dx * dx + dy * dy);
     }
 
-    function getCenter(t1, t2) {
-        return {
-            x: (t1.clientX + t2.clientX) / 2,
-            y: (t1.clientY + t2.clientY) / 2
-        };
-    }
-
     function constrain() {
         if (scale <= 1) {
             translateX = 0;
@@ -2407,7 +2400,6 @@ if (busMapContainer && busMapImage) {
         }
 
         const containerRect = busMapContainer.getBoundingClientRect();
-        const imgRect = busMapImage.getBoundingClientRect();
         
         // Get actual scaled dimensions
         const scaledWidth = busMapImage.naturalWidth * scale;
@@ -2425,8 +2417,8 @@ if (busMapContainer && busMapImage) {
     }
 
     function onTouchStart(e) {
-        // Only handle touches on the map container
-        if (!e.target.closest('.bus-map-container')) return;
+        // Only handle if bus map is open
+        if (!busMapIsOpen) return;
         
         if (e.touches.length === 2) {
             // Start zoom
@@ -2450,6 +2442,8 @@ if (busMapContainer && busMapImage) {
     }
 
     function onTouchMove(e) {
+        // Only handle if bus map is open
+        if (!busMapIsOpen) return;
         if (!isZooming && !isPanning) return;
         
         if (e.touches.length === 2 && isZooming) {
@@ -2487,6 +2481,9 @@ if (busMapContainer && busMapImage) {
     }
 
     function onTouchEnd(e) {
+        // Only handle if bus map is open
+        if (!busMapIsOpen) return;
+        
         if (e.touches.length < 2) {
             isZooming = false;
         }
