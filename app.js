@@ -2365,168 +2365,160 @@ if (busMapBackBtn && busMapScreen) {
 
 // Bus Map Zoom and Pan - Citymapper style with smart boundaries
 const busMapContainer = document.querySelector('.bus-map-container');
-const busMapWrapper = document.getElementById('bus-map-wrapper');
 const busMapImage = document.getElementById('bus-map-image');
 
-if (busMapContainer && busMapWrapper && busMapImage) {
+if (busMapContainer && busMapImage) {
     let scale = 1;
-    let posX = 0;
-    let posY = 0;
-    let lastTouchDistance = 0;
-    let lastTouchCenter = { x: 0, y: 0 };
-    let lastPanPoint = { x: 0, y: 0 };
+    let translateX = 0;
+    let translateY = 0;
+    let startDistance = 0;
+    let startScale = 1;
+    let startX = 0;
+    let startY = 0;
+    let startTranslateX = 0;
+    let startTranslateY = 0;
     let isZooming = false;
     let isPanning = false;
 
-    function setTransform() {
-        const transform = 'translate(' + posX + 'px, ' + posY + 'px) scale(' + scale + ')';
-        busMapWrapper.style.transform = transform;
-        busMapWrapper.style.webkitTransform = transform;
+    // Apply transform using inline styles
+    function applyTransform() {
+        busMapImage.style.transform = 'translate(' + translateX + 'px, ' + translateY + 'px) scale(' + scale + ')';
+        busMapImage.style.webkitTransform = 'translate(' + translateX + 'px, ' + translateY + 'px) scale(' + scale + ')';
     }
 
-    function getTouchDistance(t1, t2) {
+    function getDistance(t1, t2) {
         const dx = t1.clientX - t2.clientX;
         const dy = t1.clientY - t2.clientY;
         return Math.sqrt(dx * dx + dy * dy);
     }
 
-    function getTouchCenter(t1, t2) {
+    function getCenter(t1, t2) {
         return {
             x: (t1.clientX + t2.clientX) / 2,
             y: (t1.clientY + t2.clientY) / 2
         };
     }
 
-    function constrainPan() {
+    function constrain() {
         if (scale <= 1) {
-            posX = 0;
-            posY = 0;
+            translateX = 0;
+            translateY = 0;
             return;
         }
 
-        const rect = busMapContainer.getBoundingClientRect();
-        const imgWidth = busMapImage.offsetWidth;
-        const imgHeight = busMapImage.offsetHeight;
+        const containerRect = busMapContainer.getBoundingClientRect();
+        const imgRect = busMapImage.getBoundingClientRect();
         
-        const scaledWidth = imgWidth * scale;
-        const scaledHeight = imgHeight * scale;
+        // Get actual scaled dimensions
+        const scaledWidth = busMapImage.naturalWidth * scale;
+        const scaledHeight = busMapImage.naturalHeight * scale;
         
-        // Calculate max pan distance
-        const maxX = Math.max(0, (scaledWidth - rect.width) / 2);
-        const maxY = Math.max(0, (scaledHeight - rect.height) / 2);
+        // Calculate max translation
+        const maxX = Math.max(0, (scaledWidth - containerRect.width) / 2);
+        const maxY = Math.max(0, (scaledHeight - containerRect.height) / 2);
         
-        // Only constrain if actually exceeding bounds
-        if (Math.abs(posX) > maxX) {
-            posX = posX > 0 ? maxX : -maxX;
-        }
-        if (Math.abs(posY) > maxY) {
-            posY = posY > 0 ? maxY : -maxY;
-        }
+        // Constrain
+        if (translateX > maxX) translateX = maxX;
+        if (translateX < -maxX) translateX = -maxX;
+        if (translateY > maxY) translateY = maxY;
+        if (translateY < -maxY) translateY = -maxY;
     }
 
-    function handleTouchStart(e) {
-        // Only handle if touch is on bus map container
+    function onTouchStart(e) {
+        // Only handle touches on the map container
         if (!e.target.closest('.bus-map-container')) return;
         
         if (e.touches.length === 2) {
+            // Start zoom
             e.preventDefault();
             e.stopPropagation();
             isZooming = true;
             isPanning = false;
-            lastTouchDistance = getTouchDistance(e.touches[0], e.touches[1]);
-            lastTouchCenter = getTouchCenter(e.touches[0], e.touches[1]);
-        } else if (e.touches.length === 1) {
-            if (scale > 1) {
-                e.preventDefault();
-                e.stopPropagation();
-                isPanning = true;
-                isZooming = false;
-                lastPanPoint = { x: e.touches[0].clientX, y: e.touches[0].clientY };
-            }
+            startDistance = getDistance(e.touches[0], e.touches[1]);
+            startScale = scale;
+        } else if (e.touches.length === 1 && scale > 1) {
+            // Start pan
+            e.preventDefault();
+            e.stopPropagation();
+            isPanning = true;
+            isZooming = false;
+            startX = e.touches[0].clientX;
+            startY = e.touches[0].clientY;
+            startTranslateX = translateX;
+            startTranslateY = translateY;
         }
     }
 
-    function handleTouchMove(e) {
-        // Only handle if we're zooming or panning
+    function onTouchMove(e) {
         if (!isZooming && !isPanning) return;
         
         if (e.touches.length === 2 && isZooming) {
             e.preventDefault();
             e.stopPropagation();
             
-            const newDistance = getTouchDistance(e.touches[0], e.touches[1]);
-            const newCenter = getTouchCenter(e.touches[0], e.touches[1]);
+            const currentDistance = getDistance(e.touches[0], e.touches[1]);
+            const newScale = (currentDistance / startDistance) * startScale;
             
-            // Calculate scale change
-            const scaleChange = newDistance / lastTouchDistance;
-            const newScale = scale * scaleChange;
+            // Clamp scale
+            scale = Math.max(1, Math.min(6, newScale));
             
-            // Clamp scale between 1 and 6
-            if (newScale >= 1 && newScale <= 6) {
-                // Zoom towards touch center
-                const rect = busMapContainer.getBoundingClientRect();
-                const centerX = newCenter.x - rect.left - rect.width / 2;
-                const centerY = newCenter.y - rect.top - rect.height / 2;
-                
-                posX = centerX + (posX - centerX) * scaleChange;
-                posY = centerY + (posY - centerY) * scaleChange;
-                scale = newScale;
-                
-                constrainPan();
-                setTransform();
+            if (scale === 1) {
+                translateX = 0;
+                translateY = 0;
+            } else {
+                constrain();
             }
             
-            lastTouchDistance = newDistance;
-            lastTouchCenter = newCenter;
+            applyTransform();
             
         } else if (e.touches.length === 1 && isPanning && scale > 1) {
             e.preventDefault();
             e.stopPropagation();
             
-            const deltaX = e.touches[0].clientX - lastPanPoint.x;
-            const deltaY = e.touches[0].clientY - lastPanPoint.y;
+            const deltaX = e.touches[0].clientX - startX;
+            const deltaY = e.touches[0].clientY - startY;
             
-            posX += deltaX;
-            posY += deltaY;
+            translateX = startTranslateX + deltaX;
+            translateY = startTranslateY + deltaY;
             
-            constrainPan();
-            setTransform();
-            
-            lastPanPoint = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+            constrain();
+            applyTransform();
         }
     }
 
-    function handleTouchEnd(e) {
+    function onTouchEnd(e) {
         if (e.touches.length < 2) {
             isZooming = false;
         }
         if (e.touches.length === 0) {
             isPanning = false;
             
-            // Reset if zoomed out completely
             if (scale <= 1) {
                 scale = 1;
-                posX = 0;
-                posY = 0;
-                setTransform();
+                translateX = 0;
+                translateY = 0;
+                applyTransform();
             }
         }
     }
 
-    // Attach to document for better Safari iOS 15.1 compatibility
-    document.addEventListener('touchstart', handleTouchStart, { passive: false, capture: true });
-    document.addEventListener('touchmove', handleTouchMove, { passive: false, capture: true });
-    document.addEventListener('touchend', handleTouchEnd, { passive: false, capture: true });
+    // Attach to document for Safari iOS 15.1 compatibility
+    document.addEventListener('touchstart', onTouchStart, { passive: false, capture: true });
+    document.addEventListener('touchmove', onTouchMove, { passive: false, capture: true });
+    document.addEventListener('touchend', onTouchEnd, { passive: false, capture: true });
 
-    // Reset on open
+    // Reset on map open
     if (actionMapBtn) {
         actionMapBtn.addEventListener('click', function() {
             scale = 1;
-            posX = 0;
-            posY = 0;
-            setTransform();
+            translateX = 0;
+            translateY = 0;
+            applyTransform();
         });
     }
+    
+    // Initialize transform
+    applyTransform();
 }
 
 // Back button navigation rules:
