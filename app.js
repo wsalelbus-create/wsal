@@ -2572,6 +2572,14 @@ if (busMapContainer && busMapWrapper && busMapImage) {
     busMapContainer.addEventListener('touchstart', handleTouchStart, { passive: false });
     busMapContainer.addEventListener('touchmove', handleTouchMove, { passive: false });
     busMapContainer.addEventListener('touchend', handleTouchEnd, { passive: false });
+    
+    // Test if ANY events work on Safari
+    busMapContainer.addEventListener('click', function() {
+        debugLog('CLICK EVENT WORKS!');
+    });
+    busMapContainer.addEventListener('mousedown', function() {
+        debugLog('MOUSEDOWN EVENT WORKS!');
+    });
 
     // Safari gesture events (iOS specific)
     busMapContainer.addEventListener('gesturestart', handleGestureStart, false);
@@ -2589,6 +2597,24 @@ if (busMapContainer && busMapWrapper && busMapImage) {
             debugDiv.style.display = 'block';
             tempDebugBounce.style.display = 'block';
             tempDebugBounce.innerHTML = 'Bounce guard monitor active';
+            
+            // Test if container exists and is visible
+            setTimeout(function() {
+                const exists = busMapContainer ? 'YES' : 'NO';
+                const rect = busMapContainer ? busMapContainer.getBoundingClientRect() : null;
+                const visible = rect ? (rect.width + 'x' + rect.height) : 'N/A';
+                const computed = busMapContainer ? window.getComputedStyle(busMapContainer) : null;
+                const pointerEvents = computed ? computed.pointerEvents : 'N/A';
+                const touchAction = computed ? computed.touchAction : 'N/A';
+                
+                debugLog('Container exists: ' + exists);
+                debugLog('Size: ' + visible);
+                debugLog('pointer-events: ' + pointerEvents);
+                debugLog('touch-action: ' + touchAction);
+                
+                // Try to manually trigger a test
+                debugLog('Waiting for touch...');
+            }, 500);
         });
     }
     
