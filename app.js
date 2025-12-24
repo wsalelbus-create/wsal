@@ -2356,7 +2356,7 @@ if (busMapBackBtn && busMapScreen) {
 }
 
 
-// Bus Map Zoom and Pan - NO boundaries, free scrolling
+// Bus Map Zoom and Pan - Citymapper style with smart boundaries
 const busMapContainer = document.querySelector('.bus-map-container');
 const busMapWrapper = document.getElementById('bus-map-wrapper');
 const busMapImage = document.getElementById('bus-map-image');
@@ -2383,6 +2383,28 @@ if (busMapContainer && busMapWrapper && busMapImage) {
         return Math.sqrt(dx * dx + dy * dy);
     }
 
+    function constrainPosition() {
+        // Smart boundaries: allow scrolling proportional to zoom level
+        // More zoom = more scroll range
+        const imageWidth = busMapImage.offsetWidth;
+        const imageHeight = busMapImage.offsetHeight;
+        const containerWidth = busMapContainer.offsetWidth;
+        const containerHeight = busMapContainer.offsetHeight;
+        
+        // At scale 1: no scroll
+        // At higher scales: can scroll to see all parts of the zoomed map
+        const scaledWidth = imageWidth * scale;
+        const scaledHeight = imageHeight * scale;
+        
+        // Allow scrolling up to the point where map edge reaches screen edge
+        // This means you can always see the part of the map you want
+        const maxX = (scaledWidth - containerWidth) / 2 + (containerWidth * 0.2);
+        const maxY = (scaledHeight - containerHeight) / 2 + (containerHeight * 0.2);
+        
+        posX = Math.max(-maxX, Math.min(maxX, posX));
+        posY = Math.max(-maxY, Math.min(maxY, posY));
+    }
+
     busMapContainer.addEventListener('touchstart', function(e) {
         if (e.touches.length === 2) {
             e.preventDefault();
@@ -2406,18 +2428,20 @@ if (busMapContainer && busMapWrapper && busMapImage) {
         e.stopPropagation();
         
         if (e.touches.length === 2 && initialDistance) {
-            // Pinch zoom - NO LIMITS
+            // Pinch zoom
             const currentDistance = getDistance(e.touches[0], e.touches[1]);
-            scale = Math.max(1, Math.min(10, (currentDistance / initialDistance) * initialScale));
+            scale = Math.max(1, Math.min(6, (currentDistance / initialDistance) * initialScale));
             
             if (scale === 1) {
                 posX = 0;
                 posY = 0;
+            } else {
+                constrainPosition();
             }
             
             applyTransform();
         } else if (e.touches.length === 1 && isPanning && scale > 1) {
-            // Pan - NO BOUNDARIES
+            // Pan with direction locking
             const deltaX = e.touches[0].clientX - startX;
             const deltaY = e.touches[0].clientY - startY;
             
@@ -2433,6 +2457,7 @@ if (busMapContainer && busMapWrapper && busMapImage) {
                 startY = e.touches[0].clientY;
             }
             
+            constrainPosition();
             applyTransform();
         }
     }, false);
@@ -3101,8 +3126,13 @@ function installBounceGuard() {
     ];
     document.addEventListener('touchmove', (e) => {
         if (panelDragging) { e.preventDefault(); return; }
-        // Bus map handles its own touchmove, skip global handler
-        if (e.target.closest('.bus-map-container') || e.target.closest('#bus-map-screen')) {
+        // Bus map handles its own touchmove, skip global handler completely
+        if (e.target.closest('.bus-map-container') || 
+            e.target.closest('#bus-map-screen') ||
+            e.target.closest('.bus-map-wrapper') ||
+            e.target.closest('.bus-map-image') ||
+            e.target.id === 'bus-map-image' ||
+            e.target.id === 'bus-map-wrapper') {
             return;
         }
         const ok = allowSelectors.some(sel => e.target.closest(sel));
