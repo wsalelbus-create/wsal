@@ -2370,6 +2370,8 @@ const busMapContainer = document.querySelector('.bus-map-container');
 const busMapWrapper = document.getElementById('bus-map-wrapper');
 const busMapImage = document.getElementById('bus-map-image');
 
+alert('busMapContainer: ' + (busMapContainer ? 'EXISTS' : 'NULL') + ', busMapWrapper: ' + (busMapWrapper ? 'EXISTS' : 'NULL') + ', busMapImage: ' + (busMapImage ? 'EXISTS' : 'NULL'));
+
 if (busMapContainer && busMapWrapper && busMapImage) {
     let scale = 1;
     let posX = 0;
