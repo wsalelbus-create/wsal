@@ -2342,11 +2342,13 @@ if (actionMapBtn && busMapScreen) {
     actionMapBtn.addEventListener('click', () => {
         busMapScreen.classList.remove('hidden');
         busMapIsOpen = true;
+        alert('Map opened, busMapIsOpen=' + busMapIsOpen);
     });
     actionMapBtn.addEventListener('touchend', (e) => {
         e.preventDefault();
         busMapScreen.classList.remove('hidden');
         busMapIsOpen = true;
+        alert('Map opened (touch), busMapIsOpen=' + busMapIsOpen);
     }, { passive: false });
 }
 
@@ -2383,6 +2385,12 @@ if (busMapContainer && busMapWrapper && busMapImage) {
     const debugDiv = document.createElement('div');
     debugDiv.style.cssText = 'position:fixed;top:80px;left:10px;background:rgba(0,0,0,0.8);color:#0f0;padding:10px;font-size:12px;z-index:99999;max-width:90%;word-wrap:break-word;display:none;';
     document.body.appendChild(debugDiv);
+    
+    // Create temp debug for bounce guard
+    const tempDebugBounce = document.createElement('div');
+    tempDebugBounce.id = 'temp-debug-bounce';
+    tempDebugBounce.style.cssText = 'position:fixed;top:120px;left:10px;background:rgba(255,0,0,0.8);color:#fff;padding:5px;font-size:10px;z-index:99999;display:none;';
+    document.body.appendChild(tempDebugBounce);
     
     function debugLog(msg) {
         console.log(msg);
@@ -2591,6 +2599,8 @@ if (busMapContainer && busMapWrapper && busMapImage) {
             setTransform();
             debugDiv.innerHTML = 'DEBUG READY<br>';
             debugDiv.style.display = 'block';
+            tempDebugBounce.style.display = 'block';
+            tempDebugBounce.innerHTML = 'Bounce guard monitor active';
         });
     }
     
@@ -2598,6 +2608,7 @@ if (busMapContainer && busMapWrapper && busMapImage) {
     if (busMapBackBtn) {
         busMapBackBtn.addEventListener('click', function() {
             debugDiv.style.display = 'none';
+            tempDebugBounce.style.display = 'none';
         });
     }
 }
@@ -3258,6 +3269,11 @@ function installBounceGuard() {
         
         // CRITICAL: If bus map is open, don't interfere with ANY touch events
         if (typeof busMapIsOpen !== 'undefined' && busMapIsOpen) {
+            // Create temp debug to verify this is being skipped
+            const tempDebug = document.getElementById('temp-debug-bounce');
+            if (tempDebug) {
+                tempDebug.innerHTML = 'BOUNCE GUARD SKIPPED (map open)';
+            }
             return;
         }
         
