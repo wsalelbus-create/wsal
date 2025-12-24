@@ -2564,12 +2564,15 @@ if (busMapContainer && busMapWrapper && busMapImage) {
     }
 
     function handleGestureChange(e) {
+        e.preventDefault();
+        
+        // Safari iOS 15.1 sometimes skips gesturestart, so initialize here if needed
         if (!isZooming) {
-            globalDebugLog('GESTURE CHANGE but not zooming!');
-            return;
+            globalDebugLog('GESTURE CHANGE without start - initializing');
+            initialPinchScale = scale;
+            isZooming = true;
         }
         
-        e.preventDefault();
         globalDebugLog('GESTURE scale=' + e.scale.toFixed(2));
         
         const newScale = initialPinchScale * e.scale;
@@ -2579,8 +2582,9 @@ if (busMapContainer && busMapWrapper && busMapImage) {
             scale = newScale;
             constrainPan();
             setTransform();
+            globalDebugLog('Applied scale=' + scale.toFixed(2));
         } else {
-            globalDebugLog('Scale out of range!');
+            globalDebugLog('Scale out of range: ' + newScale.toFixed(2));
         }
     }
 
