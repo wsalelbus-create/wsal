@@ -2236,6 +2236,13 @@ function setUIMode(mode) {
         else routesListEl.classList.add('hidden');
     }
 
+    // Home ad: visible only on home (idle), hidden in bus/walk modes
+    const homeAdEl = document.getElementById('home-ad-placeholder');
+    if (homeAdEl) {
+        if (mode === 'idle') homeAdEl.classList.remove('hidden');
+        else homeAdEl.classList.add('hidden');
+    }
+
     // Quick actions: visible only on home (idle)
     if (quickActionsEl) {
         if (mode === 'idle') quickActionsEl.classList.remove('hidden');
