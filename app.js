@@ -2377,6 +2377,7 @@ if (busMapContainer && busMapWrapper && busMapImage) {
     let lastPanPoint = { x: 0, y: 0 };
     let isZooming = false;
     let isPanning = false;
+    let initialPinchScale = 1;
 
     function setTransform() {
         const transform = 'translate(' + posX + 'px, ' + posY + 'px) scale(' + scale + ')';
@@ -2411,11 +2412,9 @@ if (busMapContainer && busMapWrapper && busMapImage) {
         const scaledWidth = imgWidth * scale;
         const scaledHeight = imgHeight * scale;
         
-        // Calculate max pan distance
         const maxX = Math.max(0, (scaledWidth - rect.width) / 2);
         const maxY = Math.max(0, (scaledHeight - rect.height) / 2);
         
-        // Only constrain if actually exceeding bounds
         if (Math.abs(posX) > maxX) {
             posX = posX > 0 ? maxX : -maxX;
         }
@@ -2425,8 +2424,10 @@ if (busMapContainer && busMapWrapper && busMapImage) {
     }
 
     function handleTouchStart(e) {
-        // Only handle if touch is on bus map container
+        if (!busMapIsOpen) return;
         if (!e.target.closest('.bus-map-container')) return;
+        
+        console.log('BUS MAP: touchstart', e.touches.length);
         
         if (e.touches.length === 2) {
             e.preventDefault();
@@ -2435,35 +2436,33 @@ if (busMapContainer && busMapWrapper && busMapImage) {
             isPanning = false;
             lastTouchDistance = getTouchDistance(e.touches[0], e.touches[1]);
             lastTouchCenter = getTouchCenter(e.touches[0], e.touches[1]);
+            console.log('BUS MAP: zoom start');
         } else if (e.touches.length === 1) {
-            if (scale > 1) {
-                e.preventDefault();
-                e.stopPropagation();
-                isPanning = true;
-                isZooming = false;
-                lastPanPoint = { x: e.touches[0].clientX, y: e.touches[0].clientY };
-            }
+            e.preventDefault();
+            e.stopPropagation();
+            isPanning = true;
+            isZooming = false;
+            lastPanPoint = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+            console.log('BUS MAP: pan start, scale=' + scale);
         }
     }
 
     function handleTouchMove(e) {
-        // Only handle if we're zooming or panning
+        if (!busMapIsOpen) return;
         if (!isZooming && !isPanning) return;
+        
+        console.log('BUS MAP: touchmove', e.touches.length, 'zoom=' + isZooming, 'pan=' + isPanning);
         
         if (e.touches.length === 2 && isZooming) {
             e.preventDefault();
             e.stopPropagation();
             
             const newDistance = getTouchDistance(e.touches[0], e.touches[1]);
-            const newCenter = getTouchCenter(e.touches[0], e.touches[1]);
-            
-            // Calculate scale change
             const scaleChange = newDistance / lastTouchDistance;
             const newScale = scale * scaleChange;
             
-            // Clamp scale between 1 and 6
             if (newScale >= 1 && newScale <= 6) {
-                // Zoom towards touch center
+                const newCenter = getTouchCenter(e.touches[0], e.touches[1]);
                 const rect = busMapContainer.getBoundingClientRect();
                 const centerX = newCenter.x - rect.left - rect.width / 2;
                 const centerY = newCenter.y - rect.top - rect.height / 2;
@@ -2474,12 +2473,12 @@ if (busMapContainer && busMapWrapper && busMapImage) {
                 
                 constrainPan();
                 setTransform();
+                console.log('BUS MAP: zooming to scale=' + scale.toFixed(2));
             }
             
             lastTouchDistance = newDistance;
-            lastTouchCenter = newCenter;
             
-        } else if (e.touches.length === 1 && isPanning && scale > 1) {
+        } else if (e.touches.length === 1 && isPanning) {
             e.preventDefault();
             e.stopPropagation();
             
@@ -2493,17 +2492,21 @@ if (busMapContainer && busMapWrapper && busMapImage) {
             setTransform();
             
             lastPanPoint = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+            console.log('BUS MAP: panning dx=' + deltaX + ' dy=' + deltaY);
         }
     }
 
     function handleTouchEnd(e) {
+        if (!busMapIsOpen) return;
+        
+        console.log('BUS MAP: touchend', e.touches.length);
+        
         if (e.touches.length < 2) {
             isZooming = false;
         }
         if (e.touches.length === 0) {
             isPanning = false;
             
-            // Reset if zoomed out completely
             if (scale <= 1) {
                 scale = 1;
                 posX = 0;
@@ -2513,10 +2516,56 @@ if (busMapContainer && busMapWrapper && busMapImage) {
         }
     }
 
-    // Attach to document for better Safari iOS 15.1 compatibility
+    // Safari iOS gesture events (for older Safari versions)
+    function handleGestureStart(e) {
+        if (!busMapIsOpen) return;
+        if (!e.target.closest('.bus-map-container')) return;
+        
+        e.preventDefault();
+        console.log('BUS MAP: gesturestart');
+        initialPinchScale = scale;
+        isZooming = true;
+    }
+
+    function handleGestureChange(e) {
+        if (!busMapIsOpen) return;
+        if (!isZooming) return;
+        
+        e.preventDefault();
+        console.log('BUS MAP: gesturechange scale=' + e.scale);
+        
+        const newScale = initialPinchScale * e.scale;
+        if (newScale >= 1 && newScale <= 6) {
+            scale = newScale;
+            constrainPan();
+            setTransform();
+        }
+    }
+
+    function handleGestureEnd(e) {
+        if (!busMapIsOpen) return;
+        
+        e.preventDefault();
+        console.log('BUS MAP: gestureend');
+        isZooming = false;
+        
+        if (scale <= 1) {
+            scale = 1;
+            posX = 0;
+            posY = 0;
+            setTransform();
+        }
+    }
+
+    // Standard touch events
     document.addEventListener('touchstart', handleTouchStart, { passive: false, capture: true });
     document.addEventListener('touchmove', handleTouchMove, { passive: false, capture: true });
     document.addEventListener('touchend', handleTouchEnd, { passive: false, capture: true });
+
+    // Safari gesture events (iOS specific)
+    busMapContainer.addEventListener('gesturestart', handleGestureStart, false);
+    busMapContainer.addEventListener('gesturechange', handleGestureChange, false);
+    busMapContainer.addEventListener('gestureend', handleGestureEnd, false);
 
     // Reset on open
     if (actionMapBtn) {
@@ -2528,6 +2577,16 @@ if (busMapContainer && busMapWrapper && busMapImage) {
         });
     }
 }
+
+    // Reset on open
+    if (actionMapBtn) {
+        actionMapBtn.addEventListener('click', function() {
+            scale = 1;
+            posX = 0;
+            posY = 0;
+            setTransform();
+        });
+    }
 
 // Back button navigation rules:
 // - If on 3rd screen (walk + busDetailActive), go back to Bus list.
