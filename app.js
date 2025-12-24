@@ -2416,15 +2416,15 @@ const busMapImage = document.getElementById('bus-map-image');
 alert('busMapContainer: ' + (busMapContainer ? 'EXISTS' : 'NULL') + ', busMapWrapper: ' + (busMapWrapper ? 'EXISTS' : 'NULL') + ', busMapImage: ' + (busMapImage ? 'EXISTS' : 'NULL'));
 
 if (busMapContainer && busMapWrapper && busMapImage) {
-    let scale = 1;
-    let posX = 0;
-    let posY = 0;
-    let lastTouchDistance = 0;
-    let lastTouchCenter = { x: 0, y: 0 };
-    let lastPanPoint = { x: 0, y: 0 };
-    let isZooming = false;
-    let isPanning = false;
-    let initialPinchScale = 1;
+    var scale = 1;
+    var posX = 0;
+    var posY = 0;
+    var lastTouchDistance = 0;
+    var lastTouchCenter = { x: 0, y: 0 };
+    var lastPanPoint = { x: 0, y: 0 };
+    var isZooming = false;
+    var isPanning = false;
+    var initialPinchScale = 1;
 
     function setTransform() {
         const transform = 'translate(' + posX + 'px, ' + posY + 'px) scale(' + scale + ')';
