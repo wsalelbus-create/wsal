@@ -2564,27 +2564,32 @@ if (busMapContainer && busMapWrapper && busMapImage) {
     }
 
     function handleGestureChange(e) {
-        e.preventDefault();
-        
-        // Safari iOS 15.1 sometimes skips gesturestart, so initialize here if needed
-        if (!isZooming) {
-            globalDebugLog('GESTURE CHANGE without start - initializing');
-            initialPinchScale = scale;
-            isZooming = true;
-        }
-        
-        globalDebugLog('GESTURE scale=' + e.scale.toFixed(2));
-        
-        const newScale = initialPinchScale * e.scale;
-        globalDebugLog('newScale=' + newScale.toFixed(2) + ' (init=' + initialPinchScale.toFixed(2) + ')');
-        
-        if (newScale >= 1 && newScale <= 6) {
-            scale = newScale;
-            constrainPan();
-            setTransform();
-            globalDebugLog('Applied scale=' + scale.toFixed(2));
-        } else {
-            globalDebugLog('Scale out of range: ' + newScale.toFixed(2));
+        try {
+            e.preventDefault();
+            
+            globalDebugLog('GESTURE scale=' + e.scale.toFixed(2));
+            globalDebugLog('isZooming=' + isZooming + ', initialPinchScale=' + initialPinchScale);
+            
+            // Safari iOS 15.1 sometimes skips gesturestart, so initialize here if needed
+            if (!isZooming) {
+                globalDebugLog('GESTURE CHANGE without start - initializing');
+                initialPinchScale = scale;
+                isZooming = true;
+            }
+            
+            const newScale = initialPinchScale * e.scale;
+            globalDebugLog('newScale=' + newScale.toFixed(2) + ' (init=' + initialPinchScale.toFixed(2) + ')');
+            
+            if (newScale >= 1 && newScale <= 6) {
+                scale = newScale;
+                constrainPan();
+                setTransform();
+                globalDebugLog('Applied scale=' + scale.toFixed(2));
+            } else {
+                globalDebugLog('Scale out of range: ' + newScale.toFixed(2));
+            }
+        } catch (err) {
+            globalDebugLog('ERROR: ' + err.message);
         }
     }
 
