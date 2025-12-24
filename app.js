@@ -514,23 +514,21 @@ function renderBusStationDetail(station, withDelay = false) {
     card.appendChild(arrivalsDiv);
     routesListEl.appendChild(card);
     
-    // In bus/walk modes, add ad after first card
-    if (routesListEl.children.length === 1) {
-        // Check if ad already exists in routes list
-        const existingAd = routesListEl.querySelector('.ad-placeholder');
-        if (!existingAd) {
-            const adPlaceholder = document.createElement('div');
-            adPlaceholder.className = 'ad-placeholder routes-ad';
-            adPlaceholder.innerHTML = `
-                <!-- Replace this entire div content with your Google Ads code -->
-                <div class="ad-demo-content">
-                    <div class="ad-label">Advertisement</div>
-                    <p style="color: #999; font-size: 0.75rem; margin-top: 8px;">Your Google Ads will appear here</p>
-                </div>
-                <!-- Example: <ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-xxxxx" ...></ins> -->
-            `;
-            routesListEl.appendChild(adPlaceholder);
-        }
+    // In bus/walk modes, add ad AFTER first card (second position)
+    // Only add if this is the first card AND ad doesn't already exist
+    const existingAd = routesListEl.querySelector('.routes-ad');
+    if (routesListEl.querySelectorAll('.station-card').length === 1 && !existingAd) {
+        const adPlaceholder = document.createElement('div');
+        adPlaceholder.className = 'ad-placeholder routes-ad';
+        adPlaceholder.innerHTML = `
+            <!-- Replace this entire div content with your Google Ads code -->
+            <div class="ad-demo-content">
+                <div class="ad-label">Advertisement</div>
+                <p style="color: #999; font-size: 0.75rem; margin-top: 8px;">Your Google Ads will appear here</p>
+            </div>
+            <!-- Example: <ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-xxxxx" ...></ins> -->
+        `;
+        routesListEl.appendChild(adPlaceholder);
     }
 }
 // Route Paths - GPS waypoints for all routes
