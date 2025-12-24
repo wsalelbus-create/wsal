@@ -566,6 +566,7 @@ function renderBusStationDetail(station, withDelay = false) {
 // Route Paths - GPS waypoints for all routes
 // Route Paths - GPS coordinates for START and END of each route
 // Simplified to 2 points per route for easier maintenance
+// Make globally accessible for traffic-sampler.js
 const ROUTE_PATHS = {
     '04': [ // 1er Mai ↔ Ben Omar
         { lat: 36.7606, lon: 3.0553, name: '1er Mai' },
@@ -672,6 +673,9 @@ const ROUTE_PATHS = {
         { lat: 36.7550, lon: 3.0800, name: 'Gare Routière Caroubier' }
     ]
 };
+
+// Make ROUTE_PATHS globally accessible for traffic-sampler.js
+window.ROUTE_PATHS = ROUTE_PATHS;
 
 // --- Global State Variables ---
 let map = null;

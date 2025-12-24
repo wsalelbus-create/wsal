@@ -374,9 +374,15 @@ class TrafficSampler {
             const routeNumber = typeof routeInfo === 'string' ? routeInfo : routeInfo.number;
             const destination = routeInfo.dest || null;
             
+            console.log(`🔍 getTrafficSpeed called: route ${routeNumber}, dest: ${destination}`);
+            console.log(`🔍 window.ROUTE_PATHS exists:`, !!window.ROUTE_PATHS);
+            
             // Get route path
             const routePath = window.ROUTE_PATHS && window.ROUTE_PATHS[routeNumber];
+            console.log(`🔍 routePath for ${routeNumber}:`, routePath ? `${routePath.length} points` : 'NOT FOUND');
+            
             if (!routePath || routePath.length < 2) {
+                console.warn(`❌ No route path found for route ${routeNumber}`);
                 return null; // No route data - use fallback
             }
 
@@ -387,6 +393,8 @@ class TrafficSampler {
                 // Simple 2-point route: check if destination matches end point
                 const startPoint = routePath[0];
                 const endPoint = routePath[1];
+                
+                console.log(`🔍 Checking direction: start="${startPoint.name}", end="${endPoint.name}", dest="${destination}"`);
                 
                 // If destination name matches end point, go START → END
                 // Otherwise go END → START (reverse direction)
@@ -404,8 +412,12 @@ class TrafficSampler {
                 console.log(`🚌 Route ${routeNumber} sampling all points (no direction info)`);
             }
 
+            console.log(`🔍 About to sample ${pointsToSample.length} points`);
+
             // Sample traffic along the route in the correct direction
             const speed = await this.sampleRoute(pointsToSample, 15);
+            
+            console.log(`🔍 sampleRoute returned: ${speed}`);
             
             if (speed !== null) {
                 console.log(`🚦 Google traffic for route ${routeNumber}: ${speed.toFixed(1)} km/h`);
