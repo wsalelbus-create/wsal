@@ -2335,23 +2335,30 @@ const actionMapBtn = document.getElementById('action-map');
 const busMapScreen = document.getElementById('bus-map-screen');
 const busMapBackBtn = document.getElementById('bus-map-back-btn');
 
+// Global flag to disable bounce guard when bus map is open
+let busMapIsOpen = false;
+
 if (actionMapBtn && busMapScreen) {
     actionMapBtn.addEventListener('click', () => {
         busMapScreen.classList.remove('hidden');
+        busMapIsOpen = true;
     });
     actionMapBtn.addEventListener('touchend', (e) => {
         e.preventDefault();
         busMapScreen.classList.remove('hidden');
+        busMapIsOpen = true;
     }, { passive: false });
 }
 
 if (busMapBackBtn && busMapScreen) {
     busMapBackBtn.addEventListener('click', () => {
         busMapScreen.classList.add('hidden');
+        busMapIsOpen = false;
     });
     busMapBackBtn.addEventListener('touchend', (e) => {
         e.preventDefault();
         busMapScreen.classList.add('hidden');
+        busMapIsOpen = false;
     }, { passive: false });
 }
 
@@ -2404,16 +2411,26 @@ if (busMapContainer && busMapWrapper && busMapImage) {
         const scaledWidth = imgWidth * scale;
         const scaledHeight = imgHeight * scale;
         
+        // Calculate max pan distance
         const maxX = Math.max(0, (scaledWidth - rect.width) / 2);
         const maxY = Math.max(0, (scaledHeight - rect.height) / 2);
         
-        posX = Math.max(-maxX, Math.min(maxX, posX));
-        posY = Math.max(-maxY, Math.min(maxY, posY));
+        // Only constrain if actually exceeding bounds
+        if (Math.abs(posX) > maxX) {
+            posX = posX > 0 ? maxX : -maxX;
+        }
+        if (Math.abs(posY) > maxY) {
+            posY = posY > 0 ? maxY : -maxY;
+        }
     }
 
-    busMapContainer.addEventListener('touchstart', function(e) {
+    function handleTouchStart(e) {
+        // Only handle if touch is on bus map container
+        if (!e.target.closest('.bus-map-container')) return;
+        
         if (e.touches.length === 2) {
             e.preventDefault();
+            e.stopPropagation();
             isZooming = true;
             isPanning = false;
             lastTouchDistance = getTouchDistance(e.touches[0], e.touches[1]);
@@ -2421,16 +2438,21 @@ if (busMapContainer && busMapWrapper && busMapImage) {
         } else if (e.touches.length === 1) {
             if (scale > 1) {
                 e.preventDefault();
+                e.stopPropagation();
                 isPanning = true;
                 isZooming = false;
                 lastPanPoint = { x: e.touches[0].clientX, y: e.touches[0].clientY };
             }
         }
-    }, { passive: false });
+    }
 
-    busMapContainer.addEventListener('touchmove', function(e) {
+    function handleTouchMove(e) {
+        // Only handle if we're zooming or panning
+        if (!isZooming && !isPanning) return;
+        
         if (e.touches.length === 2 && isZooming) {
             e.preventDefault();
+            e.stopPropagation();
             
             const newDistance = getTouchDistance(e.touches[0], e.touches[1]);
             const newCenter = getTouchCenter(e.touches[0], e.touches[1]);
@@ -2459,6 +2481,7 @@ if (busMapContainer && busMapWrapper && busMapImage) {
             
         } else if (e.touches.length === 1 && isPanning && scale > 1) {
             e.preventDefault();
+            e.stopPropagation();
             
             const deltaX = e.touches[0].clientX - lastPanPoint.x;
             const deltaY = e.touches[0].clientY - lastPanPoint.y;
@@ -2471,9 +2494,9 @@ if (busMapContainer && busMapWrapper && busMapImage) {
             
             lastPanPoint = { x: e.touches[0].clientX, y: e.touches[0].clientY };
         }
-    }, { passive: false });
+    }
 
-    busMapContainer.addEventListener('touchend', function(e) {
+    function handleTouchEnd(e) {
         if (e.touches.length < 2) {
             isZooming = false;
         }
@@ -2488,7 +2511,12 @@ if (busMapContainer && busMapWrapper && busMapImage) {
                 setTransform();
             }
         }
-    }, { passive: false });
+    }
+
+    // Attach to document for better Safari iOS 15.1 compatibility
+    document.addEventListener('touchstart', handleTouchStart, { passive: false, capture: true });
+    document.addEventListener('touchmove', handleTouchMove, { passive: false, capture: true });
+    document.addEventListener('touchend', handleTouchEnd, { passive: false, capture: true });
 
     // Reset on open
     if (actionMapBtn) {
@@ -3144,15 +3172,12 @@ function installBounceGuard() {
     ];
     document.addEventListener('touchmove', (e) => {
         if (panelDragging) { e.preventDefault(); return; }
-        // Bus map handles its own touchmove, skip global handler completely
-        if (e.target.closest('.bus-map-container') || 
-            e.target.closest('#bus-map-screen') ||
-            e.target.closest('.bus-map-wrapper') ||
-            e.target.closest('.bus-map-image') ||
-            e.target.id === 'bus-map-image' ||
-            e.target.id === 'bus-map-wrapper') {
+        
+        // CRITICAL: If bus map is open, don't interfere with ANY touch events
+        if (typeof busMapIsOpen !== 'undefined' && busMapIsOpen) {
             return;
         }
+        
         const ok = allowSelectors.some(sel => e.target.closest(sel));
         if (ok) return; // allow default touchmove
         e.preventDefault(); // block page-level drag/bounce
