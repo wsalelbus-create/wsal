@@ -416,6 +416,30 @@ function renderBusStations(withDelay = false, fadeIn = false) {
         });
         routesListEl.appendChild(card);
     });
+    
+    // In bus list mode, add ad AFTER first card (second position)
+    const stationCards = routesListEl.querySelectorAll('.station-card');
+    const existingAd = routesListEl.querySelector('.routes-ad');
+    
+    // Add ad after first card if it doesn't exist yet and we have at least one card
+    if (stationCards.length >= 1 && !existingAd) {
+        const adPlaceholder = document.createElement('div');
+        adPlaceholder.className = 'ad-placeholder routes-ad';
+        adPlaceholder.innerHTML = `
+            <!-- Replace this entire div content with your Google Ads code -->
+            <div class="ad-demo-content">
+                <div class="ad-label">Advertisement</div>
+                <p style="color: #999; font-size: 0.75rem; margin-top: 8px;">Your Google Ads will appear here</p>
+            </div>
+            <!-- Example: <ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-xxxxx" ...></ins> -->
+        `;
+        // Insert after the first card (second position)
+        if (stationCards[0].nextSibling) {
+            routesListEl.insertBefore(adPlaceholder, stationCards[0].nextSibling);
+        } else {
+            routesListEl.appendChild(adPlaceholder);
+        }
+    }
 }
  
 // Render a single station using the exact Bus screen card design (header + arrivals)
@@ -515,9 +539,12 @@ function renderBusStationDetail(station, withDelay = false) {
     routesListEl.appendChild(card);
     
     // In bus/walk modes, add ad AFTER first card (second position)
-    // Only add if this is the first card AND ad doesn't already exist
+    // Count only station cards, not ads
+    const stationCards = routesListEl.querySelectorAll('.station-card');
     const existingAd = routesListEl.querySelector('.routes-ad');
-    if (routesListEl.querySelectorAll('.station-card').length === 1 && !existingAd) {
+    
+    // Add ad after first card if it doesn't exist yet
+    if (stationCards.length === 1 && !existingAd) {
         const adPlaceholder = document.createElement('div');
         adPlaceholder.className = 'ad-placeholder routes-ad';
         adPlaceholder.innerHTML = `
@@ -528,7 +555,12 @@ function renderBusStationDetail(station, withDelay = false) {
             </div>
             <!-- Example: <ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-xxxxx" ...></ins> -->
         `;
-        routesListEl.appendChild(adPlaceholder);
+        // Insert after the first card (second position)
+        if (stationCards[0].nextSibling) {
+            routesListEl.insertBefore(adPlaceholder, stationCards[0].nextSibling);
+        } else {
+            routesListEl.appendChild(adPlaceholder);
+        }
     }
 }
 // Route Paths - GPS waypoints for all routes
