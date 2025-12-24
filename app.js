@@ -2338,58 +2338,15 @@ const busMapBackBtn = document.getElementById('bus-map-back-btn');
 // Global flag to disable bounce guard when bus map is open
 let busMapIsOpen = false;
 
-// Create debug divs globally
-const globalDebugDiv = document.createElement('div');
-globalDebugDiv.style.cssText = 'position:fixed;top:80px;left:10px;background:rgba(0,0,0,0.8);color:#0f0;padding:10px;font-size:12px;z-index:99999;max-width:90%;word-wrap:break-word;display:none;';
-document.body.appendChild(globalDebugDiv);
-
-function globalDebugLog(msg) {
-    console.log(msg);
-    globalDebugDiv.style.display = 'block';
-    globalDebugDiv.innerHTML += msg + '<br>';
-    const lines = globalDebugDiv.innerHTML.split('<br>');
-    if (lines.length > 15) {
-        globalDebugDiv.innerHTML = lines.slice(-15).join('<br>');
-    }
-}
-
 if (actionMapBtn && busMapScreen) {
     actionMapBtn.addEventListener('click', () => {
         busMapScreen.classList.remove('hidden');
         busMapIsOpen = true;
-        globalDebugLog('Map opened (click)');
-        globalDebugLog('busMapIsOpen=' + busMapIsOpen);
-        
-        // Test container
-        const container = document.querySelector('.bus-map-container');
-        if (container) {
-            const rect = container.getBoundingClientRect();
-            globalDebugLog('Container: ' + rect.width + 'x' + rect.height);
-            const style = window.getComputedStyle(container);
-            globalDebugLog('touch-action: ' + style.touchAction);
-            globalDebugLog('pointer-events: ' + style.pointerEvents);
-        } else {
-            globalDebugLog('Container NOT FOUND!');
-        }
     });
     actionMapBtn.addEventListener('touchend', (e) => {
         e.preventDefault();
         busMapScreen.classList.remove('hidden');
         busMapIsOpen = true;
-        globalDebugLog('Map opened (touch)');
-        globalDebugLog('busMapIsOpen=' + busMapIsOpen);
-        
-        // Test container
-        const container = document.querySelector('.bus-map-container');
-        if (container) {
-            const rect = container.getBoundingClientRect();
-            globalDebugLog('Container: ' + rect.width + 'x' + rect.height);
-            const style = window.getComputedStyle(container);
-            globalDebugLog('touch-action: ' + style.touchAction);
-            globalDebugLog('pointer-events: ' + style.pointerEvents);
-        } else {
-            globalDebugLog('Container NOT FOUND!');
-        }
     }, { passive: false });
 }
 
@@ -2397,13 +2354,11 @@ if (busMapBackBtn && busMapScreen) {
     busMapBackBtn.addEventListener('click', () => {
         busMapScreen.classList.add('hidden');
         busMapIsOpen = false;
-        globalDebugDiv.style.display = 'none';
     });
     busMapBackBtn.addEventListener('touchend', (e) => {
         e.preventDefault();
         busMapScreen.classList.add('hidden');
         busMapIsOpen = false;
-        globalDebugDiv.style.display = 'none';
     }, { passive: false });
 }
 
@@ -2412,8 +2367,6 @@ if (busMapBackBtn && busMapScreen) {
 const busMapContainer = document.querySelector('.bus-map-container');
 const busMapWrapper = document.getElementById('bus-map-wrapper');
 const busMapImage = document.getElementById('bus-map-image');
-
-alert('busMapContainer: ' + (busMapContainer ? 'EXISTS' : 'NULL') + ', busMapWrapper: ' + (busMapWrapper ? 'EXISTS' : 'NULL') + ', busMapImage: ' + (busMapImage ? 'EXISTS' : 'NULL'));
 
 if (busMapContainer && busMapWrapper && busMapImage) {
     var scale = 1;
@@ -2430,7 +2383,6 @@ if (busMapContainer && busMapWrapper && busMapImage) {
         const transform = 'translate(' + posX + 'px, ' + posY + 'px) scale(' + scale + ')';
         busMapWrapper.style.transform = transform;
         busMapWrapper.style.webkitTransform = transform;
-        globalDebugLog('TRANSFORM: ' + transform);
     }
 
     function getTouchDistance(t1, t2) {
@@ -2472,8 +2424,6 @@ if (busMapContainer && busMapWrapper && busMapImage) {
     }
 
     function handleTouchStart(e) {
-        globalDebugLog('touchstart fingers=' + e.touches.length);
-        
         if (e.touches.length === 2) {
             e.preventDefault();
             e.stopPropagation();
@@ -2481,14 +2431,12 @@ if (busMapContainer && busMapWrapper && busMapImage) {
             isPanning = false;
             lastTouchDistance = getTouchDistance(e.touches[0], e.touches[1]);
             lastTouchCenter = getTouchCenter(e.touches[0], e.touches[1]);
-            globalDebugLog('ZOOM START');
         } else if (e.touches.length === 1) {
             e.preventDefault();
             e.stopPropagation();
             isPanning = true;
             isZooming = false;
             lastPanPoint = { x: e.touches[0].clientX, y: e.touches[0].clientY };
-            globalDebugLog('PAN START scale=' + scale.toFixed(2));
         }
     }
 
@@ -2515,7 +2463,6 @@ if (busMapContainer && busMapWrapper && busMapImage) {
                 
                 constrainPan();
                 setTransform();
-                globalDebugLog('ZOOMING scale=' + scale.toFixed(2));
             }
             
             lastTouchDistance = newDistance;
@@ -2538,8 +2485,6 @@ if (busMapContainer && busMapWrapper && busMapImage) {
     }
 
     function handleTouchEnd(e) {
-        globalDebugLog('touchend fingers=' + e.touches.length);
-        
         if (e.touches.length < 2) {
             isZooming = false;
         }
@@ -2555,47 +2500,33 @@ if (busMapContainer && busMapWrapper && busMapImage) {
         }
     }
 
-    // Safari iOS gesture events (for older Safari versions)
+    // Safari iOS gesture events (for older Safari versions like iOS 15.1)
     function handleGestureStart(e) {
         e.preventDefault();
-        globalDebugLog('GESTURESTART (Safari)');
         initialPinchScale = scale;
         isZooming = true;
     }
 
     function handleGestureChange(e) {
-        try {
-            e.preventDefault();
-            
-            globalDebugLog('GESTURE scale=' + e.scale.toFixed(2));
-            globalDebugLog('isZooming=' + isZooming + ', initialPinchScale=' + initialPinchScale);
-            
-            // Safari iOS 15.1 sometimes skips gesturestart, so initialize here if needed
-            if (!isZooming) {
-                globalDebugLog('GESTURE CHANGE without start - initializing');
-                initialPinchScale = scale;
-                isZooming = true;
-            }
-            
-            const newScale = initialPinchScale * e.scale;
-            globalDebugLog('newScale=' + newScale.toFixed(2) + ' (init=' + initialPinchScale.toFixed(2) + ')');
-            
-            if (newScale >= 1 && newScale <= 6) {
-                scale = newScale;
-                constrainPan();
-                setTransform();
-                globalDebugLog('Applied scale=' + scale.toFixed(2));
-            } else {
-                globalDebugLog('Scale out of range: ' + newScale.toFixed(2));
-            }
-        } catch (err) {
-            globalDebugLog('ERROR: ' + err.message);
+        e.preventDefault();
+        
+        // Safari iOS 15.1 sometimes skips gesturestart, so initialize here if needed
+        if (!isZooming) {
+            initialPinchScale = scale;
+            isZooming = true;
+        }
+        
+        const newScale = initialPinchScale * e.scale;
+        
+        if (newScale >= 1 && newScale <= 6) {
+            scale = newScale;
+            constrainPan();
+            setTransform();
         }
     }
 
     function handleGestureEnd(e) {
         e.preventDefault();
-        globalDebugLog('GESTUREEND final=' + scale.toFixed(2));
         isZooming = false;
         
         if (scale <= 1) {
@@ -2610,14 +2541,6 @@ if (busMapContainer && busMapWrapper && busMapImage) {
     busMapContainer.addEventListener('touchstart', handleTouchStart, { passive: false });
     busMapContainer.addEventListener('touchmove', handleTouchMove, { passive: false });
     busMapContainer.addEventListener('touchend', handleTouchEnd, { passive: false });
-    
-    // Test if ANY events work on Safari
-    busMapContainer.addEventListener('click', function() {
-        globalDebugLog('CLICK EVENT WORKS!');
-    });
-    busMapContainer.addEventListener('mousedown', function() {
-        globalDebugLog('MOUSEDOWN EVENT WORKS!');
-    });
 
     // Safari gesture events (iOS specific)
     busMapContainer.addEventListener('gesturestart', handleGestureStart, false);
@@ -2656,14 +2579,10 @@ if (busMapContainer && busMapWrapper && busMapImage) {
         });
     }
     
-    // Hide debug when closing map
-    if (busMapBackBtn) {
-        busMapBackBtn.addEventListener('click', function() {
-            debugDiv.style.display = 'none';
-            tempDebugBounce.style.display = 'none';
-        });
-    }
-}
+    // Safari gesture events (iOS specific)
+    busMapContainer.addEventListener('gesturestart', handleGestureStart, false);
+    busMapContainer.addEventListener('gesturechange', handleGestureChange, false);
+    busMapContainer.addEventListener('gestureend', handleGestureEnd, false);
 
     // Reset on open
     if (actionMapBtn) {
@@ -2674,6 +2593,7 @@ if (busMapContainer && busMapWrapper && busMapImage) {
             setTransform();
         });
     }
+}
 
 // Back button navigation rules:
 // - If on 3rd screen (walk + busDetailActive), go back to Bus list.
@@ -3321,11 +3241,6 @@ function installBounceGuard() {
         
         // CRITICAL: If bus map is open, don't interfere with ANY touch events
         if (typeof busMapIsOpen !== 'undefined' && busMapIsOpen) {
-            // Create temp debug to verify this is being skipped
-            const tempDebug = document.getElementById('temp-debug-bounce');
-            if (tempDebug) {
-                tempDebug.innerHTML = 'BOUNCE GUARD SKIPPED (map open)';
-            }
             return;
         }
         
