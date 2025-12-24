@@ -1076,55 +1076,12 @@ function calculateArrivals(station) {
         const busSpeed = carSpeed * busSpeedFactor;
         console.log(`🚌 Bus speed calculation: Car ${carSpeed.toFixed(1)} km/h × ${busSpeedFactor} = ${busSpeed.toFixed(1)} km/h`);
 
-        // STEP 4: Calculate DISTANCE using OSRM (real road distance) or GPS fallback
+        // STEP 4: Calculate DISTANCE using GPS × 1.6 (accurate for Algiers roads)
         const routePath = ROUTE_PATHS[route.number];
         let totalDistance = 3.5; // Default fallback: 3.5 km (typical Algiers route)
         
-        // Try to get REAL driving distance from OSRM (cached per route)
-        if (routePath && routePath.length >= 2 && route.osrmDistance === undefined) {
-            // First load - fetch OSRM driving distance asynchronously
-            const start = routePath[0];
-            const end = routePath[routePath.length - 1];
-            
-            getOsrmDrivingDistance(start.lat, start.lon, end.lat, end.lon).then(distance => {
-                if (distance) {
-                    route.osrmDistance = distance;
-                    console.log(`📏 OSRM driving distance for route ${route.number}: ${distance.toFixed(2)} km`);
-                    // Re-render with updated distance
-                    if (typeof renderBusStations === 'function' && uiMode === 'bus' && !busDetailActive) {
-                        renderBusStations();
-                    } else if (typeof renderBusStationDetail === 'function' && busDetailActive && currentStation) {
-                        renderBusStationDetail(currentStation);
-                    }
-                } else {
-                    route.osrmDistance = null; // Mark as failed
-                }
-            }).catch(e => {
-                console.warn('OSRM distance fetch error:', e);
-                route.osrmDistance = null;
-            });
-            
-            // While OSRM is loading, use GPS fallback immediately
-            if (routePath && routePath.length >= 2) {
-                totalDistance = 0;
-                for (let i = 0; i < routePath.length - 1; i++) {
-                    const dist = getDistanceFromLatLonInKm(
-                        routePath[i].lat, 
-                        routePath[i].lon,
-                        routePath[i + 1].lat,
-                        routePath[i + 1].lon
-                    );
-                    totalDistance += dist;
-                }
-                totalDistance *= 1.6; // Roads are typically 60% longer than straight line
-            }
-        }
-        
-        // Use OSRM distance if available, otherwise use GPS fallback
-        if (route.osrmDistance && route.osrmDistance > 0) {
-            totalDistance = route.osrmDistance;
-        } else if (routePath && routePath.length >= 2 && !route.osrmDistance) {
-            // Calculate GPS fallback if not already done
+        if (routePath && routePath.length >= 2) {
+            // Calculate GPS straight-line distance
             totalDistance = 0;
             for (let i = 0; i < routePath.length - 1; i++) {
                 const dist = getDistanceFromLatLonInKm(
@@ -1135,7 +1092,9 @@ function calculateArrivals(station) {
                 );
                 totalDistance += dist;
             }
-            totalDistance *= 1.6; // Roads are typically 60% longer than straight line
+            // Multiply by 1.6 for real road distance (proven accurate for Algiers)
+            totalDistance *= 1.6;
+            console.log(`📏 Route ${route.number} distance: ${totalDistance.toFixed(2)} km (GPS × 1.6)`);
         }
 
         // STEP 5: Calculate MOVEMENT TIME (time spent driving)
