@@ -1257,6 +1257,15 @@ html, body {
     align-items: center;
     justify-content: center;
     position: relative;
+    touch-action: none;
+}
+
+/* Wrapper for transform */
+.bus-map-wrapper {
+    display: block;
+    position: relative;
+    transform-origin: center center;
+    will-change: transform;
 }
 
 /* White frame wrapper - centered, zoomable */
@@ -1266,11 +1275,11 @@ html, body {
     border-radius: 0;
     box-shadow: none;
     padding: 20px;
+    width: 90vw;
     max-width: 90vw;
     height: auto;
     user-select: none;
     -webkit-user-select: none;
-    position: relative;
 }
     -webkit-user-drag: none;
     user-select: none;
