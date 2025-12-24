@@ -648,42 +648,26 @@ const ROUTE_PATHS = {
     ],
     '90': [ // Place des Martyrs ↔ Birtouta
         { lat: 36.7847, lon: 3.0625, name: 'Place des Martyrs' },
-        { lat: 36.7750, lon: 3.0500, name: 'Port Said' },
-        { lat: 36.7600, lon: 3.0300, name: 'Bab El Oued' },
-        { lat: 36.7400, lon: 3.0100, name: 'Dely Ibrahim' },
         { lat: 36.7100, lon: 2.9800, name: 'Birtouta' }
     ],
-    '91': [ // Chevalley route
+    '91': [ // Place Audin ↔ Chevalley
         { lat: 36.7700, lon: 3.0553, name: 'Place Audin' },
-        { lat: 36.7750, lon: 3.0650, name: 'Rue Hassiba Ben Bouali' },
-        { lat: 36.7650, lon: 3.0800, name: 'Belcourt' },
-        { lat: 36.7500, lon: 3.0950, name: 'Hussein Dey' },
         { lat: 36.7300, lon: 3.1200, name: 'Chevalley' }
     ],
-    '99': [ // Aïn Benian / Airport route
+    '99': [ // 1er Mai ↔ Aïn Benian
         { lat: 36.7606, lon: 3.0553, name: '1er Mai' },
-        { lat: 36.7750, lon: 3.0400, name: 'Telemly' },
-        { lat: 36.7900, lon: 3.0200, name: 'Bouzareah' },
         { lat: 36.8100, lon: 3.0000, name: 'Aïn Benian' }
     ],
-    '100': [ // Martyrs -> Airport
+    '100': [ // Place des Martyrs ↔ Aéroport
         { lat: 36.7847, lon: 3.0625, name: 'Place des Martyrs' },
-        { lat: 36.7750, lon: 3.0700, name: 'Grande Poste' },
-        { lat: 36.7600, lon: 3.0800, name: 'El Harrach' },
-        { lat: 36.7200, lon: 3.1100, name: 'Dar El Beida' },
         { lat: 36.6910, lon: 3.2154, name: 'Aéroport' }
     ],
-    '101': [ // Birtouta route
+    '101': [ // Place des Martyrs ↔ Birtouta
         { lat: 36.7847, lon: 3.0625, name: 'Place des Martyrs' },
-        { lat: 36.7750, lon: 3.0500, name: 'Port Said' },
-        { lat: 36.7600, lon: 3.0300, name: 'Bab El Oued' },
-        { lat: 36.7400, lon: 3.0100, name: 'Dely Ibrahim' },
         { lat: 36.7100, lon: 2.9800, name: 'Birtouta' }
     ],
-    '113': [ // Gare Routière Caroubier
+    '113': [ // Place des Martyrs ↔ Gare Routière Caroubier
         { lat: 36.7847, lon: 3.0625, name: 'Place des Martyrs' },
-        { lat: 36.7750, lon: 3.0700, name: 'Grande Poste' },
-        { lat: 36.7650, lon: 3.0750, name: 'Belcourt' },
         { lat: 36.7550, lon: 3.0800, name: 'Gare Routière Caroubier' }
     ]
 };
@@ -1076,25 +1060,22 @@ function calculateArrivals(station) {
         const busSpeed = carSpeed * busSpeedFactor;
         console.log(`🚌 Bus speed calculation: Car ${carSpeed.toFixed(1)} km/h × ${busSpeedFactor} = ${busSpeed.toFixed(1)} km/h`);
 
-        // STEP 4: Calculate DISTANCE using GPS × 1.6 (accurate for Algiers roads)
+        // STEP 4: Calculate DISTANCE using GPS straight-line × 1.7 (Algiers urban factor)
+        // Research shows hilly coastal cities like Algiers have 1.7x road distance vs straight-line
         const routePath = ROUTE_PATHS[route.number];
         let totalDistance = 3.5; // Default fallback: 3.5 km (typical Algiers route)
         
         if (routePath && routePath.length >= 2) {
-            // Calculate GPS straight-line distance
-            totalDistance = 0;
-            for (let i = 0; i < routePath.length - 1; i++) {
-                const dist = getDistanceFromLatLonInKm(
-                    routePath[i].lat, 
-                    routePath[i].lon,
-                    routePath[i + 1].lat,
-                    routePath[i + 1].lon
-                );
-                totalDistance += dist;
-            }
-            // Multiply by 1.6 for real road distance (proven accurate for Algiers)
-            totalDistance *= 1.6;
-            console.log(`📏 Route ${route.number} distance: ${totalDistance.toFixed(2)} km (GPS × 1.6)`);
+            // Calculate straight-line distance from START to END
+            const straightLine = getDistanceFromLatLonInKm(
+                routePath[0].lat, 
+                routePath[0].lon,
+                routePath[routePath.length - 1].lat,
+                routePath[routePath.length - 1].lon
+            );
+            // Apply Algiers urban factor: 1.7x for hilly + curved + coastal roads
+            totalDistance = straightLine * 1.7;
+            console.log(`📏 Route ${route.number}: ${straightLine.toFixed(2)} km straight × 1.7 = ${totalDistance.toFixed(2)} km road`);
         }
 
         // STEP 5: Calculate MOVEMENT TIME (time spent driving)
