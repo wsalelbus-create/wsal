@@ -2379,6 +2379,24 @@ if (busMapContainer && busMapWrapper && busMapImage) {
     let isPanning = false;
     let initialPinchScale = 1;
 
+    // Create on-screen debug display
+    const debugDiv = document.createElement('div');
+    debugDiv.style.cssText = 'position:fixed;top:80px;left:10px;background:rgba(0,0,0,0.8);color:#0f0;padding:10px;font-size:12px;z-index:99999;max-width:90%;word-wrap:break-word;display:none;';
+    document.body.appendChild(debugDiv);
+    
+    function debugLog(msg) {
+        console.log(msg);
+        if (busMapIsOpen) {
+            debugDiv.style.display = 'block';
+            debugDiv.innerHTML += msg + '<br>';
+            // Keep only last 15 lines
+            const lines = debugDiv.innerHTML.split('<br>');
+            if (lines.length > 15) {
+                debugDiv.innerHTML = lines.slice(-15).join('<br>');
+            }
+        }
+    }
+
     function setTransform() {
         const transform = 'translate(' + posX + 'px, ' + posY + 'px) scale(' + scale + ')';
         busMapWrapper.style.transform = transform;
@@ -2427,7 +2445,7 @@ if (busMapContainer && busMapWrapper && busMapImage) {
         if (!busMapIsOpen) return;
         if (!e.target.closest('.bus-map-container')) return;
         
-        console.log('BUS MAP: touchstart', e.touches.length);
+        debugLog('touchstart fingers=' + e.touches.length);
         
         if (e.touches.length === 2) {
             e.preventDefault();
@@ -2436,22 +2454,20 @@ if (busMapContainer && busMapWrapper && busMapImage) {
             isPanning = false;
             lastTouchDistance = getTouchDistance(e.touches[0], e.touches[1]);
             lastTouchCenter = getTouchCenter(e.touches[0], e.touches[1]);
-            console.log('BUS MAP: zoom start');
+            debugLog('ZOOM START');
         } else if (e.touches.length === 1) {
             e.preventDefault();
             e.stopPropagation();
             isPanning = true;
             isZooming = false;
             lastPanPoint = { x: e.touches[0].clientX, y: e.touches[0].clientY };
-            console.log('BUS MAP: pan start, scale=' + scale);
+            debugLog('PAN START scale=' + scale.toFixed(2));
         }
     }
 
     function handleTouchMove(e) {
         if (!busMapIsOpen) return;
         if (!isZooming && !isPanning) return;
-        
-        console.log('BUS MAP: touchmove', e.touches.length, 'zoom=' + isZooming, 'pan=' + isPanning);
         
         if (e.touches.length === 2 && isZooming) {
             e.preventDefault();
@@ -2473,7 +2489,7 @@ if (busMapContainer && busMapWrapper && busMapImage) {
                 
                 constrainPan();
                 setTransform();
-                console.log('BUS MAP: zooming to scale=' + scale.toFixed(2));
+                debugLog('ZOOMING scale=' + scale.toFixed(2));
             }
             
             lastTouchDistance = newDistance;
@@ -2492,14 +2508,13 @@ if (busMapContainer && busMapWrapper && busMapImage) {
             setTransform();
             
             lastPanPoint = { x: e.touches[0].clientX, y: e.touches[0].clientY };
-            console.log('BUS MAP: panning dx=' + deltaX + ' dy=' + deltaY);
         }
     }
 
     function handleTouchEnd(e) {
         if (!busMapIsOpen) return;
         
-        console.log('BUS MAP: touchend', e.touches.length);
+        debugLog('touchend fingers=' + e.touches.length);
         
         if (e.touches.length < 2) {
             isZooming = false;
@@ -2522,7 +2537,7 @@ if (busMapContainer && busMapWrapper && busMapImage) {
         if (!e.target.closest('.bus-map-container')) return;
         
         e.preventDefault();
-        console.log('BUS MAP: gesturestart');
+        debugLog('GESTURESTART (Safari)');
         initialPinchScale = scale;
         isZooming = true;
     }
@@ -2532,7 +2547,7 @@ if (busMapContainer && busMapWrapper && busMapImage) {
         if (!isZooming) return;
         
         e.preventDefault();
-        console.log('BUS MAP: gesturechange scale=' + e.scale);
+        debugLog('GESTURE scale=' + e.scale.toFixed(2));
         
         const newScale = initialPinchScale * e.scale;
         if (newScale >= 1 && newScale <= 6) {
@@ -2546,7 +2561,7 @@ if (busMapContainer && busMapWrapper && busMapImage) {
         if (!busMapIsOpen) return;
         
         e.preventDefault();
-        console.log('BUS MAP: gestureend');
+        debugLog('GESTUREEND final=' + scale.toFixed(2));
         isZooming = false;
         
         if (scale <= 1) {
@@ -2574,6 +2589,15 @@ if (busMapContainer && busMapWrapper && busMapImage) {
             posX = 0;
             posY = 0;
             setTransform();
+            debugDiv.innerHTML = 'DEBUG READY<br>';
+            debugDiv.style.display = 'block';
+        });
+    }
+    
+    // Hide debug when closing map
+    if (busMapBackBtn) {
+        busMapBackBtn.addEventListener('click', function() {
+            debugDiv.style.display = 'none';
         });
     }
 }
