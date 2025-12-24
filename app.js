@@ -513,6 +513,15 @@ function renderBusStationDetail(station, withDelay = false) {
     }
     card.appendChild(arrivalsDiv);
     routesListEl.appendChild(card);
+    
+    // In bus/walk modes, move the ad after first card
+    if (routesListEl.children.length === 1) {
+        const homeAd = document.getElementById('home-ad-placeholder');
+        if (homeAd) {
+            // Move the ad from home position to after first card
+            routesListEl.appendChild(homeAd);
+        }
+    }
 }
 // Route Paths - GPS waypoints for all routes
 // Each route has waypoints representing major stops along the path
@@ -2191,6 +2200,16 @@ function setUIMode(mode) {
     if (quickActionsEl) {
         if (mode === 'idle') quickActionsEl.classList.remove('hidden');
         else quickActionsEl.classList.add('hidden');
+    }
+    
+    // Move ad back to home position (below quick actions) when returning to idle mode
+    if (mode === 'idle') {
+        const homeAd = document.getElementById('home-ad-placeholder');
+        const routesHeader = document.querySelector('.routes-header');
+        if (homeAd && routesHeader && routesHeader.parentNode) {
+            // Move ad back to its original position (before routes-header)
+            routesHeader.parentNode.insertBefore(homeAd, routesHeader);
+        }
     }
 
     // Skyline: always visible in all modes (ensure not hidden)
