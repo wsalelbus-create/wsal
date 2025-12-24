@@ -970,7 +970,7 @@ function calculateArrivals(station) {
         const minutesSinceStart = currentMinutes - startMins;
         const cyclePosition = minutesSinceStart % route.interval;
 
-        // STEP 2: Get REAL-TIME CAR SPEED from Google Traffic (Primary) or Manual (Fallback)
+        // STEP 2: Get REAL-TIME CAR SPEED from Google Traffic
         let carSpeed;
         let usingGoogleTraffic = false;
         
@@ -979,83 +979,53 @@ function calculateArrivals(station) {
         const trafficAge = route.trafficTimestamp ? now - route.trafficTimestamp : Infinity;
         const TRAFFIC_REFRESH_INTERVAL = 3 * 60 * 1000; // 3 minutes
         
-        if (window.TrafficSampler && route.trafficSpeed !== undefined && route.trafficSpeed !== null && trafficAge < TRAFFIC_REFRESH_INTERVAL) {
+        if (window.TrafficSampler && route.trafficSpeed !== undefined && route.trafficSpeed !== null && route.trafficSpeed !== 'loading' && trafficAge < TRAFFIC_REFRESH_INTERVAL) {
             // Use cached Google traffic speed (still fresh)
             carSpeed = route.trafficSpeed;
             usingGoogleTraffic = true;
         } else if (window.TrafficSampler && (route.trafficSpeed === undefined || trafficAge >= TRAFFIC_REFRESH_INTERVAL)) {
-            // First load OR traffic data is stale - fetch fresh Google traffic
-            // Mark as loading (not null, not undefined, but 'loading')
+            // First load OR traffic data is stale - fetch fresh Google traffic IN BACKGROUND
             if (route.trafficSpeed === undefined) {
-                route.trafficSpeed = 'loading'; // Mark as loading
+                route.trafficSpeed = 'loading'; // Mark as loading to prevent duplicate fetches
+                
+                // Fetch in background
+                window.TrafficSampler.getTrafficSpeed(station, route).then(speed => {
+                    route.trafficSpeed = speed;
+                    route.trafficTimestamp = Date.now();
+                    console.log(`🔄 Traffic loaded for route ${route.number}: ${speed ? speed.toFixed(1) + ' km/h' : 'no data'}`);
+                    // Re-render with updated traffic data
+                    if (typeof renderBusStations === 'function' && uiMode === 'bus' && !busDetailActive) {
+                        renderBusStations();
+                    } else if (typeof renderBusStationDetail === 'function' && busDetailActive && currentStation) {
+                        renderBusStationDetail(currentStation);
+                    }
+                }).catch(e => {
+                    console.warn('Traffic fetch error:', e);
+                    route.trafficSpeed = null;
+                    route.trafficTimestamp = Date.now();
+                    // Re-render to show error state
+                    if (typeof renderBusStations === 'function' && uiMode === 'bus' && !busDetailActive) {
+                        renderBusStations();
+                    } else if (typeof renderBusStationDetail === 'function' && busDetailActive && currentStation) {
+                        renderBusStationDetail(currentStation);
+                    }
+                });
             }
             
-            // Pass full route object (includes number and dest for direction awareness)
-            window.TrafficSampler.getTrafficSpeed(station, route).then(speed => {
-                route.trafficSpeed = speed;
-                route.trafficTimestamp = Date.now(); // Mark when we fetched it
-                console.log(`🔄 Traffic refreshed for route ${route.number}: ${speed ? speed.toFixed(1) + ' km/h' : 'no data'}`);
-                // Re-render with updated traffic data
-                if (typeof renderBusStations === 'function' && uiMode === 'bus' && !busDetailActive) {
-                    renderBusStations();
-                } else if (typeof renderBusStationDetail === 'function' && busDetailActive && currentStation) {
-                    renderBusStationDetail(currentStation);
-                }
-            }).catch(e => {
-                console.warn('Traffic fetch error:', e);
-                route.trafficSpeed = null;
-                route.trafficTimestamp = Date.now(); // Don't retry immediately
-            });
-            
-            // Show loading state while fetching
+            // Show loading state - will update when traffic arrives
             return {
                 ...route,
                 status: 'Loading',
-                message: 'Loading traffic...'
+                message: '...'
             };
         }
         
-        // FALLBACK: Manual time-based speed if Google unavailable
-        // COMMENTED OUT FOR TESTING - Using Google traffic only
-        /*
+        // If no traffic data available, skip
         if (!usingGoogleTraffic) {
-            const currentDay = algiersTime.getDay();
-            const isWeekend = currentDay === 5 || currentDay === 6; // Friday/Saturday
-
-            if (isWeekend) {
-                carSpeed = 35; // km/h - Weekend traffic
-            } else {
-                // Weekday traffic patterns
-                if ((currentHour >= 7 && currentHour < 9) || (currentHour >= 16 && currentHour < 19)) {
-                    carSpeed = 12 + (parseInt(route.number) % 3); // 12-14 km/h - Rush hour
-                } else if (currentHour >= 12 && currentHour < 14) {
-                    carSpeed = 22; // km/h - Lunch hour
-                } else if (currentHour >= 9 && currentHour < 12) {
-                    carSpeed = 28; // km/h - Mid-morning
-                } else if (currentHour >= 14 && currentHour < 16) {
-                    carSpeed = 25; // km/h - Afternoon
-                } else if (currentHour >= 19 && currentHour < 21) {
-                    carSpeed = 20; // km/h - Evening
-                } else {
-                    carSpeed = 40; // km/h - Night/Early morning
-                }
-            }
-            
-            // Apply weather ONLY to manual calculation (Google already includes weather)
-            const weatherFactor = (window.WeatherModule && WeatherModule.getDelayFactor)
-                ? WeatherModule.getDelayFactor()
-                : 1.0;
-            carSpeed = carSpeed / weatherFactor;
-        }
-        */
-        
-        // If no Google traffic data available, skip this route
-        if (!usingGoogleTraffic) {
-            console.warn(`⚠️ No Google traffic data for route ${route.number} - skipping`);
             return {
                 ...route,
                 status: 'NoData',
-                message: 'Traffic data unavailable'
+                message: 'No traffic data'
             };
         }
 
