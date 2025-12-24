@@ -2450,9 +2450,6 @@ if (busMapContainer && busMapWrapper && busMapImage) {
     }
 
     function handleTouchStart(e) {
-        if (!busMapIsOpen) return;
-        if (!e.target.closest('.bus-map-container')) return;
-        
         debugLog('touchstart fingers=' + e.touches.length);
         
         if (e.touches.length === 2) {
@@ -2474,7 +2471,6 @@ if (busMapContainer && busMapWrapper && busMapImage) {
     }
 
     function handleTouchMove(e) {
-        if (!busMapIsOpen) return;
         if (!isZooming && !isPanning) return;
         
         if (e.touches.length === 2 && isZooming) {
@@ -2520,8 +2516,6 @@ if (busMapContainer && busMapWrapper && busMapImage) {
     }
 
     function handleTouchEnd(e) {
-        if (!busMapIsOpen) return;
-        
         debugLog('touchend fingers=' + e.touches.length);
         
         if (e.touches.length < 2) {
@@ -2541,9 +2535,6 @@ if (busMapContainer && busMapWrapper && busMapImage) {
 
     // Safari iOS gesture events (for older Safari versions)
     function handleGestureStart(e) {
-        if (!busMapIsOpen) return;
-        if (!e.target.closest('.bus-map-container')) return;
-        
         e.preventDefault();
         debugLog('GESTURESTART (Safari)');
         initialPinchScale = scale;
@@ -2551,7 +2542,6 @@ if (busMapContainer && busMapWrapper && busMapImage) {
     }
 
     function handleGestureChange(e) {
-        if (!busMapIsOpen) return;
         if (!isZooming) return;
         
         e.preventDefault();
@@ -2566,8 +2556,6 @@ if (busMapContainer && busMapWrapper && busMapImage) {
     }
 
     function handleGestureEnd(e) {
-        if (!busMapIsOpen) return;
-        
         e.preventDefault();
         debugLog('GESTUREEND final=' + scale.toFixed(2));
         isZooming = false;
@@ -2580,10 +2568,10 @@ if (busMapContainer && busMapWrapper && busMapImage) {
         }
     }
 
-    // Standard touch events
-    document.addEventListener('touchstart', handleTouchStart, { passive: false, capture: true });
-    document.addEventListener('touchmove', handleTouchMove, { passive: false, capture: true });
-    document.addEventListener('touchend', handleTouchEnd, { passive: false, capture: true });
+    // Standard touch events - attach directly to container for Safari iOS 15.1
+    busMapContainer.addEventListener('touchstart', handleTouchStart, { passive: false });
+    busMapContainer.addEventListener('touchmove', handleTouchMove, { passive: false });
+    busMapContainer.addEventListener('touchend', handleTouchEnd, { passive: false });
 
     // Safari gesture events (iOS specific)
     busMapContainer.addEventListener('gesturestart', handleGestureStart, false);
