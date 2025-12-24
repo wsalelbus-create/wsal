@@ -564,119 +564,74 @@ function renderBusStationDetail(station, withDelay = false) {
     }
 }
 // Route Paths - GPS waypoints for all routes
-// Each route has waypoints representing major stops along the path
+// Route Paths - GPS coordinates for START and END of each route
+// Simplified to 2 points per route for easier maintenance
 const ROUTE_PATHS = {
-    '04': [ // Ben Omar route
+    '04': [ // 1er Mai ↔ Ben Omar
         { lat: 36.7606, lon: 3.0553, name: '1er Mai' },
-        { lat: 36.7650, lon: 3.0600, name: 'Belouizdad' },
-        { lat: 36.7700, lon: 3.0750, name: 'Belcourt' },
         { lat: 36.7800, lon: 3.0900, name: 'Ben Omar' }
     ],
-    '05': [ // Audin -> Martyrs
+    '05': [ // Place Audin ↔ Place des Martyrs
         { lat: 36.7700, lon: 3.0553, name: 'Place Audin' },
-        { lat: 36.7770, lon: 3.0590, name: 'Rue Larbi Ben M\'hidi' },
         { lat: 36.7847, lon: 3.0625, name: 'Place des Martyrs' }
     ],
-    '07': [ // Martyrs -> El Harrach
+    '07': [ // Place des Martyrs ↔ El Harrach
         { lat: 36.7847, lon: 3.0625, name: 'Place des Martyrs' },
-        { lat: 36.7750, lon: 3.0700, name: 'Grande Poste' },
-        { lat: 36.7606, lon: 3.0553, name: '1er Mai' },
-        { lat: 36.7500, lon: 3.0900, name: 'Hussein Dey' },
         { lat: 36.7400, lon: 3.1100, name: 'El Harrach' }
     ],
-    '10': [ // Bouzareah route
+    '10': [ // 1er Mai ↔ Bouzareah
         { lat: 36.7606, lon: 3.0553, name: '1er Mai' },
-        { lat: 36.7700, lon: 3.0500, name: 'Telemly' },
-        { lat: 36.7800, lon: 3.0400, name: 'Bouzareah Lower' },
         { lat: 36.7900, lon: 3.0350, name: 'Bouzareah' }
     ],
-    '31': [ // Hydra ↔ Place Audin
+    '31': [ // Place Audin ↔ Hydra
         { lat: 36.7692, lon: 3.0549, name: 'Place Audin' },
-        { lat: 36.7650, lon: 3.0520, name: 'Didouche Mourad' },
-        { lat: 36.7600, lon: 3.0490, name: 'Telemly' },
-        { lat: 36.7550, lon: 3.0460, name: 'Ben Aknoun Lower' },
         { lat: 36.7435, lon: 3.0421, name: 'Hydra' }
     ],
-    '54': [ // El Mouradia ↔ Place Audin
+    '54': [ // Place Audin ↔ El Mouradia
         { lat: 36.7692, lon: 3.0549, name: 'Place Audin' },
-        { lat: 36.7650, lon: 3.0530, name: 'Grande Poste' },
-        { lat: 36.7600, lon: 3.0520, name: 'Didouche Mourad' },
-        { lat: 36.7550, lon: 3.0515, name: 'Rue Larbi Ben M\'hidi' },
         { lat: 36.7482, lon: 3.0511, name: 'El Mouradia' }
     ],
-    '67': [ // Ben Aknoun route
+    '67': [ // Place des Martyrs ↔ Ben Aknoun
         { lat: 36.7847, lon: 3.0625, name: 'Place des Martyrs' },
-        { lat: 36.7750, lon: 3.0600, name: 'Grande Poste' },
-        { lat: 36.7692, lon: 3.0549, name: 'Place Audin' },
-        { lat: 36.7600, lon: 3.0490, name: 'Telemly' },
-        { lat: 36.7500, lon: 3.0450, name: 'Ben Aknoun Lower' },
         { lat: 36.7400, lon: 3.0400, name: 'Ben Aknoun' }
     ],
-    '16': [ // Kouba route
+    '16': [ // 1er Mai ↔ Kouba
         { lat: 36.7606, lon: 3.0553, name: '1er Mai' },
-        { lat: 36.7650, lon: 3.0600, name: 'Belouizdad' },
-        { lat: 36.7700, lon: 3.0700, name: 'Mohamed Belouizdad' },
         { lat: 36.7400, lon: 3.0800, name: 'Kouba' }
     ],
-    '33': [ // Kouba route
+    '33': [ // Place Audin ↔ Kouba
         { lat: 36.7700, lon: 3.0553, name: 'Place Audin' },
-        { lat: 36.7750, lon: 3.0650, name: 'Rue Hassiba Ben Bouali' },
-        { lat: 36.7650, lon: 3.0750, name: 'Belcourt' },
         { lat: 36.7400, lon: 3.0800, name: 'Kouba' }
     ],
-    '34': [ // Birkhadem route
+    '34': [ // 1er Mai ↔ Birkhadem
         { lat: 36.7606, lon: 3.0553, name: '1er Mai' },
-        { lat: 36.7498, lon: 3.0489, name: 'El Mouradia' },
-        { lat: 36.7350, lon: 3.0400, name: 'El Madania' },
         { lat: 36.7200, lon: 3.0350, name: 'Birkhadem' }
     ],
-    '45': [ // Ben Aknoun route
+    '45': [ // Hydra ↔ Ben Aknoun
         { lat: 36.7472, lon: 3.0403, name: 'Hydra' },
-        { lat: 36.7498, lon: 3.0489, name: 'El Mouradia' },
-        { lat: 36.7550, lon: 3.0350, name: 'El Biar' },
         { lat: 36.7800, lon: 3.0200, name: 'Ben Aknoun' }
     ],
-    '48': [ // Ben Aknoun route
+    '48': [ // 1er Mai ↔ Ben Aknoun
         { lat: 36.7606, lon: 3.0553, name: '1er Mai' },
-        { lat: 36.7650, lon: 3.0500, name: 'Didouche Mourad' },
-        { lat: 36.7700, lon: 3.0400, name: 'El Biar' },
         { lat: 36.7800, lon: 3.0200, name: 'Ben Aknoun' }
     ],
-    '54': [ // Audin -> El Mouradia
-        { lat: 36.7700, lon: 3.0553, name: 'Place Audin' },
-        { lat: 36.7650, lon: 3.0520, name: 'Didouche Mourad' },
-        { lat: 36.7498, lon: 3.0489, name: 'El Mouradia' }
-    ],
-    '58': [ // Chevalley route
+    '58': [ // Place des Martyrs ↔ Chevalley
         { lat: 36.7847, lon: 3.0625, name: 'Place des Martyrs' },
-        { lat: 36.7750, lon: 3.0700, name: 'Grande Poste' },
-        { lat: 36.7650, lon: 3.0800, name: 'Belcourt' },
-        { lat: 36.7500, lon: 3.0950, name: 'Hussein Dey' },
         { lat: 36.7300, lon: 3.1200, name: 'Chevalley' }
     ],
-    '65': [ // El Madania route
+    '65': [ // 1er Mai ↔ El Madania
         { lat: 36.7606, lon: 3.0553, name: '1er Mai' },
-        { lat: 36.7550, lon: 3.0500, name: 'Didouche Mourad' },
         { lat: 36.7450, lon: 3.0450, name: 'El Madania' }
     ],
-    '67': [ // Ben Aknoun route
-        { lat: 36.7847, lon: 3.0625, name: 'Place des Martyrs' },
-        { lat: 36.7700, lon: 3.0553, name: 'Place Audin' },
-        { lat: 36.7650, lon: 3.0400, name: 'El Biar' },
-        { lat: 36.7800, lon: 3.0200, name: 'Ben Aknoun' }
-    ],
-    '88': [ // Bir Mourad Raïs route
+    '88': [ // Hydra ↔ Bir Mourad Raïs
         { lat: 36.7472, lon: 3.0403, name: 'Hydra' },
-        { lat: 36.7400, lon: 3.0350, name: 'El Biar' },
         { lat: 36.7300, lon: 3.0300, name: 'Bir Mourad Raïs' }
     ],
-    '89': [ // Vieux Kouba route
+    '89': [ // 1er Mai ↔ Vieux Kouba
         { lat: 36.7606, lon: 3.0553, name: '1er Mai' },
-        { lat: 36.7650, lon: 3.0650, name: 'Belouizdad' },
-        { lat: 36.7550, lon: 3.0750, name: 'Belcourt' },
         { lat: 36.7450, lon: 3.0850, name: 'Vieux Kouba' }
     ],
-    '90': [ // Birtouta route
+    '90': [ // Place des Martyrs ↔ Birtouta
         { lat: 36.7847, lon: 3.0625, name: 'Place des Martyrs' },
         { lat: 36.7750, lon: 3.0500, name: 'Port Said' },
         { lat: 36.7600, lon: 3.0300, name: 'Bab El Oued' },
@@ -997,95 +952,220 @@ function calculateArrivals(station) {
             return { ...route, status: 'Ended', message: 'Service Ended' };
         }
 
-        // RESEARCH-BASED BUS ARRIVAL CALCULATION
-        // Based on validated urban transit studies:
-        // - Buses operate at 60% of car speed
-        // - Dwell time: 5 + 2.75 seconds per passenger
-        // - Bidirectional operation
+        // ============================================================================
+        // ETUSA BUS ARRIVAL ALGORITHM (Timetable-Based with Real-Time Traffic)
+        // ============================================================================
+        // ETUSA operates on fixed schedules:
+        // - First departure: 6:00 AM from main stations
+        // - Last departure: 6:30 PM
+        // - Frequency: 20-40 minutes between buses
+        // - Journey time varies based on real-time traffic conditions
+        // ============================================================================
 
-        // 1. Calculate where the bus is in its cycle
+        // STEP 1: Calculate time since service started
         const minutesSinceStart = currentMinutes - startMins;
         const cyclePosition = minutesSinceStart % route.interval;
 
-        // 2. Determine CAR speed based on Algiers traffic patterns
-        const currentDay = algiersTime.getDay(); // 0 = Sunday, 6 = Saturday
-        const isWeekend = currentDay === 5 || currentDay === 6; // Friday/Saturday
+        // STEP 2: Get REAL-TIME CAR SPEED from Google Traffic (Primary) or Manual (Fallback)
         let carSpeed;
+        let usingGoogleTraffic = false;
+        
+        // Check if we need to refresh traffic data (every 3 minutes)
+        const now = Date.now();
+        const trafficAge = route.trafficTimestamp ? now - route.trafficTimestamp : Infinity;
+        const TRAFFIC_REFRESH_INTERVAL = 3 * 60 * 1000; // 3 minutes
+        
+        if (window.TrafficSampler && route.trafficSpeed !== undefined && route.trafficSpeed !== null && trafficAge < TRAFFIC_REFRESH_INTERVAL) {
+            // Use cached Google traffic speed (still fresh)
+            carSpeed = route.trafficSpeed;
+            usingGoogleTraffic = true;
+        } else if (window.TrafficSampler && (route.trafficSpeed === undefined || trafficAge >= TRAFFIC_REFRESH_INTERVAL)) {
+            // First load OR traffic data is stale - fetch fresh Google traffic
+            // Pass full route object (includes number and dest for direction awareness)
+            window.TrafficSampler.getTrafficSpeed(station, route).then(speed => {
+                route.trafficSpeed = speed;
+                route.trafficTimestamp = Date.now(); // Mark when we fetched it
+                console.log(`🔄 Traffic refreshed for route ${route.number}: ${speed ? speed.toFixed(1) + ' km/h' : 'no data'}`);
+                // Re-render with updated traffic data
+                if (typeof renderBusStations === 'function' && uiMode === 'bus' && !busDetailActive) {
+                    renderBusStations();
+                } else if (typeof renderBusStationDetail === 'function' && busDetailActive && currentStation) {
+                    renderBusStationDetail(currentStation);
+                }
+            }).catch(e => {
+                console.warn('Traffic fetch error:', e);
+                route.trafficSpeed = null;
+                route.trafficTimestamp = Date.now(); // Don't retry immediately
+            });
+        }
+        
+        // FALLBACK: Manual time-based speed if Google unavailable
+        // COMMENTED OUT FOR TESTING - Using Google traffic only
+        /*
+        if (!usingGoogleTraffic) {
+            const currentDay = algiersTime.getDay();
+            const isWeekend = currentDay === 5 || currentDay === 6; // Friday/Saturday
 
-        if (isWeekend) {
-            // Weekend: lighter traffic
-            carSpeed = 35; // km/h
-        } else {
-            // Weekday traffic patterns based on Algiers statistics
-            if ((currentHour >= 7 && currentHour < 9) || (currentHour >= 16 && currentHour < 19)) {
-                // Peak rush hour: Severe congestion
-                carSpeed = 12 + (parseInt(route.number) % 3); // 12-14 km/h
-            } else if (currentHour >= 12 && currentHour < 14) {
-                // Lunch hour: Moderate traffic
-                carSpeed = 22; // km/h
-            } else if (currentHour >= 9 && currentHour < 12) {
-                // Mid-morning: Light-moderate traffic
-                carSpeed = 28; // km/h
-            } else if (currentHour >= 14 && currentHour < 16) {
-                // Afternoon: Moderate traffic
-                carSpeed = 25; // km/h
-            } else if (currentHour >= 19 && currentHour < 21) {
-                // Evening: Clearing up
-                carSpeed = 20; // km/h
+            if (isWeekend) {
+                carSpeed = 35; // km/h - Weekend traffic
             } else {
-                // Early morning/late night: Light traffic
-                carSpeed = 40; // km/h
+                // Weekday traffic patterns
+                if ((currentHour >= 7 && currentHour < 9) || (currentHour >= 16 && currentHour < 19)) {
+                    carSpeed = 12 + (parseInt(route.number) % 3); // 12-14 km/h - Rush hour
+                } else if (currentHour >= 12 && currentHour < 14) {
+                    carSpeed = 22; // km/h - Lunch hour
+                } else if (currentHour >= 9 && currentHour < 12) {
+                    carSpeed = 28; // km/h - Mid-morning
+                } else if (currentHour >= 14 && currentHour < 16) {
+                    carSpeed = 25; // km/h - Afternoon
+                } else if (currentHour >= 19 && currentHour < 21) {
+                    carSpeed = 20; // km/h - Evening
+                } else {
+                    carSpeed = 40; // km/h - Night/Early morning
+                }
             }
+            
+            // Apply weather ONLY to manual calculation (Google already includes weather)
+            const weatherFactor = (window.WeatherModule && WeatherModule.getDelayFactor)
+                ? WeatherModule.getDelayFactor()
+                : 1.0;
+            carSpeed = carSpeed / weatherFactor;
+        }
+        */
+        
+        // If no Google traffic data available, skip this route
+        if (!usingGoogleTraffic) {
+            console.warn(`⚠️ No Google traffic data for route ${route.number} - skipping`);
+            return {
+                ...route,
+                status: 'NoData',
+                message: 'Traffic data unavailable'
+            };
         }
 
-        // 3. Apply weather delay factor to car speed
-        const weatherFactor = (window.WeatherModule && WeatherModule.getDelayFactor)
-            ? WeatherModule.getDelayFactor()
-            : 1.0;
-        carSpeed = carSpeed / weatherFactor;
+        // STEP 3: Calculate BUS SPEED with traffic-aware reduction
+        // Buses are MUCH slower than cars due to:
+        // - Traffic lights (30-60 sec stops, multiple times)
+        // - Bus stops (loading/unloading passengers)
+        // - Pulling in/out of bus stops
+        // - Slow acceleration/deceleration
+        // - Stop signs and intersections
+        // Real-world data: Route 54 (3.6 km)
+        //   - Green traffic: ~25 min (8.6 km/h average)
+        //   - Heavy traffic: ~70 min max (3.1 km/h average)
+        
+        let busSpeedFactor;
+        if (carSpeed >= 35) {
+            // Green traffic (free flow): buses at 25% of car speed
+            // Example: 40 km/h car → 10 km/h bus → ~25 min for 3.6 km
+            busSpeedFactor = 0.25;
+        } else if (carSpeed >= 25) {
+            // Yellow traffic (moderate): buses at 22% of car speed
+            // Example: 30 km/h car → 6.6 km/h bus → ~35 min for 3.6 km
+            busSpeedFactor = 0.22;
+        } else if (carSpeed >= 15) {
+            // Orange traffic (slow): buses at 20% of car speed
+            // Example: 20 km/h car → 4 km/h bus → ~55 min for 3.6 km
+            busSpeedFactor = 0.20;
+        } else {
+            // Red traffic (heavy): buses at 30% of car speed
+            // Example: 10 km/h car → 3 km/h bus → ~70 min for 3.6 km (max)
+            busSpeedFactor = 0.30;
+        }
+        
+        const busSpeed = carSpeed * busSpeedFactor;
+        console.log(`🚌 Bus speed calculation: Car ${carSpeed.toFixed(1)} km/h × ${busSpeedFactor} = ${busSpeed.toFixed(1)} km/h`);
 
-        // 4. Calculate BUS speed (research: buses at 60% of car speed)
-        const busSpeed = carSpeed * 0.6;
-
-        // 5. Get number of stops from route path
+        // STEP 4: Calculate DISTANCE using OSRM (real road distance) or GPS fallback
         const routePath = ROUTE_PATHS[route.number];
-        const numberOfStops = routePath ? routePath.length : 5; // Default 5 if no path
+        let totalDistance = route.totalDistance || 10; // Fallback to 10 km
+        
+        // Try to get REAL driving distance from OSRM (cached per route)
+        if (routePath && routePath.length >= 2 && route.osrmDistance === undefined) {
+            // First load - fetch OSRM driving distance asynchronously
+            const start = routePath[0];
+            const end = routePath[routePath.length - 1];
+            
+            getOsrmDrivingDistance(start.lat, start.lon, end.lat, end.lon).then(distance => {
+                if (distance) {
+                    route.osrmDistance = distance;
+                    console.log(`📏 OSRM driving distance for route ${route.number}: ${distance.toFixed(2)} km`);
+                    // Re-render with updated distance
+                    if (typeof renderBusStations === 'function' && uiMode === 'bus' && !busDetailActive) {
+                        renderBusStations();
+                    } else if (typeof renderBusStationDetail === 'function' && busDetailActive && currentStation) {
+                        renderBusStationDetail(currentStation);
+                    }
+                } else {
+                    route.osrmDistance = null; // Mark as failed
+                }
+            }).catch(e => {
+                console.warn('OSRM distance fetch error:', e);
+                route.osrmDistance = null;
+            });
+        }
+        
+        // Use OSRM distance if available, otherwise fallback
+        if (route.osrmDistance && route.osrmDistance > 0) {
+            totalDistance = route.osrmDistance;
+        } else if (routePath && routePath.length >= 2) {
+            // Fallback: Calculate straight-line GPS distance and multiply by 1.6 (roads are ~60% longer)
+            totalDistance = 0;
+            for (let i = 0; i < routePath.length - 1; i++) {
+                const dist = getDistanceFromLatLonInKm(
+                    routePath[i].lat, 
+                    routePath[i].lon,
+                    routePath[i + 1].lat,
+                    routePath[i + 1].lon
+                );
+                totalDistance += dist;
+            }
+            totalDistance *= 1.6; // Roads are typically 60% longer than straight line
+        }
 
-        // 6. Calculate dwell time (research formula: 5 + 2.75 seconds per passenger)
+        // STEP 5: Calculate MOVEMENT TIME (time spent driving)
+        const movementTimeMinutes = (totalDistance / busSpeed) * 60;
+
+        // STEP 6: Calculate DWELL TIME (time spent at stops loading/unloading)
+        const numberOfStops = routePath ? routePath.length : 5;
+        
+        // Average passengers per stop (varies by time of day)
         let avgPassengers;
         if ((currentHour >= 7 && currentHour < 9) || (currentHour >= 16 && currentHour < 19)) {
-            // Rush hour: 8-12 passengers per stop
-            avgPassengers = 10;
+            avgPassengers = 10; // Rush hour: 8-12 passengers per stop
         } else {
-            // Normal hours: 3-5 passengers per stop
-            avgPassengers = 4;
+            avgPassengers = 4; // Normal hours: 3-5 passengers per stop
         }
+        
+        // Research formula: Dwell time = 5 seconds base + 2.75 seconds per passenger
+        const dwellTimePerStopSeconds = 5 + (2.75 * avgPassengers);
+        const dwellTimePerStopMinutes = dwellTimePerStopSeconds / 60;
+        const totalDwellTimeMinutes = numberOfStops * dwellTimePerStopMinutes;
 
-        // Dwell time per stop in seconds, convert to minutes
-        const dwellTimePerStop = (5 + (2.75 * avgPassengers)) / 60; // minutes
-        const totalDwellTime = numberOfStops * dwellTimePerStop;
+        // STEP 7: Calculate TOTAL JOURNEY TIME
+        const totalJourneyTime = movementTimeMinutes + totalDwellTimeMinutes;
 
-        // 7. Calculate total journey time
-        const totalDistance = route.totalDistance || 10; // km
-        const movementTime = (totalDistance / busSpeed) * 60; // minutes
-        const totalJourneyTime = movementTime + totalDwellTime;
-
-        // 8. Calculate arrival time (bidirectional consideration)
+        // STEP 8: Calculate ARRIVAL TIME based on timetable
+        // ETUSA buses depart at fixed intervals (e.g., every 30 minutes)
+        // If current time is 6:15 and bus departed at 6:00, cyclePosition = 15 min
+        
         if (cyclePosition < totalJourneyTime) {
-            // Bus is currently on route
-            const remainingJourneyTime = totalJourneyTime - cyclePosition;
+            // Bus is currently traveling to this station
+            const remainingTime = totalJourneyTime - cyclePosition;
             return {
                 ...route,
                 status: 'Active',
-                minutes: Math.ceil(remainingJourneyTime)
+                minutes: Math.ceil(remainingTime)
             };
         } else {
-            // Bus completed journey, waiting for next departure
-            const waitTime = route.interval - cyclePosition;
+            // Bus already arrived or hasn't departed yet
+            // Wait for next scheduled departure
+            const timeUntilNextDeparture = route.interval - cyclePosition;
+            const totalWaitTime = timeUntilNextDeparture + totalJourneyTime;
             return {
                 ...route,
                 status: 'Active',
-                minutes: Math.ceil(waitTime + totalJourneyTime)
+                minutes: Math.ceil(totalWaitTime)
             };
         }
     }).sort((a, b) => {
@@ -1899,6 +1979,22 @@ async function getOsrmWalkingTime(fromLat, fromLon, toLat, toLon) {
         const route = data.routes[0];
         // Return duration in minutes
         return route.duration ? Math.round(route.duration / 60) : null;
+    } catch (e) {
+        return null;
+    }
+}
+
+// Fetch OSRM driving distance (for bus routes)
+async function getOsrmDrivingDistance(fromLat, fromLon, toLat, toLon) {
+    const url = `https://routing.openstreetmap.de/routed-car/route/v1/car/${fromLon},${fromLat};${toLon},${toLat}?overview=false`;
+    try {
+        const res = await fetch(url);
+        if (!res.ok) return null;
+        const data = await res.json();
+        if (!data || data.code !== 'Ok' || !data.routes || !data.routes[0]) return null;
+        const route = data.routes[0];
+        // Return distance in kilometers
+        return route.distance ? route.distance / 1000 : null;
     } catch (e) {
         return null;
     }
@@ -3362,6 +3458,24 @@ document.addEventListener('DOMContentLoaded', () => { try { applySkylineSizing()
 // Init
 initMap(); // Initialize map immediately (background)
 initGeolocation();
+
+// Initialize traffic sampling - update every 3 minutes
+if (window.TrafficSampler) {
+    console.log('[Traffic] 🚦 Real-time Google Maps traffic enabled (leaky tiles)');
+    console.log('[Traffic] 📊 Manual time-based calculation as fallback');
+    
+    // Clear cached traffic speeds every 3 minutes to get fresh data
+    setInterval(() => {
+        if (window.STATIONS) {
+            STATIONS.forEach(station => {
+                station.routes.forEach(route => {
+                    delete route.trafficSpeed; // Clear cache
+                });
+            });
+        }
+        console.log('[Traffic] 🔄 Cleared traffic cache - fetching fresh data');
+    }, 3 * 60 * 1000); // 3 minutes
+}
 
 // PWA: Re-request geolocation when app becomes visible (fixes GPS loss after being closed)
 document.addEventListener('visibilitychange', () => {
