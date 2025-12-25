@@ -977,8 +977,23 @@ function calculateArrivals(station) {
         // - Journey time varies based on real-time traffic conditions
         // ============================================================================
 
-        // STEP 1: Calculate time since service started
-        const minutesSinceStart = currentMinutes - startMins;
+        // STEP 1: Calculate time since service started (handle overnight)
+        let minutesSinceStart;
+        if (endMins < startMins) {
+            // Overnight service
+            if (currentMinutes >= startMins) {
+                // After midnight but before service start (e.g., 23:00)
+                minutesSinceStart = currentMinutes - startMins;
+            } else {
+                // After midnight (e.g., 00:17)
+                // Add 24 hours to current time: 00:17 + 1440 = 1457
+                // Then subtract start: 1457 - 360 = 1097 minutes since 06:00
+                minutesSinceStart = (currentMinutes + 1440) - startMins;
+            }
+        } else {
+            // Normal service
+            minutesSinceStart = currentMinutes - startMins;
+        }
         const cyclePosition = minutesSinceStart % route.interval;
 
         // STEP 2: Get REAL-TIME CAR SPEED from Google Traffic
@@ -995,44 +1010,16 @@ function calculateArrivals(station) {
             carSpeed = route.trafficSpeed;
             usingGoogleTraffic = true;
         } else if (window.TrafficSampler && (route.trafficSpeed === undefined || trafficAge >= TRAFFIC_REFRESH_INTERVAL)) {
-            // First load OR traffic data is stale - fetch fresh Google traffic IN BACKGROUND
-            if (route.trafficSpeed === undefined) {
-                route.trafficSpeed = 'loading'; // Mark as loading to prevent duplicate fetches
-                
-                // Fetch in background
-                window.TrafficSampler.getTrafficSpeed(station, route).then(speed => {
-                    route.trafficSpeed = speed;
-                    route.trafficTimestamp = Date.now();
-                    console.log(`🔄 Traffic loaded for route ${route.number}: ${speed ? speed.toFixed(1) + ' km/h' : 'no data'}`);
-                    // Re-render with updated traffic data
-                    if (typeof renderBusStations === 'function' && uiMode === 'bus' && !busDetailActive) {
-                        renderBusStations();
-                    } else if (typeof renderBusStationDetail === 'function' && busDetailActive && currentStation) {
-                        renderBusStationDetail(currentStation);
-                    }
-                }).catch(e => {
-                    console.warn('Traffic fetch error:', e);
-                    route.trafficSpeed = null;
-                    route.trafficTimestamp = Date.now();
-                    // Re-render to show error state
-                    if (typeof renderBusStations === 'function' && uiMode === 'bus' && !busDetailActive) {
-                        renderBusStations();
-                    } else if (typeof renderBusStationDetail === 'function' && busDetailActive && currentStation) {
-                        renderBusStationDetail(currentStation);
-                    }
-                });
-            }
-            
-            // Show loading state - will update when traffic arrives
+            // Traffic not loaded yet - show loading
             return {
                 ...route,
                 status: 'Loading',
-                message: '...'
+                message: 'Loading'
             };
         }
         
-        // If no traffic data available, skip
-        if (!usingGoogleTraffic) {
+        // If no traffic data available after loading, skip this route
+        if (!usingGoogleTraffic || !carSpeed) {
             return {
                 ...route,
                 status: 'NoData',
@@ -2345,7 +2332,32 @@ function setUIMode(mode) {
 
     // Render based on mode
     if (mode === 'bus') {
-        // Initial entry shows brief loading state for arrivals
+        // Pre-fetch traffic for all nearby stations BEFORE rendering
+        if (window.TrafficSampler) {
+            const nearbyStations = nearestStations(
+                map && mapInitialized ? map.getCenter().lat : (userLat || 36.7692),
+                map && mapInitialized ? map.getCenter().lng : (userLon || 3.0549),
+                5
+            );
+            
+            // Pre-fetch traffic for all routes in parallel
+            nearbyStations.forEach(({ station }) => {
+                station.routes.forEach(route => {
+                    if (route.trafficSpeed === undefined) {
+                        route.trafficSpeed = 'loading';
+                        window.TrafficSampler.getTrafficSpeed(station.station, route).then(speed => {
+                            route.trafficSpeed = speed;
+                            route.trafficTimestamp = Date.now();
+                        }).catch(() => {
+                            route.trafficSpeed = null;
+                            route.trafficTimestamp = Date.now();
+                        });
+                    }
+                });
+            });
+        }
+        
+        // Show loading spinner while traffic loads (850ms delay)
         renderBusStations(true);
     } else {
         if (currentStation) {
