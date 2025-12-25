@@ -823,12 +823,12 @@ const STATIONS = [
         address: 'Alger Centre',
         image: 'images/station_placeholder.png',
         routes: [
-            { number: '31', dest: 'Hydra', interval: 25, startTime: '06:00', endTime: '18:30', totalDistance: 4.2 },
-            { number: '33', dest: 'Kouba', interval: 30, startTime: '06:00', endTime: '18:30', totalDistance: 6.5 },
-            { number: '67', dest: 'Ben Aknoun', interval: 30, startTime: '06:00', endTime: '18:30', totalDistance: 7.0 },
-            { number: '91', dest: 'Chevalley', interval: 35, startTime: '06:00', endTime: '18:30', totalDistance: 11.0 },
-            { number: '54', dest: 'El Mouradia', interval: 20, startTime: '06:00', endTime: '18:30', totalDistance: 3.5 },
-            { number: '05', dest: 'Place des Martyrs', interval: 20, startTime: '06:00', endTime: '18:30', totalDistance: 2.0 }
+            { number: '31', dest: 'Hydra', interval: 25, startTime: '06:00', endTime: '05:00', totalDistance: 4.2 },
+            { number: '33', dest: 'Kouba', interval: 30, startTime: '06:00', endTime: '05:00', totalDistance: 6.5 },
+            { number: '67', dest: 'Ben Aknoun', interval: 30, startTime: '06:00', endTime: '05:00', totalDistance: 7.0 },
+            { number: '91', dest: 'Chevalley', interval: 35, startTime: '06:00', endTime: '05:00', totalDistance: 11.0 },
+            { number: '54', dest: 'El Mouradia', interval: 20, startTime: '06:00', endTime: '05:00', totalDistance: 3.5 },
+            { number: '05', dest: 'Place des Martyrs', interval: 20, startTime: '06:00', endTime: '05:00', totalDistance: 2.0 }
         ]
     },
     {
@@ -839,11 +839,11 @@ const STATIONS = [
         address: 'Sidi M\'Hamed',
         image: 'images/station_placeholder.png',
         routes: [
-            { number: '04', dest: 'Ben Omar', interval: 35, startTime: '06:00', endTime: '18:30', totalDistance: 9.0 },
-            { number: '10', dest: 'Bouzareah', interval: 30, startTime: '06:00', endTime: '18:30', totalDistance: 8.5 },
-            { number: '12', dest: 'Dély Ibrahim', interval: 35, startTime: '06:00', endTime: '18:30', totalDistance: 10.0 },
-            { number: '07', dest: 'El Harrach', interval: 25, startTime: '06:00', endTime: '18:30', totalDistance: 8.0 },
-            { number: '16', dest: 'Kouba', interval: 25, startTime: '06:00', endTime: '18:30', totalDistance: 5.5 }
+            { number: '04', dest: 'Ben Omar', interval: 35, startTime: '06:00', endTime: '05:00', totalDistance: 9.0 },
+            { number: '10', dest: 'Bouzareah', interval: 30, startTime: '06:00', endTime: '05:00', totalDistance: 8.5 },
+            { number: '12', dest: 'Dély Ibrahim', interval: 35, startTime: '06:00', endTime: '05:00', totalDistance: 10.0 },
+            { number: '07', dest: 'El Harrach', interval: 25, startTime: '06:00', endTime: '05:00', totalDistance: 8.0 },
+            { number: '16', dest: 'Kouba', interval: 25, startTime: '06:00', endTime: '05:00', totalDistance: 5.5 }
         ]
     },
     {
@@ -854,9 +854,9 @@ const STATIONS = [
         address: 'Hydra Centre',
         image: 'images/station_placeholder.png',
         routes: [
-            { number: '31', dest: 'Place Audin', interval: 25, startTime: '06:00', endTime: '18:30', totalDistance: 4.2 },
-            { number: '88', dest: 'Bir Mourad Raïs', interval: 35, startTime: '06:00', endTime: '18:30', totalDistance: 6.0 },
-            { number: '45', dest: 'Ben Aknoun', interval: 30, startTime: '06:00', endTime: '18:30', totalDistance: 5.5 }
+            { number: '31', dest: 'Place Audin', interval: 25, startTime: '06:00', endTime: '05:00', totalDistance: 4.2 },
+            { number: '88', dest: 'Bir Mourad Raïs', interval: 35, startTime: '06:00', endTime: '05:00', totalDistance: 6.0 },
+            { number: '45', dest: 'Ben Aknoun', interval: 30, startTime: '06:00', endTime: '05:00', totalDistance: 5.5 }
         ]
     },
     {
@@ -867,9 +867,9 @@ const STATIONS = [
         address: 'El Mouradia',
         image: 'images/station_placeholder.png',
         routes: [
-            { number: '54', dest: 'Place Audin', interval: 20, startTime: '06:00', endTime: '18:30', totalDistance: 3.5 },
-            { number: '34', dest: '1er Mai', interval: 30, startTime: '06:00', endTime: '18:30', totalDistance: 4.0 },
-            { number: '45', dest: 'Ben Aknoun', interval: 30, startTime: '06:00', endTime: '18:30', totalDistance: 6.5 }
+            { number: '54', dest: 'Place Audin', interval: 20, startTime: '06:00', endTime: '05:00', totalDistance: 3.5 },
+            { number: '34', dest: '1er Mai', interval: 30, startTime: '06:00', endTime: '05:00', totalDistance: 4.0 },
+            { number: '45', dest: 'Ben Aknoun', interval: 30, startTime: '06:00', endTime: '05:00', totalDistance: 6.5 }
         ]
     }
 ];
