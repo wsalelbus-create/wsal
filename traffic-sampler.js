@@ -243,13 +243,8 @@ class TrafficSampler {
             const start = routePoints[0];
             const end = routePoints[1];
             
-            // ULTRA FAST: Sample only MIDPOINT (1 point instead of 2)
-            // Midpoint represents average traffic along the route
-            samplingPoints = [{
-                lat: (start.lat + end.lat) / 2,
-                lon: (start.lon + end.lon) / 2,
-                name: 'Midpoint'
-            }];
+            // Sample START point only (most reliable - always on a road)
+            samplingPoints = [start];
         } else {
             samplingPoints = routePoints;
         }
