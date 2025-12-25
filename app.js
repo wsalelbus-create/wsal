@@ -946,12 +946,25 @@ function calculateArrivals(station) {
         const startMins = timeToMinutes(route.startTime);
         const endMins = timeToMinutes(route.endTime);
 
-        // Status Check
-        if (currentMinutes < startMins) {
-            return { ...route, status: 'Not Started', message: `Starts ${route.startTime}` };
+        // Status Check - Handle overnight service (e.g., 06:00 to 05:00 next day)
+        let isActive = false;
+        
+        if (endMins < startMins) {
+            // Overnight service: 06:00 to 05:00 (next day)
+            // Active if: current >= start OR current <= end
+            isActive = (currentMinutes >= startMins) || (currentMinutes <= endMins);
+        } else {
+            // Normal service: 06:00 to 18:30 (same day)
+            // Active if: current >= start AND current <= end
+            isActive = (currentMinutes >= startMins) && (currentMinutes <= endMins);
         }
-        if (currentMinutes > endMins) {
-            return { ...route, status: 'Ended', message: 'Service Ended' };
+        
+        if (!isActive) {
+            if (currentMinutes < startMins) {
+                return { ...route, status: 'Not Started', message: `Starts ${route.startTime}` };
+            } else {
+                return { ...route, status: 'Ended', message: 'Service Ended' };
+            }
         }
 
         // ============================================================================
