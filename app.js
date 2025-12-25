@@ -805,14 +805,14 @@ const STATIONS = [
         address: 'Casbah, Algiers',
         image: 'images/station_placeholder.png',
         routes: [
-            { number: '100', dest: 'Aéroport', interval: 40, startTime: '06:00', endTime: '18:30', totalDistance: 18.5 },
-            { number: '101', dest: 'Birtouta', interval: 35, startTime: '06:00', endTime: '18:30', totalDistance: 15.0 },
-            { number: '99', dest: 'Aéroport', interval: 40, startTime: '06:00', endTime: '18:30', totalDistance: 18.5 },
-            { number: '58', dest: 'Chevalley', interval: 30, startTime: '06:00', endTime: '18:30', totalDistance: 12.0 },
-            { number: '67', dest: 'Ben Aknoun', interval: 25, startTime: '06:00', endTime: '18:30', totalDistance: 8.5 },
-            { number: '07', dest: 'El Harrach', interval: 25, startTime: '06:00', endTime: '18:30', totalDistance: 10.0 },
-            { number: '90', dest: 'Birtouta', interval: 35, startTime: '06:00', endTime: '18:30', totalDistance: 15.0 },
-            { number: '113', dest: 'Gare Routière Caroubier', interval: 30, startTime: '06:00', endTime: '18:30', totalDistance: 7.0 }
+            { number: '100', dest: 'Aéroport', interval: 40, startTime: '06:00', endTime: '05:00', totalDistance: 18.5 },
+            { number: '101', dest: 'Birtouta', interval: 35, startTime: '06:00', endTime: '05:00', totalDistance: 15.0 },
+            { number: '99', dest: 'Aéroport', interval: 40, startTime: '06:00', endTime: '05:00', totalDistance: 18.5 },
+            { number: '58', dest: 'Chevalley', interval: 30, startTime: '06:00', endTime: '05:00', totalDistance: 12.0 },
+            { number: '67', dest: 'Ben Aknoun', interval: 25, startTime: '06:00', endTime: '05:00', totalDistance: 8.5 },
+            { number: '07', dest: 'El Harrach', interval: 25, startTime: '06:00', endTime: '05:00', totalDistance: 10.0 },
+            { number: '90', dest: 'Birtouta', interval: 35, startTime: '06:00', endTime: '05:00', totalDistance: 15.0 },
+            { number: '113', dest: 'Gare Routière Caroubier', interval: 30, startTime: '06:00', endTime: '05:00', totalDistance: 7.0 }
         ]
     },
     {

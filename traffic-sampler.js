@@ -73,7 +73,7 @@ class TrafficSampler {
         });
     }
 
-    // Sample color at specific lat/lon - samples multiple nearby pixels to find traffic overlay
+    // Sample color at specific lat/lon - samples area to find traffic overlay
     async sampleColorAt(lat, lon, zoom = 15) {
         const { tileX, tileY, pixelX, pixelY } = this.latLonToPixel(lat, lon, zoom);
         
@@ -84,9 +84,9 @@ class TrafficSampler {
         this.ctx.clearRect(0, 0, 256, 256);
         this.ctx.drawImage(tile, 0, 0);
 
-        // Sample a larger 9x9 area to catch traffic overlay lines
+        // OPTIMIZED: Sample smaller 15x15 area (was 9x9) for better detection
         const samples = [];
-        const radius = 4; // Sample 9x9 grid
+        const radius = 7; // 15x15 grid (reduced from 20x20 for speed)
         
         for (let dx = -radius; dx <= radius; dx++) {
             for (let dy = -radius; dy <= radius; dy++) {
@@ -97,11 +97,6 @@ class TrafficSampler {
                 const [r, g, b, a] = imageData.data;
                 
                 if (a > 100) {
-                    // Filter out common non-traffic colors
-                    const isGray = Math.abs(r - g) < 15 && Math.abs(g - b) < 15 && Math.abs(r - b) < 15 && r > 200;
-                    const isBlue = b > r + 20 && b > g + 10; // Water/sea
-                    const isDarkGray = r < 100 && g < 100 && b < 100 && Math.abs(r - g) < 20; // Dark features
-                    
                     // Look for traffic colors: green, yellow, orange, red
                     const isGreen = g > r + 15 && g > b + 15;
                     const isYellow = r > 180 && g > 150 && b < 120;
@@ -110,16 +105,13 @@ class TrafficSampler {
                     
                     if (isGreen || isYellow || isOrange || isRed) {
                         samples.push({ r, g, b, a, priority: 10 }); // High priority for traffic colors
-                    } else if (!isGray && !isBlue && !isDarkGray) {
-                        samples.push({ r, g, b, a, priority: 1 }); // Low priority for other colors
                     }
                 }
             }
         }
 
-        // If we found traffic-colored pixels, return the highest priority one
+        // If we found traffic-colored pixels, return the first one
         if (samples.length > 0) {
-            samples.sort((a, b) => b.priority - a.priority);
             return samples[0];
         }
 
@@ -251,9 +243,13 @@ class TrafficSampler {
             const start = routePoints[0];
             const end = routePoints[1];
             
-            // FAST: Sample only START and END (2 points instead of 5)
-            // This makes traffic loading 2.5x faster
-            samplingPoints = [start, end];
+            // ULTRA FAST: Sample only MIDPOINT (1 point instead of 2)
+            // Midpoint represents average traffic along the route
+            samplingPoints = [{
+                lat: (start.lat + end.lat) / 2,
+                lon: (start.lon + end.lon) / 2,
+                name: 'Midpoint'
+            }];
         } else {
             samplingPoints = routePoints;
         }
@@ -283,8 +279,8 @@ class TrafficSampler {
                         const normLat = dlat / distance;
                         const normLon = dlon / distance;
                         
-                        // Search at 50m, 100m along the route direction (reduced from 4 to 2 searches)
-                        const searchDistances = [0.0005, 0.001];
+                        // Search at 100m along the route direction (reduced from 4 searches to 1)
+                        const searchDistances = [0.001];
                         
                         for (const searchDist of searchDistances) {
                             const nearbyColor = await this.sampleColorAt(
