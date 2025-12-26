@@ -65,6 +65,25 @@
     display: none; /* Hide icon in GO state */
 }
 
+/* When panel collapses, badge becomes grey with arrow (OVERRIDES active) */
+.crowd-badge.active.panel-collapsed {
+    background: #8E8E93 !important;
+    color: white;
+    padding: 14px 20px;
+    border-radius: 24px;
+}
+
+.crowd-badge.active.panel-collapsed svg {
+    display: block !important;
+    margin: 0;
+    width: 20px;
+    height: 20px;
+}
+
+.crowd-badge.active.panel-collapsed #crowd-badge-text {
+    display: none;
+}
+
 /* Crowd-Sourcing Panel Content (rendered in arrivals panel) */
 .crowd-panel-content {
     padding: 24px 20px;
