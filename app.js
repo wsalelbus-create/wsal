@@ -2958,15 +2958,19 @@ if (compassBtn) {
             document.body.classList.add('compass-mode');
             console.log('[Compass] Rotation mode ON - map follows heading, dragging disabled');
             
-            // Collapse panel to 20vh and hide content (like Citymapper)
+            // Collapse panel to 20vh with smooth animation
             if (arrivalsPanel) {
                 arrivalsPanel.style.height = '20vh';
                 arrivalsPanel.style.minHeight = '20vh';
+                arrivalsPanel.style.transform = 'translateY(0)'; // Reset transform to show panel at bottom
+                arrivalsPanel.style.transition = 'transform 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94), height 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
                 arrivalsPanel.classList.add('compass-collapsed');
             }
             
-            // Re-center map for 20vh panel
-            centerMapForPanelHeight(20);
+            // Re-center map for 20vh panel with smooth transition
+            setTimeout(() => {
+                centerMapForPanelHeight(20);
+            }, 100);
             
             // Disable ALL map interactions
             if (map) {
@@ -2998,15 +3002,19 @@ if (compassBtn) {
             document.body.classList.remove('compass-mode');
             console.log('[Compass] Rotation mode OFF - normal map controls');
             
-            // Restore panel
+            // Restore panel with smooth animation
             if (arrivalsPanel) {
                 arrivalsPanel.style.height = '';
                 arrivalsPanel.style.minHeight = '';
+                arrivalsPanel.style.transform = ''; // Let JS control transform again
+                arrivalsPanel.style.transition = '';
                 arrivalsPanel.classList.remove('compass-collapsed');
             }
             
-            // Re-center map for default panel height (40vh)
-            centerMapForPanelHeight(40);
+            // Re-center map for default panel height
+            setTimeout(() => {
+                centerMapForPanelHeight(40);
+            }, 100);
             
             // Re-enable map dragging and zoom
             if (map) {
