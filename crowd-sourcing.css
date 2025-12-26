@@ -21,7 +21,7 @@
 /* When panel collapses, badge becomes fixed and moves above white bar */
 .crowd-badge.panel-collapsed {
     position: fixed;
-    bottom: calc(20vh + 5px);
+    bottom: calc(20vh + 10px);
     right: 20px;
     z-index: 800;
 }

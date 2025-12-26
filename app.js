@@ -3325,7 +3325,6 @@ function setupPanelDrag() {
                     inertiaActive = false;
                     
                     // FORCE: If at 20vh and moving up, go to 40vh
-                    const circlesHook = vhToPx(20);
                     let target;
                     if (Math.abs(h - circlesHook) < 20 && dir > 0) {
                         console.log('[INERTIA] At 20vh, moving up → FORCING 40vh');
@@ -3355,7 +3354,6 @@ function setupPanelDrag() {
                     // Show/hide distance circles based on final position in idle mode
                     // Only show at 20vh, hide at all other positions
                     if (uiMode === 'idle' && userLat && userLon) {
-                        const circlesHook = vhToPx(20);
                         const isAt20vh = Math.abs(target - circlesHook) < 1;
                         console.log('[CIRCLES INERTIA] target:', target, 'circlesHook:', circlesHook, 'isAt20vh:', isAt20vh);
                         
@@ -3365,6 +3363,18 @@ function setupPanelDrag() {
                         } else if (!isAt20vh && distanceCirclesLayer) {
                             console.log('[CIRCLES] ❌ Hiding circles - not at 20vh (inertia)');
                             hideDistanceCircles();
+                        }
+                    }
+                    
+                    // Reset crowd badge when panel goes above 20vh
+                    if (target > circlesHook + 10) {
+                        const crowdBadge = document.getElementById('crowd-badge');
+                        const crowdBadgeText = document.getElementById('crowd-badge-text');
+                        if (crowdBadge && crowdBadge.classList.contains('active')) {
+                            console.log('[CROWD] Resetting badge - panel pulled up');
+                            crowdBadge.classList.remove('active');
+                            crowdBadge.classList.remove('panel-collapsed');
+                            if (crowdBadgeText) crowdBadgeText.textContent = 'Help Others';
                         }
                     }
                     
@@ -3435,6 +3445,18 @@ function setupPanelDrag() {
                 } else if (!isAt20vh && distanceCirclesLayer) {
                     console.log('[CIRCLES] ❌ Hiding circles - not at 20vh');
                     hideDistanceCircles();
+                }
+            }
+            
+            // Reset crowd badge when panel goes above 20vh
+            if (target > circlesHook + 10) {
+                const crowdBadge = document.getElementById('crowd-badge');
+                const crowdBadgeText = document.getElementById('crowd-badge-text');
+                if (crowdBadge && crowdBadge.classList.contains('active')) {
+                    console.log('[CROWD] Resetting badge - panel pulled up');
+                    crowdBadge.classList.remove('active');
+                    crowdBadge.classList.remove('panel-collapsed');
+                    if (crowdBadgeText) crowdBadgeText.textContent = 'Help Others';
                 }
             }
             
