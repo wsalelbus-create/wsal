@@ -1411,24 +1411,7 @@ function handleDeviceOrientation(e) {
 }
 
 function updateHeading(deg) {
-    currentHeading = normalizeBearing(deg);
-    hasHeadingFix = true;
-    // Smooth transitions to avoid flip/jitter and 359→0 jumps
-    if (smoothedHeading == null) smoothedHeading = currentHeading;
-    const delta = smallestAngleDelta(smoothedHeading, currentHeading);
-    smoothedHeading = normalizeBearing(smoothedHeading + HEADING_SMOOTH * delta);
-
-    // Rotate the cone inside the user marker, if present
-    if (userMarker) {
-        const el = userMarker.getElement();
-        if (el) {
-            const rotor = el.querySelector('.user-heading-rotor');
-            if (rotor) {
-                rotor.style.transform = `translate(-50%, -50%) rotate(${smoothedHeading}deg)`;
-                rotor.style.opacity = shouldShowCone() ? '1' : '0';
-            }
-        }
-    }
+    updateHeadingWithRotation(deg);
 }
 
 // --- Heading helpers ---
@@ -2921,52 +2904,71 @@ if (backBtn) {
     });
 }
 
-// Compass Button - Reset map rotation to North (Citymapper style)
+// Compass Button - Toggle map rotation to follow user heading
 const compassBtn = document.getElementById('compass-btn');
+let compassRotationActive = false;
+
 if (compassBtn) {
-    let mapBearing = 0; // Track current map rotation
-    
     compassBtn.addEventListener('click', () => {
-        if (!map) return;
+        compassRotationActive = !compassRotationActive;
         
-        // Get current map bearing (rotation)
-        const currentBearing = map.getBearing ? map.getBearing() : 0;
-        
-        if (Math.abs(currentBearing) < 1) {
-            // Map is already north-up, do nothing (just visual feedback)
-            compassBtn.style.transform = 'scale(1.1)';
-            setTimeout(() => {
-                compassBtn.style.transform = '';
-            }, 200);
-        } else {
-            // Rotate map back to north
-            console.log('[Compass] Resetting map to North, current bearing:', currentBearing);
-            
-            // Leaflet doesn't have native rotation, but we can simulate with CSS transform
-            // For now, just provide visual feedback that compass was clicked
+        if (compassRotationActive) {
+            // Enable rotation mode - map follows user heading
             compassBtn.classList.add('compass-active');
-            compassBtn.style.transform = 'rotate(360deg) scale(1.1)';
+            console.log('[Compass] Rotation mode ON - map will follow your heading');
             
-            setTimeout(() => {
-                compassBtn.style.transform = '';
-                compassBtn.classList.remove('compass-active');
-            }, 400);
-            
-            // Note: Full map rotation requires Leaflet.Rotate plugin
-            // For now, this provides the visual feedback
-            // To implement full rotation: install leaflet-rotate plugin
-        }
-    });
-    
-    // Update compass label rotation based on map bearing (if rotation plugin is added)
-    if (map && map.on) {
-        map.on('rotate', (e) => {
-            const bearing = map.getBearing ? map.getBearing() : 0;
-            const label = compassBtn.querySelector('.compass-label');
-            if (label) {
-                label.style.transform = `translate(-50%, -50%) rotate(${-bearing}deg)`;
+            // Rotate map to current heading if available
+            if (map && smoothedHeading !== null) {
+                map.setBearing(-smoothedHeading); // negative because Leaflet rotates clockwise
             }
-        });
+        } else {
+            // Disable rotation mode - reset to North up
+            compassBtn.classList.remove('compass-active');
+            console.log('[Compass] Rotation mode OFF - map reset to North up');
+            
+            // Reset map to North up
+            if (map) {
+                map.setBearing(0);
+            }
+        }
+        
+        // Visual feedback
+        compassBtn.style.transform = 'rotate(360deg) scale(1.1)';
+        setTimeout(() => {
+            compassBtn.style.transform = '';
+        }, 300);
+    });
+}
+
+// Update map rotation when heading changes (if rotation mode is active)
+function updateHeadingWithRotation(deg) {
+    currentHeading = normalizeBearing(deg);
+    hasHeadingFix = true;
+    
+    // Smooth transitions
+    if (smoothedHeading == null) smoothedHeading = currentHeading;
+    const delta = smallestAngleDelta(smoothedHeading, currentHeading);
+    smoothedHeading = normalizeBearing(smoothedHeading + HEADING_SMOOTH * delta);
+
+    // Rotate map if compass rotation mode is active
+    if (compassRotationActive && map) {
+        try {
+            map.setBearing(-smoothedHeading); // negative because Leaflet rotates clockwise
+        } catch (e) {
+            console.warn('[Compass] Map rotation not supported:', e);
+        }
+    }
+
+    // Rotate the cone inside the user marker
+    if (userMarker) {
+        const el = userMarker.getElement();
+        if (el) {
+            const rotor = el.querySelector('.user-heading-rotor');
+            if (rotor) {
+                rotor.style.transform = `translate(-50%, -50%) rotate(${smoothedHeading}deg)`;
+                rotor.style.opacity = shouldShowCone() ? '1' : '0';
+            }
+        }
     }
 }
 
@@ -3814,10 +3816,20 @@ if (crowdBadge) {
                 }
             }
             
-            // Transform badge: White → Green, "Help Others" → "GO"
+            // Transform badge: White → Grey with arrow, "Help Others" → hidden
             crowdBadge.classList.add('active');
             crowdBadge.classList.add('panel-collapsed');
             crowdBadgeText.textContent = 'GO';
+            
+            // Change icon to arrow
+            const badgeSvg = crowdBadge.querySelector('svg');
+            if (badgeSvg) {
+                badgeSvg.innerHTML = `
+                    <path d="M5 12h14M12 5l7 7-7 7" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+                `;
+                badgeSvg.setAttribute('viewBox', '0 0 24 24');
+                badgeSvg.style.marginRight = '0';
+            }
             
         } else {
             // Second click: Open report panel
