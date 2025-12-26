@@ -3851,6 +3851,16 @@ setInterval(() => {
 // Handle orientation changes (portrait ↔ landscape)
 window.addEventListener('orientationchange', () => {
     console.log('[Orientation] Changed - reinitializing layout');
+    
+    // Don't reinitialize if compass mode is active
+    if (compassRotationActive) {
+        console.log('[Orientation] Compass mode active - skipping reinitialization');
+        setTimeout(() => {
+            if (map) map.invalidateSize();
+        }, 300);
+        return;
+    }
+    
     setTimeout(() => {
         try {
             // Reinitialize viewport polyfill
