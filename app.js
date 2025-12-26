@@ -1485,7 +1485,6 @@ function computeHeadingFromEvent(e) {
         return heading;
     } catch { return null; }
 }
-}
 
 // Compute compass heading from Euler angles (alpha, beta, gamma)
 // Adapted from community/MDN formula
