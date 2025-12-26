@@ -2924,6 +2924,25 @@ function rotateMap(degrees) {
     mapContainer.style.transform = `translate3d(0, 0, 0) rotate(${degrees}deg)`;
 }
 
+// Function to center map based on panel height
+function centerMapForPanelHeight(panelHeightVh) {
+    const mapContainer = document.getElementById('map-container');
+    if (!mapContainer) return;
+    
+    // Calculate visible map area center
+    // If panel is at 40vh, visible area is 0-60vh, center at 30vh
+    // If panel is at 20vh, visible area is 0-80vh, center at 40vh
+    const visibleMapHeight = 100 - panelHeightVh;
+    const centerVh = visibleMapHeight / 2;
+    
+    // Map container is 250% tall (125% on each side of center)
+    // Position so center aligns with visible area center
+    const topPosition = `calc(${centerVh}vh - 125%)`;
+    
+    mapContainer.style.top = topPosition;
+    console.log(`[Map Center] Panel at ${panelHeightVh}vh, map centered at ${centerVh}vh`);
+}
+
 if (compassBtn) {
     compassBtn.addEventListener('click', () => {
         compassRotationActive = !compassRotationActive;
@@ -2945,6 +2964,9 @@ if (compassBtn) {
                 arrivalsPanel.style.minHeight = '20vh';
                 arrivalsPanel.classList.add('compass-collapsed');
             }
+            
+            // Re-center map for 20vh panel
+            centerMapForPanelHeight(20);
             
             // Disable ALL map interactions
             if (map) {
@@ -2982,6 +3004,9 @@ if (compassBtn) {
                 arrivalsPanel.style.minHeight = '';
                 arrivalsPanel.classList.remove('compass-collapsed');
             }
+            
+            // Re-center map for default panel height (40vh)
+            centerMapForPanelHeight(40);
             
             // Re-enable map dragging and zoom
             if (map) {

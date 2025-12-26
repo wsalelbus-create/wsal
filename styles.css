@@ -346,28 +346,24 @@ body.compass-mode .arrivals-panel.compass-collapsed {
     min-height: 20vh !important;
     max-height: 20vh !important;
     overflow: hidden !important;
+    /* Keep panel visible but empty - just the colored bar */
+    background: rgba(48, 209, 88, 0.95) !important;
+    backdrop-filter: blur(20px) !important;
 }
 
-/* Hide all panel content in compass mode */
+/* Hide all panel content in compass mode - keep only the panel itself */
 body.compass-mode .arrivals-panel.compass-collapsed .floating-controls,
 body.compass-mode .arrivals-panel.compass-collapsed .routes-list,
 body.compass-mode .arrivals-panel.compass-collapsed .quick-actions-panel,
 body.compass-mode .arrivals-panel.compass-collapsed .station-selector-card,
 body.compass-mode .arrivals-panel.compass-collapsed .routes-header,
 body.compass-mode .arrivals-panel.compass-collapsed .skyline-inline,
-body.compass-mode .arrivals-panel.compass-collapsed > *:not(.sheet-grabber) {
+body.compass-mode .arrivals-panel.compass-collapsed .sheet-grabber,
+body.compass-mode .arrivals-panel.compass-collapsed .selector-row,
+body.compass-mode .arrivals-panel.compass-collapsed .station-card,
+body.compass-mode .arrivals-panel.compass-collapsed > * {
     display: none !important;
-}
-
-/* Keep only the grabber bar visible */
-body.compass-mode .arrivals-panel.compass-collapsed .sheet-grabber {
-    display: block !important;
-}
-
-/* Make panel just a simple bar at bottom */
-body.compass-mode .arrivals-panel.compass-collapsed {
-    background: #30D158 !important;
-    border-radius: 20px 20px 0 0 !important;
+    visibility: hidden !important;
 }
 
 .compass-label {
