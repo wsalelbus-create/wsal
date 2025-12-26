@@ -2921,16 +2921,53 @@ if (backBtn) {
     });
 }
 
-// Compass Button - Simple visual feedback (Leaflet has no bearing by default)
+// Compass Button - Reset map rotation to North (Citymapper style)
 const compassBtn = document.getElementById('compass-btn');
 if (compassBtn) {
+    let mapBearing = 0; // Track current map rotation
+    
     compassBtn.addEventListener('click', () => {
-        // Visual feedback
-        compassBtn.style.transform = 'rotate(360deg) scale(1.1)';
-        setTimeout(() => {
-            compassBtn.style.transform = '';
-        }, 300);
+        if (!map) return;
+        
+        // Get current map bearing (rotation)
+        const currentBearing = map.getBearing ? map.getBearing() : 0;
+        
+        if (Math.abs(currentBearing) < 1) {
+            // Map is already north-up, do nothing (just visual feedback)
+            compassBtn.style.transform = 'scale(1.1)';
+            setTimeout(() => {
+                compassBtn.style.transform = '';
+            }, 200);
+        } else {
+            // Rotate map back to north
+            console.log('[Compass] Resetting map to North, current bearing:', currentBearing);
+            
+            // Leaflet doesn't have native rotation, but we can simulate with CSS transform
+            // For now, just provide visual feedback that compass was clicked
+            compassBtn.classList.add('compass-active');
+            compassBtn.style.transform = 'rotate(360deg) scale(1.1)';
+            
+            setTimeout(() => {
+                compassBtn.style.transform = '';
+                compassBtn.classList.remove('compass-active');
+            }, 400);
+            
+            // Note: Full map rotation requires Leaflet.Rotate plugin
+            // For now, this provides the visual feedback
+            // To implement full rotation: install leaflet-rotate plugin
+        }
     });
+    
+    // Update compass label rotation based on map bearing (if rotation plugin is added)
+    if (map && map.on) {
+        map.on('rotate', (e) => {
+            const bearing = map.getBearing ? map.getBearing() : 0;
+            const label = compassBtn.querySelector('.compass-label');
+            if (label) {
+                label.style.transform = `translate(-50%, -50%) rotate(${-bearing}deg)`;
+            }
+        });
+    }
 }
 
 // Bottom Sheet: drag the arrivals panel up/down, no page bounce

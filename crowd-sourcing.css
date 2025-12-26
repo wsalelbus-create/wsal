@@ -21,9 +21,32 @@
 /* When panel collapses, badge becomes fixed and moves above white bar */
 .crowd-badge.panel-collapsed {
     position: fixed;
-    bottom: calc(20vh + 10px);
+    bottom: calc(20vh + 15px); /* 15px spacing from white bar */
     right: 20px;
     z-index: 800;
+    background: rgba(0, 0, 0, 0.5); /* Gray like Citymapper */
+    color: white;
+    padding: 12px 20px;
+    border-radius: 25px; /* More rounded like Citymapper */
+    min-width: 60px;
+    justify-content: center;
+}
+
+/* Hide text, show only arrow in GO state */
+.crowd-badge.panel-collapsed #crowd-badge-text {
+    display: none;
+}
+
+.crowd-badge.panel-collapsed svg {
+    display: none;
+}
+
+/* Add arrow icon for GO state */
+.crowd-badge.panel-collapsed::after {
+    content: '→';
+    font-size: 24px;
+    font-weight: 700;
+    color: white;
 }
 
 .crowd-badge:hover {
@@ -37,12 +60,12 @@
 
 /* Green "GO" state */
 .crowd-badge.active {
-    background: #34C759;
-    color: white;
+    background: white; /* Keep white background */
+    color: #333;
 }
 
 .crowd-badge.active svg {
-    display: none; /* Hide icon in GO state */
+    display: flex; /* Show icon in normal active state */
 }
 
 /* Crowd-Sourcing Panel Content (rendered in arrivals panel) */
