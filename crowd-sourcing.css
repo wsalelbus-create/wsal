@@ -323,3 +323,308 @@
         font-size: 12px;
     }
 }
+
+/* Crowd Data Indicator (shown next to arrival times) */
+.crowd-indicator {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    background: rgba(52, 199, 89, 0.1);
+    border-radius: 50%;
+    margin-left: 6px;
+    animation: pulse-crowd 2s ease-in-out infinite;
+}
+
+@keyframes pulse-crowd {
+    0%, 100% {
+        opacity: 1;
+        transform: scale(1);
+    }
+    50% {
+        opacity: 0.7;
+        transform: scale(1.1);
+    }
+}
+
+.crowd-indicator svg {
+    display: block;
+}
+
+
+/* Mode Selection Buttons */
+.crowd-mode-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.crowd-mode-btn {
+    background: white;
+    border: 2px solid #E5E5EA;
+    border-radius: 12px;
+    padding: 16px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-family: 'Outfit', sans-serif;
+    text-align: left;
+}
+
+.crowd-mode-btn:hover {
+    border-color: #007AFF;
+    background: #F0F8FF;
+    transform: translateY(-2px);
+}
+
+.crowd-mode-icon {
+    font-size: 32px;
+    flex-shrink: 0;
+}
+
+.crowd-mode-text {
+    flex: 1;
+}
+
+.crowd-mode-text strong {
+    display: block;
+    font-size: 16px;
+    font-weight: 700;
+    color: #333;
+    margin-bottom: 4px;
+}
+
+.crowd-mode-text span {
+    display: block;
+    font-size: 13px;
+    color: #666;
+}
+
+/* GPS Tracking Screen */
+.gps-tracking-header {
+    text-align: center;
+    margin-bottom: 24px;
+}
+
+.gps-tracking-icon {
+    font-size: 48px;
+    margin-bottom: 12px;
+}
+
+.gps-tracking-header h2 {
+    margin: 0 0 4px;
+    font-size: 24px;
+    font-weight: 700;
+    color: #333;
+}
+
+.gps-tracking-subtitle {
+    margin: 0;
+    font-size: 14px;
+    color: #666;
+}
+
+/* GPS Stats */
+.gps-tracking-stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    margin-bottom: 24px;
+}
+
+.gps-stat {
+    background: #F2F2F7;
+    border-radius: 12px;
+    padding: 16px 12px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+}
+
+.gps-stat-icon {
+    font-size: 24px;
+}
+
+.gps-stat-text {
+    text-align: center;
+}
+
+.gps-stat-value {
+    font-size: 20px;
+    font-weight: 700;
+    color: #333;
+}
+
+.gps-stat-label {
+    font-size: 11px;
+    color: #666;
+}
+
+/* GPS Progress */
+.gps-tracking-progress {
+    margin-bottom: 24px;
+}
+
+.gps-progress-bar {
+    height: 8px;
+    background: #E5E5EA;
+    border-radius: 4px;
+    overflow: hidden;
+    margin-bottom: 8px;
+}
+
+.gps-progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #34C759, #30D158);
+    border-radius: 4px;
+    transition: width 0.5s ease;
+}
+
+.gps-progress-text {
+    text-align: center;
+    font-size: 13px;
+    color: #666;
+    font-weight: 600;
+}
+
+/* GPS Info Items */
+.gps-tracking-info {
+    background: #F2F2F7;
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 24px;
+}
+
+.gps-info-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 8px 0;
+    font-size: 13px;
+    color: #666;
+}
+
+.gps-info-item:not(:last-child) {
+    border-bottom: 1px solid #E5E5EA;
+}
+
+.gps-info-item svg {
+    flex-shrink: 0;
+}
+
+/* GPS Stop Button */
+.gps-stop-btn {
+    width: 100%;
+    background: #FF3B30;
+    color: white;
+    border: none;
+    border-radius: 12px;
+    padding: 16px;
+    font-size: 16px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-family: 'Outfit', sans-serif;
+    margin-bottom: 12px;
+}
+
+.gps-stop-btn:hover {
+    background: #FF2D20;
+    transform: translateY(-2px);
+}
+
+.gps-stop-btn:active {
+    transform: translateY(0);
+}
+
+.gps-tracking-note {
+    text-align: center;
+    font-size: 12px;
+    color: #999;
+    margin: 0;
+}
+
+/* GPS Thank You Screen */
+.gps-thankyou-header {
+    text-align: center;
+    margin-bottom: 24px;
+}
+
+.gps-thankyou-icon {
+    font-size: 64px;
+    margin-bottom: 16px;
+}
+
+.gps-thankyou-header h2 {
+    margin: 0;
+    font-size: 28px;
+    font-weight: 700;
+    color: #333;
+}
+
+.gps-thankyou-stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    margin-bottom: 24px;
+}
+
+.gps-thankyou-stat {
+    text-align: center;
+    padding: 20px;
+    background: #F2F2F7;
+    border-radius: 12px;
+}
+
+.gps-thankyou-value {
+    font-size: 32px;
+    font-weight: 700;
+    color: #34C759;
+    margin-bottom: 4px;
+}
+
+.gps-thankyou-label {
+    font-size: 12px;
+    color: #666;
+}
+
+.gps-thankyou-message {
+    text-align: center;
+    font-size: 16px;
+    color: #666;
+    padding: 20px;
+    background: #F2F2F7;
+    border-radius: 12px;
+    margin-bottom: 24px;
+}
+
+.gps-done-btn {
+    width: 100%;
+    background: #007AFF;
+    color: white;
+    border: none;
+    border-radius: 12px;
+    padding: 16px;
+    font-size: 16px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-family: 'Outfit', sans-serif;
+}
+
+.gps-done-btn:hover {
+    background: #0051D5;
+    transform: translateY(-2px);
+}
+
+.gps-done-btn:active {
+    transform: translateY(0);
+}

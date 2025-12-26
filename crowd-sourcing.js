@@ -490,43 +490,75 @@ class CrowdSourcingModule {
             return null; // No crowd data
         }
 
-        // Calculate weighted average based on trust scores
+        // Calculate weighted average based on trust scores and time decay
         let totalWeight = 0;
         let weightedSum = 0;
 
         recentReports.forEach(r => {
-            const age = (now - r.timestamp) / 1000 / 60; // minutes ago
-            const weight = r.trust * (1 - age / 10); // Decay over 10 min
+            const ageMinutes = (now - r.timestamp) / 1000 / 60; // minutes ago
+            
+            // Time decay: reports lose influence over time (linear decay over 10 min)
+            const timeDecay = Math.max(0, 1 - ageMinutes / 10);
+            
+            // Final weight = trust score × time decay
+            const weight = r.trust * timeDecay;
 
-            if (r.type === 'bus_passed') {
-                // Bus passed X minutes ago
-                weightedSum += age * weight;
-                totalWeight += weight;
-            } else if (r.type === 'bus_arrived') {
-                // Bus just arrived (0 minutes)
-                weightedSum += 0 * weight;
-                totalWeight += weight;
+            // Calculate adjustment based on report type
+            let adjustment = 0;
+            
+            if (r.type === 'bus_arrived') {
+                // Bus just arrived (0 minutes) - STRONGEST signal
+                // If system predicted 5 min but bus arrived now, we were 5 min off
+                // Adjustment: Make prediction show "arriving now" (0 min)
+                adjustment = -ageMinutes; // Negative = bus is closer than predicted
+                
+            } else if (r.type === 'bus_passed') {
+                // Bus passed X minutes ago - POSITION TRACKING
+                // If bus passed 3 min ago, it's now 3 min downstream
+                // Adjustment: Add time since passing (bus is further away)
+                adjustment = ageMinutes; // Positive = bus is further than predicted
+                
             } else if (r.type === 'bus_delayed') {
-                // Bus is delayed (add 5 min penalty)
-                weightedSum += -5 * weight;
-                totalWeight += weight;
+                // Bus is delayed - TRAFFIC/BREAKDOWN
+                // Add penalty to push prediction back
+                // Penalty decreases over time (delay might clear)
+                adjustment = 5 * timeDecay; // Positive = bus is further away
+                
             } else if (r.type === 'no_bus') {
-                // No bus yet (add 3 min penalty)
-                weightedSum += -3 * weight;
-                totalWeight += weight;
+                // No bus yet - MINOR DELAY
+                // User expected bus but it hasn't arrived
+                // Small penalty (less severe than "delayed")
+                adjustment = 3 * timeDecay; // Positive = bus is further away
             }
+
+            weightedSum += adjustment * weight;
+            totalWeight += weight;
         });
 
         if (totalWeight === 0) return null;
 
-        const adjustment = weightedSum / totalWeight;
+        const finalAdjustment = weightedSum / totalWeight;
 
-        console.log(`[Crowd] 📊 Prediction adjustment for Route ${routeNumber}: ${adjustment.toFixed(1)} min (${recentReports.length} reports)`);
+        // Confidence calculation:
+        // - 1 report = 33% confidence (might be wrong)
+        // - 2 reports = 67% confidence (likely correct)
+        // - 3+ reports = 100% confidence (definitely correct)
+        const confidence = Math.min(1.0, recentReports.length / 3);
+
+        console.log(`[Crowd] 📊 Route ${routeNumber} at ${stationId}:`);
+        console.log(`  - ${recentReports.length} confirmed reports`);
+        console.log(`  - Adjustment: ${finalAdjustment > 0 ? '+' : ''}${finalAdjustment.toFixed(1)} min`);
+        console.log(`  - Confidence: ${(confidence * 100).toFixed(0)}%`);
 
         return {
-            adjustment: adjustment, // minutes to add/subtract
-            confidence: Math.min(1.0, recentReports.length / 3), // 0-1 (3+ reports = full confidence)
-            reportCount: recentReports.length
+            adjustment: finalAdjustment, // minutes to add/subtract
+            confidence: confidence, // 0-1 (how sure we are)
+            reportCount: recentReports.length,
+            reports: recentReports.map(r => ({
+                type: r.type,
+                age: Math.round((now - r.timestamp) / 1000 / 60),
+                trust: r.trust.toFixed(2)
+            }))
         };
     }
 

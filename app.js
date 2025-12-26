@@ -484,6 +484,18 @@ function renderBusStationDetail(station, withDelay = false) {
         return arrivals.map(arrival => {
             let timeDisplayHtml = '';
             if (arrival.status === 'Active') {
+                // Check if crowd data was used
+                const hasCrowdData = arrival.crowdConfidence && arrival.crowdConfidence > 0;
+                const crowdBadge = hasCrowdData ? `
+                    <div class="crowd-indicator" title="Adjusted by ${arrival.crowdConfidence * 100}% crowd data">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" stroke="#34C759" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            <circle cx="9" cy="7" r="4" stroke="#34C759" stroke-width="2"/>
+                            <path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" stroke="#34C759" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </div>
+                ` : '';
+                
                 timeDisplayHtml = `
                     <div class="time-inline">
                         <svg class="live-radar" width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -494,6 +506,7 @@ function renderBusStationDetail(station, withDelay = false) {
                             <div class="time-big">${arrival.minutes}</div>
                             <div class="time-unit">min</div>
                         </div>
+                        ${crowdBadge}
                     </div>
                 `;
             } else if (arrival.status === 'Loading') {
@@ -1103,25 +1116,44 @@ function calculateArrivals(station) {
         // ETUSA buses depart at fixed intervals (e.g., every 30 minutes)
         // If current time is 6:15 and bus departed at 6:00, cyclePosition = 15 min
         
+        let predictedMinutes;
         if (cyclePosition < totalJourneyTime) {
             // Bus is currently traveling to this station
             const remainingTime = totalJourneyTime - cyclePosition;
-            return {
-                ...route,
-                status: 'Active',
-                minutes: Math.ceil(remainingTime)
-            };
+            predictedMinutes = Math.ceil(remainingTime);
         } else {
             // Bus already arrived or hasn't departed yet
             // Wait for next scheduled departure
             const timeUntilNextDeparture = route.interval - cyclePosition;
             const totalWaitTime = timeUntilNextDeparture + totalJourneyTime;
-            return {
-                ...route,
-                status: 'Active',
-                minutes: Math.ceil(totalWaitTime)
-            };
+            predictedMinutes = Math.ceil(totalWaitTime);
         }
+
+        // STEP 9: Apply CROWD-SOURCING ADJUSTMENT (Real-Time Correction)
+        // Use real user reports to correct timetable predictions
+        let finalMinutes = predictedMinutes;
+        let crowdData = null;
+        
+        if (window.CrowdSourcing) {
+            crowdData = window.CrowdSourcing.getPredictionAdjustment(route.number, station.name);
+            
+            if (crowdData && crowdData.reportCount > 0) {
+                // Apply adjustment with confidence weighting
+                const adjustment = crowdData.adjustment * crowdData.confidence;
+                finalMinutes = Math.max(0, predictedMinutes + adjustment);
+                
+                console.log(`[Crowd] 🎯 Route ${route.number}: ${predictedMinutes} min → ${Math.ceil(finalMinutes)} min (${crowdData.reportCount} reports, ${(crowdData.confidence * 100).toFixed(0)}% confidence)`);
+            }
+        }
+        
+        return {
+            ...route,
+            status: 'Active',
+            minutes: Math.ceil(finalMinutes),
+            basePrediction: predictedMinutes, // Store original for debugging
+            crowdAdjustment: crowdData ? crowdData.adjustment : 0,
+            crowdConfidence: crowdData ? crowdData.confidence : 0
+        };
     }).sort((a, b) => {
         // Sort: Active first (by time), then others
         if (a.status === 'Active' && b.status === 'Active') return a.minutes - b.minutes;
@@ -3785,12 +3817,33 @@ function renderCrowdSteps(station, distanceText, distanceStatus) {
     panel.innerHTML = `
         <div class="crowd-panel-content">
             <div class="crowd-header">
-                <h2>Report Bus Status</h2>
+                <h2>Help Others</h2>
                 <p class="crowd-help-text">📍 No account needed. One tap helps others.</p>
             </div>
             
-            <!-- Step 1: Station Info (Auto-detected) -->
-            <div class="crowd-step" id="crowd-step-station">
+            <!-- Step 0: Choose Mode -->
+            <div class="crowd-step" id="crowd-step-mode">
+                <div class="crowd-step-label">What's your situation?</div>
+                <div class="crowd-mode-buttons">
+                    <button class="crowd-mode-btn" id="crowd-mode-waiting">
+                        <div class="crowd-mode-icon">📍</div>
+                        <div class="crowd-mode-text">
+                            <strong>I'm at a bus stop</strong>
+                            <span>Report bus arrival or delay</span>
+                        </div>
+                    </button>
+                    <button class="crowd-mode-btn" id="crowd-mode-onbus">
+                        <div class="crowd-mode-icon">🚌</div>
+                        <div class="crowd-mode-text">
+                            <strong>I'm on a bus</strong>
+                            <span>Track this bus route</span>
+                        </div>
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Step 1: Station Info (Auto-detected) - For "Waiting" mode -->
+            <div class="crowd-step hidden" id="crowd-step-station">
                 <div class="crowd-step-label">Your Location</div>
                 <div class="crowd-station-card ${distanceStatus}" id="crowd-station-card">
                     <div class="crowd-station-icon">
@@ -3805,8 +3858,16 @@ function renderCrowdSteps(station, distanceText, distanceStatus) {
                 </div>
             </div>
             
-            <!-- Step 2: Select Route -->
-            <div class="crowd-step" id="crowd-step-route">
+            <!-- Step 1B: Select Bus (For "On Bus" mode) -->
+            <div class="crowd-step hidden" id="crowd-step-onbus-select">
+                <div class="crowd-step-label">Which bus are you on?</div>
+                <div class="crowd-route-grid" id="crowd-onbus-grid">
+                    <!-- All routes will be populated here -->
+                </div>
+            </div>
+            
+            <!-- Step 2: Select Route (For "Waiting" mode) -->
+            <div class="crowd-step hidden" id="crowd-step-route">
                 <div class="crowd-step-label">Which bus route?</div>
                 <div class="crowd-route-grid" id="crowd-route-grid">
                     ${station.routes.map(route => `
@@ -3867,7 +3928,31 @@ function renderCrowdSteps(station, distanceText, distanceStatus) {
 
 // Attach event listeners for crowd-sourcing UI
 function attachCrowdEventListeners(station) {
-    // Route selection
+    // Mode selection buttons
+    const modeWaitingBtn = document.getElementById('crowd-mode-waiting');
+    const modeOnBusBtn = document.getElementById('crowd-mode-onbus');
+    
+    if (modeWaitingBtn) {
+        modeWaitingBtn.addEventListener('click', () => {
+            // Show "Waiting at stop" flow
+            document.getElementById('crowd-step-mode').classList.add('hidden');
+            document.getElementById('crowd-step-station').classList.remove('hidden');
+            document.getElementById('crowd-step-route').classList.remove('hidden');
+        });
+    }
+    
+    if (modeOnBusBtn) {
+        modeOnBusBtn.addEventListener('click', () => {
+            // Show "On bus" flow
+            document.getElementById('crowd-step-mode').classList.add('hidden');
+            document.getElementById('crowd-step-onbus-select').classList.remove('hidden');
+            
+            // Populate all routes from all stations
+            populateOnBusRoutes();
+        });
+    }
+    
+    // Route selection (for waiting mode)
     const routeButtons = document.querySelectorAll('.crowd-route-btn');
     routeButtons.forEach(btn => {
         btn.addEventListener('click', () => {
@@ -3985,6 +4070,268 @@ function showCrowdFeedback(message, type) {
     setTimeout(() => {
         feedback.classList.add('hidden');
     }, 5000);
+}
+
+// Populate all routes for "On Bus" mode
+function populateOnBusRoutes() {
+    const grid = document.getElementById('crowd-onbus-grid');
+    if (!grid) return;
+    
+    // Get all unique routes from all stations
+    const allRoutes = new Map();
+    STATIONS.forEach(station => {
+        station.routes.forEach(route => {
+            if (!allRoutes.has(route.number)) {
+                allRoutes.set(route.number, route);
+            }
+        });
+    });
+    
+    // Sort routes numerically
+    const sortedRoutes = Array.from(allRoutes.values()).sort((a, b) => {
+        return parseInt(a.number) - parseInt(b.number);
+    });
+    
+    // Render route buttons
+    grid.innerHTML = sortedRoutes.map(route => `
+        <button class="crowd-route-btn" data-route="${route.number}">
+            <div class="crowd-route-number">${route.number}</div>
+            <div class="crowd-route-dest">${route.dest}</div>
+        </button>
+    `).join('');
+    
+    // Attach click handlers for GPS tracking
+    const onBusButtons = grid.querySelectorAll('.crowd-route-btn');
+    onBusButtons.forEach(btn => {
+        btn.addEventListener('click', () => {
+            const routeNumber = btn.dataset.route;
+            startGPSTracking(routeNumber);
+        });
+    });
+}
+
+// Start GPS tracking for a bus route
+function startGPSTracking(routeNumber) {
+    console.log(`[GPS] Starting tracking for Route ${routeNumber}`);
+    
+    if (!window.GPSBusTracker) {
+        // Initialize GPS tracker
+        window.GPSBusTracker = new GPSTrackerModule();
+    }
+    
+    // Start tracking
+    const result = window.GPSBusTracker.startTracking(routeNumber);
+    
+    if (result.success) {
+        // Show tracking screen
+        renderGPSTrackingScreen(routeNumber);
+    } else {
+        showCrowdFeedback(`❌ ${result.message}`, 'error');
+    }
+}
+
+// Render GPS tracking screen
+function renderGPSTrackingScreen(routeNumber) {
+    const panel = document.querySelector('.arrivals-panel');
+    if (!panel) return;
+    
+    const route = findRouteByNumber(routeNumber);
+    if (!route) return;
+    
+    panel.innerHTML = `
+        <div class="crowd-panel-content">
+            <div class="gps-tracking-header">
+                <div class="gps-tracking-icon">🚌</div>
+                <h2>Tracking Bus ${routeNumber}</h2>
+                <p class="gps-tracking-subtitle">to ${route.dest}</p>
+            </div>
+            
+            <div class="gps-tracking-stats">
+                <div class="gps-stat">
+                    <div class="gps-stat-icon">👥</div>
+                    <div class="gps-stat-text">
+                        <div class="gps-stat-value" id="gps-helpers-count">1</div>
+                        <div class="gps-stat-label">tracking now</div>
+                    </div>
+                </div>
+                <div class="gps-stat">
+                    <div class="gps-stat-icon">📍</div>
+                    <div class="gps-stat-text">
+                        <div class="gps-stat-value" id="gps-distance">0.0</div>
+                        <div class="gps-stat-label">km traveled</div>
+                    </div>
+                </div>
+                <div class="gps-stat">
+                    <div class="gps-stat-icon">⚡</div>
+                    <div class="gps-stat-text">
+                        <div class="gps-stat-value" id="gps-speed">0</div>
+                        <div class="gps-stat-label">km/h</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="gps-tracking-progress">
+                <div class="gps-progress-bar">
+                    <div class="gps-progress-fill" id="gps-progress-fill" style="width: 0%"></div>
+                </div>
+                <div class="gps-progress-text" id="gps-progress-text">Starting...</div>
+            </div>
+            
+            <div class="gps-tracking-info">
+                <div class="gps-info-item">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <circle cx="12" cy="12" r="10" stroke="#34C759" stroke-width="2"/>
+                        <path d="M12 6v6l4 2" stroke="#34C759" stroke-width="2" stroke-linecap="round"/>
+                    </svg>
+                    <span>Tracking every 30 seconds</span>
+                </div>
+                <div class="gps-info-item">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M20 7h-4V5l-2-2h-4L8 5v2H4c-1.1 0-2 .9-2 2v11c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V9c0-1.1-.9-2-2-2z" fill="#34C759"/>
+                    </svg>
+                    <span>Low battery impact</span>
+                </div>
+                <div class="gps-info-item">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z" fill="#34C759"/>
+                    </svg>
+                    <span>Anonymous tracking</span>
+                </div>
+            </div>
+            
+            <button class="gps-stop-btn" id="gps-stop-btn">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <rect x="6" y="6" width="12" height="12" fill="white" rx="2"/>
+                </svg>
+                <span>Stop Tracking</span>
+            </button>
+            
+            <p class="gps-tracking-note">Tap "Stop Tracking" when you get off the bus</p>
+        </div>
+    `;
+    
+    // Attach stop button handler
+    const stopBtn = document.getElementById('gps-stop-btn');
+    if (stopBtn) {
+        stopBtn.addEventListener('click', () => {
+            stopGPSTracking();
+        });
+    }
+    
+    // Start updating stats
+    startGPSStatsUpdates();
+}
+
+// Update GPS tracking stats in real-time
+function startGPSStatsUpdates() {
+    if (window.gpsStatsInterval) {
+        clearInterval(window.gpsStatsInterval);
+    }
+    
+    window.gpsStatsInterval = setInterval(() => {
+        if (!window.GPSBusTracker || !window.GPSBusTracker.tracking) {
+            clearInterval(window.gpsStatsInterval);
+            return;
+        }
+        
+        const stats = window.GPSBusTracker.getStats();
+        
+        // Update distance
+        const distanceEl = document.getElementById('gps-distance');
+        if (distanceEl) distanceEl.textContent = stats.distance.toFixed(1);
+        
+        // Update speed
+        const speedEl = document.getElementById('gps-speed');
+        if (speedEl) speedEl.textContent = Math.round(stats.speed);
+        
+        // Update progress
+        const progressFill = document.getElementById('gps-progress-fill');
+        const progressText = document.getElementById('gps-progress-text');
+        if (progressFill) progressFill.style.width = `${stats.completion * 100}%`;
+        if (progressText) progressText.textContent = `${Math.round(stats.completion * 100)}% complete`;
+        
+        // Update helpers count (mock for now)
+        const helpersEl = document.getElementById('gps-helpers-count');
+        if (helpersEl) helpersEl.textContent = stats.helpersCount || 1;
+        
+    }, 1000); // Update every second
+}
+
+// Stop GPS tracking
+function stopGPSTracking() {
+    if (!window.GPSBusTracker) return;
+    
+    console.log('[GPS] Stopping tracking');
+    
+    const result = window.GPSBusTracker.stopTracking();
+    
+    // Clear stats interval
+    if (window.gpsStatsInterval) {
+        clearInterval(window.gpsStatsInterval);
+    }
+    
+    // Show thank you screen
+    showGPSThankYouScreen(result);
+}
+
+// Show thank you screen after GPS tracking
+function showGPSThankYouScreen(result) {
+    const panel = document.querySelector('.arrivals-panel');
+    if (!panel) return;
+    
+    panel.innerHTML = `
+        <div class="crowd-panel-content">
+            <div class="gps-thankyou-header">
+                <div class="gps-thankyou-icon">✅</div>
+                <h2>Thanks for tracking!</h2>
+            </div>
+            
+            <div class="gps-thankyou-stats">
+                <div class="gps-thankyou-stat">
+                    <div class="gps-thankyou-value">${result.helpedUsers || 0}</div>
+                    <div class="gps-thankyou-label">people helped</div>
+                </div>
+                <div class="gps-thankyou-stat">
+                    <div class="gps-thankyou-value">${Math.round(result.completion * 100)}%</div>
+                    <div class="gps-thankyou-label">route completed</div>
+                </div>
+                <div class="gps-thankyou-stat">
+                    <div class="gps-thankyou-value">+${result.trustBonus.toFixed(2)}</div>
+                    <div class="gps-thankyou-label">trust score</div>
+                </div>
+            </div>
+            
+            <div class="gps-thankyou-message">
+                ${result.completion >= 0.8 
+                    ? '🎉 Full route tracked! You earned a bonus.' 
+                    : '👍 Partial route tracked. Complete more for bonus!'}
+            </div>
+            
+            <button class="gps-done-btn" id="gps-done-btn">Done</button>
+        </div>
+    `;
+    
+    // Done button returns to home
+    const doneBtn = document.getElementById('gps-done-btn');
+    if (doneBtn) {
+        doneBtn.addEventListener('click', () => {
+            // Reset badge
+            if (crowdBadge) {
+                crowdBadge.classList.remove('active');
+                crowdBadgeText.textContent = 'Help Others';
+            }
+            setUIMode('idle');
+        });
+    }
+}
+
+// Helper function to find route by number
+function findRouteByNumber(routeNumber) {
+    for (const station of STATIONS) {
+        const route = station.routes.find(r => r.number === routeNumber);
+        if (route) return route;
+    }
+    return null;
 }
 
 // Log crowd-sourcing stats on startup
