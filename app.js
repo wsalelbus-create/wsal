@@ -2912,17 +2912,34 @@ let compassRotationActive = false;
 function getMapPane() {
     const mapContainer = document.getElementById('map-container');
     if (mapContainer) {
-        return mapContainer.querySelector('.leaflet-map-pane');
+        // Get the main container that holds all map layers
+        const mapPane = mapContainer.querySelector('.leaflet-map-pane');
+        if (mapPane) {
+            return mapPane;
+        }
     }
     return null;
+}
+
+// Apply rotation to map - rotates tile pane and overlay pane
+function rotateMap(degrees) {
+    const mapContainer = document.getElementById('map-container');
+    if (!mapContainer) return;
+    
+    // Find all panes that need rotation
+    const tilePanes = mapContainer.querySelectorAll('.leaflet-tile-pane, .leaflet-overlay-pane, .leaflet-shadow-pane, .leaflet-marker-pane');
+    
+    tilePanes.forEach(pane => {
+        pane.style.transformOrigin = '50% 50%';
+        pane.style.transform = `rotate(${degrees}deg)`;
+    });
 }
 
 if (compassBtn) {
     compassBtn.addEventListener('click', () => {
         compassRotationActive = !compassRotationActive;
         
-        const mapPane = getMapPane();
-        console.log('[Compass] Button clicked, active:', compassRotationActive, 'mapPane:', mapPane, 'smoothedHeading:', smoothedHeading);
+        console.log('[Compass] Button clicked, active:', compassRotationActive, 'smoothedHeading:', smoothedHeading);
         
         if (compassRotationActive) {
             // Enable rotation mode
@@ -2944,16 +2961,10 @@ if (compassBtn) {
                 }
             }
             
-            // Apply current heading rotation to map pane (use 0 if no heading yet)
-            if (mapPane) {
-                const heading = smoothedHeading !== null ? smoothedHeading : 0;
-                mapPane.style.transformOrigin = 'center center';
-                mapPane.style.transition = 'transform 0.3s ease';
-                mapPane.style.transform = `rotate(${-heading}deg)`;
-                console.log('[Compass] Applied rotation:', -heading, 'deg');
-            } else {
-                console.warn('[Compass] Map pane not found!');
-            }
+            // Apply current heading rotation
+            const heading = smoothedHeading !== null ? smoothedHeading : 0;
+            rotateMap(-heading);
+            console.log('[Compass] Applied rotation:', -heading, 'deg');
         } else {
             // Disable rotation mode
             compassBtn.classList.remove('compass-active');
@@ -2970,11 +2981,8 @@ if (compassBtn) {
             }
             
             // Reset map rotation to North up
-            if (mapPane) {
-                mapPane.style.transition = 'transform 0.3s ease';
-                mapPane.style.transform = 'rotate(0deg)';
-                console.log('[Compass] Reset rotation to 0deg');
-            }
+            rotateMap(0);
+            console.log('[Compass] Reset rotation to 0deg');
         }
     });
 }
@@ -2989,14 +2997,9 @@ function updateHeadingWithRotation(deg) {
     const delta = smallestAngleDelta(smoothedHeading, currentHeading);
     smoothedHeading = normalizeBearing(smoothedHeading + HEADING_SMOOTH * delta);
 
-    // Rotate map pane when compass rotation mode is active
+    // Rotate map when compass rotation mode is active
     if (compassRotationActive) {
-        const mapPane = getMapPane();
-        if (mapPane) {
-            mapPane.style.transformOrigin = 'center center';
-            mapPane.style.transition = 'none'; // no transition for smooth real-time rotation
-            mapPane.style.transform = `rotate(${-smoothedHeading}deg)`;
-        }
+        rotateMap(-smoothedHeading);
         
         // Keep map centered on user
         if (map && userLat && userLon) {

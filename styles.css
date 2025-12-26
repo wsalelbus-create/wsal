@@ -110,10 +110,14 @@ html, body {
     /* Hint browser for optimization */
 }
 
-/* Leaflet map pane rotation support for compass mode */
-#map-container .leaflet-map-pane {
-    transform-origin: center center;
+/* Leaflet panes rotation support for compass mode */
+#map-container .leaflet-tile-pane,
+#map-container .leaflet-overlay-pane,
+#map-container .leaflet-shadow-pane,
+#map-container .leaflet-marker-pane {
+    transform-origin: 50% 50%;
     will-change: transform;
+    transition: transform 0.1s linear;
 }
 
 /* Header Floating on Map */
