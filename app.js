@@ -1313,7 +1313,6 @@ function refreshGeolocation() {
 // Start continuous position watch (also yields heading when moving)
 function startGeoWatch() {
     if (geoWatchId != null || !navigator.geolocation) return;
-    let isFirstPosition = true; // Track first GPS fix
     geoWatchId = navigator.geolocation.watchPosition(
         (pos) => {
             userLat = pos.coords.latitude;
@@ -1324,19 +1323,6 @@ function startGeoWatch() {
             // Update marker position without redrawing everything
             if (userMarker) {
                 try { userMarker.setLatLng([userLat, userLon]); } catch (e) {}
-            }
-            // Center map on first GPS fix - offset to center in visible area (not behind panel)
-            if (isFirstPosition && map && userLat && userLon) {
-                isFirstPosition = false;
-                console.log('[GPS] First position fix - centering map in visible area');
-                // Pan to position with offset so dot appears in center of visible map (30vh from top)
-                const point = map.latLngToContainerPoint([userLat, userLon]);
-                const targetY = window.innerHeight * 0.30; // 30vh from top (center of visible map area)
-                const offsetY = point.y - targetY;
-                const targetPoint = L.point(point.x, point.y - offsetY);
-                const targetLatLng = map.containerPointToLatLng(targetPoint);
-                map.setView(targetLatLng, 15, { animate: false });
-                updateMap(); // Ensure marker is drawn
             }
         },
         (err) => {
@@ -1647,6 +1633,11 @@ function initMap() {
 
     mapInitialized = true;
     updateMap();
+    
+    // Install rotation drag fix for compass button
+    if (typeof installRotationDragFix === 'function') {
+        installRotationDragFix();
+    }
 
     // Invalidate size to ensure map renders at the oversized dimensions (130% height)
     // This forces Leaflet to load more tiles to fill the larger area
@@ -2918,61 +2909,108 @@ if (backBtn) {
     });
 }
 
-// Compass Button - Rotate map to heading on tap
+// Compass Button - Rotate map to match current heading
 const compassBtn = document.getElementById('compass-btn');
-let mapRotationEnabled = false; // Track if map is rotated to heading
+let mapRotationAngle = 0; // Current rotation angle in degrees
 
 if (compassBtn) {
     compassBtn.addEventListener('click', () => {
-        if (!map) return;
+        const mapContainer = document.getElementById('map-container');
+        if (!mapContainer) return;
         
-        mapRotationEnabled = !mapRotationEnabled;
-        
-        if (mapRotationEnabled && hasHeadingFix) {
-            // Rotate map to match current heading
-            const bearing = -currentHeading; // Negative because we rotate map opposite to heading
-            const mapPane = map.getPane('mapPane');
-            const tilePane = map.getPane('tilePane');
-            const overlayPane = map.getPane('overlayPane');
-            const markerPane = map.getPane('markerPane');
-            
-            if (mapPane) {
-                mapPane.style.transform = `rotate(${bearing}deg)`;
-                mapPane.style.transformOrigin = '50% 50%';
+        if (mapRotationAngle === 0) {
+            // Rotate map to current heading
+            if (smoothedHeading !== null) {
+                mapRotationAngle = -smoothedHeading;
+                compassBtn.classList.add('compass-active');
+                console.log('[Compass] Rotating map to heading:', smoothedHeading);
+                
+                // Apply rotation via CSS transform
+                mapContainer.style.transition = 'transform 0.3s ease';
+                mapContainer.style.transform = `rotate(${mapRotationAngle}deg)`;
             }
-            if (tilePane) {
-                tilePane.style.transform = `rotate(${bearing}deg)`;
-                tilePane.style.transformOrigin = '50% 50%';
-            }
-            if (overlayPane) {
-                overlayPane.style.transform = `rotate(${bearing}deg)`;
-                overlayPane.style.transformOrigin = '50% 50%';
-            }
-            // Keep markers upright
-            if (markerPane) {
-                markerPane.style.transform = `rotate(${-bearing}deg)`;
-                markerPane.style.transformOrigin = '50% 50%';
-            }
-            
-            compassBtn.style.background = '#30D158'; // Green when active
         } else {
-            // Reset rotation
-            const mapPane = map.getPane('mapPane');
-            const tilePane = map.getPane('tilePane');
-            const overlayPane = map.getPane('overlayPane');
-            const markerPane = map.getPane('markerPane');
+            // Reset to North up
+            mapRotationAngle = 0;
+            compassBtn.classList.remove('compass-active');
+            console.log('[Compass] Resetting map to North up');
             
-            if (mapPane) mapPane.style.transform = '';
-            if (tilePane) tilePane.style.transform = '';
-            if (overlayPane) overlayPane.style.transform = '';
-            if (markerPane) markerPane.style.transform = '';
-            
-            compassBtn.style.background = ''; // Reset to white
+            mapContainer.style.transition = 'transform 0.3s ease';
+            mapContainer.style.transform = 'rotate(0deg)';
         }
     });
 }
 
-// Update heading and rotate map if rotation is enabled
+// Transform screen coordinates to map coordinates accounting for rotation
+function transformDragDelta(dx, dy) {
+    if (mapRotationAngle === 0) return { dx, dy };
+    
+    // Convert rotation angle to radians (negative because we need inverse transform)
+    const rad = (-mapRotationAngle * Math.PI) / 180;
+    const cos = Math.cos(rad);
+    const sin = Math.sin(rad);
+    
+    // Rotate the delta vector to match the rotated map coordinate system
+    return {
+        dx: dx * cos - dy * sin,
+        dy: dx * sin + dy * cos
+    };
+}
+
+// Override Leaflet's drag handler to account for rotation
+function installRotationDragFix() {
+    if (!map) return;
+    
+    const dragging = map.dragging;
+    if (!dragging || !dragging._draggable) {
+        console.log('[Compass] Drag handler not ready, retrying...');
+        setTimeout(installRotationDragFix, 100);
+        return;
+    }
+    
+    const draggable = dragging._draggable;
+    const originalOnMove = draggable._onMove.bind(draggable);
+    
+    draggable._onMove = function(e) {
+        if (mapRotationAngle !== 0 && this._lastPos) {
+            // Get current position
+            const pos = L.DomEvent.getMousePosition(e, this._element);
+            
+            // Calculate delta from last position
+            const dx = pos.x - this._lastPos.x;
+            const dy = pos.y - this._lastPos.y;
+            
+            // Transform delta to account for rotation
+            const transformed = transformDragDelta(dx, dy);
+            
+            // Create a modified position
+            this._lastPos = pos;
+            
+            // Calculate new offset with transformed delta
+            const newOffset = this._startPos.add(L.point(
+                pos.x - this._startPoint.x,
+                pos.y - this._startPoint.y
+            ));
+            
+            // Apply rotation transform to the offset
+            const offsetDx = newOffset.x - this._startPos.x;
+            const offsetDy = newOffset.y - this._startPos.y;
+            const transformedOffset = transformDragDelta(offsetDx, offsetDy);
+            
+            this._newPos = this._startPos.add(L.point(transformedOffset.dx, transformedOffset.dy));
+            this._moving = true;
+            
+            this._animRequest = L.Util.requestAnimFrame(this._updatePosition, this, true);
+            L.DomEvent.preventDefault(e);
+        } else {
+            originalOnMove(e);
+        }
+    };
+    
+    console.log('[Compass] Rotation drag fix installed');
+}
+
+// Update heading WITHOUT rotating map (map only rotates on compass tap)
 function updateHeadingWithRotation(deg) {
     currentHeading = normalizeBearing(deg);
     hasHeadingFix = true;
@@ -2981,6 +3019,9 @@ function updateHeadingWithRotation(deg) {
     if (smoothedHeading == null) smoothedHeading = currentHeading;
     const delta = smallestAngleDelta(smoothedHeading, currentHeading);
     smoothedHeading = normalizeBearing(smoothedHeading + HEADING_SMOOTH * delta);
+
+    // DO NOT rotate map automatically - only rotate on compass button tap
+    // Map stays fixed at the rotation angle set by compass button
 
     // Rotate the cone inside the user marker
     if (userMarker) {
@@ -2991,28 +3032,6 @@ function updateHeadingWithRotation(deg) {
                 rotor.style.transform = `translate(-50%, -50%) rotate(${smoothedHeading}deg)`;
                 rotor.style.opacity = shouldShowCone() ? '1' : '0';
             }
-        }
-    }
-    
-    // Update map rotation if enabled
-    if (mapRotationEnabled && map) {
-        const bearing = -smoothedHeading;
-        const mapPane = map.getPane('mapPane');
-        const tilePane = map.getPane('tilePane');
-        const overlayPane = map.getPane('overlayPane');
-        const markerPane = map.getPane('markerPane');
-        
-        if (mapPane) {
-            mapPane.style.transform = `rotate(${bearing}deg)`;
-        }
-        if (tilePane) {
-            tilePane.style.transform = `rotate(${bearing}deg)`;
-        }
-        if (overlayPane) {
-            overlayPane.style.transform = `rotate(${bearing}deg)`;
-        }
-        if (markerPane) {
-            markerPane.style.transform = `rotate(${-bearing}deg)`;
         }
     }
 }

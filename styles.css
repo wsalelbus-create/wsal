@@ -103,7 +103,7 @@ html, body {
     top: -15%; /* center vertically with extra coverage */
     left: -10%; /* center horizontally with extra coverage */
     /* Performance optimizations */
-    transform: translate3d(0, 0, 0);
+    transform-origin: center center;
     /* Force GPU acceleration */
     will-change: transform;
     /* Hint browser for optimization */
