@@ -1313,6 +1313,7 @@ function refreshGeolocation() {
 // Start continuous position watch (also yields heading when moving)
 function startGeoWatch() {
     if (geoWatchId != null || !navigator.geolocation) return;
+    let isFirstPosition = true; // Track first GPS fix
     geoWatchId = navigator.geolocation.watchPosition(
         (pos) => {
             userLat = pos.coords.latitude;
@@ -1323,6 +1324,13 @@ function startGeoWatch() {
             // Update marker position without redrawing everything
             if (userMarker) {
                 try { userMarker.setLatLng([userLat, userLon]); } catch (e) {}
+            }
+            // Center map on first GPS fix
+            if (isFirstPosition && map && userLat && userLon) {
+                isFirstPosition = false;
+                console.log('[GPS] First position fix - centering map');
+                map.setView([userLat, userLon], 15, { animate: false });
+                updateMap(); // Ensure marker is drawn
             }
         },
         (err) => {
@@ -2909,10 +2917,12 @@ const compassBtn = document.getElementById('compass-btn');
 
 if (compassBtn) {
     compassBtn.addEventListener('click', () => {
-        // Visual feedback only
+        // Visual feedback only - spin animation
+        compassBtn.style.transition = 'transform 0.3s ease-out';
         compassBtn.style.transform = 'rotate(360deg) scale(1.1)';
         setTimeout(() => {
-            compassBtn.style.transform = '';
+            compassBtn.style.transition = 'transform 0.3s ease-out';
+            compassBtn.style.transform = 'rotate(0deg) scale(1)';
         }, 300);
     });
 }

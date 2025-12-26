@@ -94,20 +94,19 @@ html, body {
 
 #map-container {
     width: 120%; /* Oversized to prevent grey edges during parallax */
-    height: 160%; /* Taller to cover vertical movement */
+    height: 130%; /* Taller to cover vertical movement */
     min-height: 360px;
     /* Leaflet needs explicit height */
     background: #e8e8e8; /* light grey to avoid blue flash during tile loading */
     position: absolute;
     /* Center the oversized map */
-    top: -50%; /* center vertically with extra coverage */
+    top: -15%; /* center vertically with extra coverage */
     left: -10%; /* center horizontally with extra coverage */
     /* Performance optimizations */
     transform: translate3d(0, 0, 0);
     /* Force GPU acceleration */
     will-change: transform;
     /* Hint browser for optimization */
-}
 }
 
 /* Header Floating on Map */
