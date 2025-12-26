@@ -1325,11 +1325,17 @@ function startGeoWatch() {
             if (userMarker) {
                 try { userMarker.setLatLng([userLat, userLon]); } catch (e) {}
             }
-            // Center map on first GPS fix
+            // Center map on first GPS fix - offset to center in visible area (not behind panel)
             if (isFirstPosition && map && userLat && userLon) {
                 isFirstPosition = false;
-                console.log('[GPS] First position fix - centering map');
-                map.setView([userLat, userLon], 15, { animate: false });
+                console.log('[GPS] First position fix - centering map in visible area');
+                // Pan to position with offset so dot appears in center of visible map (30vh from top)
+                const point = map.latLngToContainerPoint([userLat, userLon]);
+                const targetY = window.innerHeight * 0.30; // 30vh from top (center of visible map area)
+                const offsetY = point.y - targetY;
+                const targetPoint = L.point(point.x, point.y - offsetY);
+                const targetLatLng = map.containerPointToLatLng(targetPoint);
+                map.setView(targetLatLng, 15, { animate: false });
                 updateMap(); // Ensure marker is drawn
             }
         },
@@ -2912,22 +2918,61 @@ if (backBtn) {
     });
 }
 
-// Compass Button - Simple visual feedback (rotation disabled - causes pan issues)
+// Compass Button - Rotate map to heading on tap
 const compassBtn = document.getElementById('compass-btn');
+let mapRotationEnabled = false; // Track if map is rotated to heading
 
 if (compassBtn) {
     compassBtn.addEventListener('click', () => {
-        // Visual feedback only - spin animation
-        compassBtn.style.transition = 'transform 0.3s ease-out';
-        compassBtn.style.transform = 'rotate(360deg) scale(1.1)';
-        setTimeout(() => {
-            compassBtn.style.transition = 'transform 0.3s ease-out';
-            compassBtn.style.transform = 'rotate(0deg) scale(1)';
-        }, 300);
+        if (!map) return;
+        
+        mapRotationEnabled = !mapRotationEnabled;
+        
+        if (mapRotationEnabled && hasHeadingFix) {
+            // Rotate map to match current heading
+            const bearing = -currentHeading; // Negative because we rotate map opposite to heading
+            const mapPane = map.getPane('mapPane');
+            const tilePane = map.getPane('tilePane');
+            const overlayPane = map.getPane('overlayPane');
+            const markerPane = map.getPane('markerPane');
+            
+            if (mapPane) {
+                mapPane.style.transform = `rotate(${bearing}deg)`;
+                mapPane.style.transformOrigin = '50% 50%';
+            }
+            if (tilePane) {
+                tilePane.style.transform = `rotate(${bearing}deg)`;
+                tilePane.style.transformOrigin = '50% 50%';
+            }
+            if (overlayPane) {
+                overlayPane.style.transform = `rotate(${bearing}deg)`;
+                overlayPane.style.transformOrigin = '50% 50%';
+            }
+            // Keep markers upright
+            if (markerPane) {
+                markerPane.style.transform = `rotate(${-bearing}deg)`;
+                markerPane.style.transformOrigin = '50% 50%';
+            }
+            
+            compassBtn.style.background = '#30D158'; // Green when active
+        } else {
+            // Reset rotation
+            const mapPane = map.getPane('mapPane');
+            const tilePane = map.getPane('tilePane');
+            const overlayPane = map.getPane('overlayPane');
+            const markerPane = map.getPane('markerPane');
+            
+            if (mapPane) mapPane.style.transform = '';
+            if (tilePane) tilePane.style.transform = '';
+            if (overlayPane) overlayPane.style.transform = '';
+            if (markerPane) markerPane.style.transform = '';
+            
+            compassBtn.style.background = ''; // Reset to white
+        }
     });
 }
 
-// Update heading without map rotation
+// Update heading and rotate map if rotation is enabled
 function updateHeadingWithRotation(deg) {
     currentHeading = normalizeBearing(deg);
     hasHeadingFix = true;
@@ -2946,6 +2991,28 @@ function updateHeadingWithRotation(deg) {
                 rotor.style.transform = `translate(-50%, -50%) rotate(${smoothedHeading}deg)`;
                 rotor.style.opacity = shouldShowCone() ? '1' : '0';
             }
+        }
+    }
+    
+    // Update map rotation if enabled
+    if (mapRotationEnabled && map) {
+        const bearing = -smoothedHeading;
+        const mapPane = map.getPane('mapPane');
+        const tilePane = map.getPane('tilePane');
+        const overlayPane = map.getPane('overlayPane');
+        const markerPane = map.getPane('markerPane');
+        
+        if (mapPane) {
+            mapPane.style.transform = `rotate(${bearing}deg)`;
+        }
+        if (tilePane) {
+            tilePane.style.transform = `rotate(${bearing}deg)`;
+        }
+        if (overlayPane) {
+            overlayPane.style.transform = `rotate(${bearing}deg)`;
+        }
+        if (markerPane) {
+            markerPane.style.transform = `rotate(${-bearing}deg)`;
         }
     }
 }
