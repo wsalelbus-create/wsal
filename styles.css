@@ -93,20 +93,27 @@ html, body {
 }
 
 #map-container {
-    width: 120%; /* Oversized to prevent grey edges during parallax */
-    height: 130%; /* Taller to cover vertical movement */
+    width: 120%; /* 20% wider to provide horizontal buffer */
+    height: 160%; /* 60% taller to provide vertical buffer for parallax */
     min-height: 360px;
     /* Leaflet needs explicit height */
     background: #e8e8e8; /* light grey to avoid blue flash during tile loading */
     position: absolute;
-    /* Center the oversized map */
-    top: -15%; /* center vertically with extra coverage */
-    left: -10%; /* center horizontally with extra coverage */
+    /* Calculation: visible area center is ~30vh, map is 160vh tall
+       To center map at 30vh: top = 30vh - (160vh / 2) = 30vh - 80vh = -50vh = -50% */
+    top: -50%; /* shift up so map center aligns with visible area center (~30vh from viewport top) */
+    left: -10%; /* center the oversized map horizontally - 10% buffer left and right */
     /* Performance optimizations */
-    transform-origin: center center;
+    transform: translate3d(0, 0, 0);
     /* Force GPU acceleration */
     will-change: transform;
     /* Hint browser for optimization */
+}
+
+/* Leaflet map pane rotation support for compass mode */
+#map .leaflet-map-pane {
+    transform-origin: center center;
+    will-change: transform;
 }
 
 /* Header Floating on Map */
