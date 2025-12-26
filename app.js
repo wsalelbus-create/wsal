@@ -2910,9 +2910,9 @@ let compassRotationActive = false;
 
 // Get the Leaflet map pane for rotation (not the container - avoids grey areas)
 function getMapPane() {
-    const mapEl = document.getElementById('map');
-    if (mapEl) {
-        return mapEl.querySelector('.leaflet-map-pane');
+    const mapContainer = document.getElementById('map-container');
+    if (mapContainer) {
+        return mapContainer.querySelector('.leaflet-map-pane');
     }
     return null;
 }
@@ -2922,6 +2922,7 @@ if (compassBtn) {
         compassRotationActive = !compassRotationActive;
         
         const mapPane = getMapPane();
+        console.log('[Compass] Button clicked, active:', compassRotationActive, 'mapPane:', mapPane, 'smoothedHeading:', smoothedHeading);
         
         if (compassRotationActive) {
             // Enable rotation mode
@@ -2943,11 +2944,15 @@ if (compassBtn) {
                 }
             }
             
-            // Apply current heading rotation to map pane
-            if (mapPane && smoothedHeading !== null) {
+            // Apply current heading rotation to map pane (use 0 if no heading yet)
+            if (mapPane) {
+                const heading = smoothedHeading !== null ? smoothedHeading : 0;
                 mapPane.style.transformOrigin = 'center center';
                 mapPane.style.transition = 'transform 0.3s ease';
-                mapPane.style.transform = `rotate(${-smoothedHeading}deg)`;
+                mapPane.style.transform = `rotate(${-heading}deg)`;
+                console.log('[Compass] Applied rotation:', -heading, 'deg');
+            } else {
+                console.warn('[Compass] Map pane not found!');
             }
         } else {
             // Disable rotation mode
@@ -2968,6 +2973,7 @@ if (compassBtn) {
             if (mapPane) {
                 mapPane.style.transition = 'transform 0.3s ease';
                 mapPane.style.transform = 'rotate(0deg)';
+                console.log('[Compass] Reset rotation to 0deg');
             }
         }
     });

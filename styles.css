@@ -111,7 +111,7 @@ html, body {
 }
 
 /* Leaflet map pane rotation support for compass mode */
-#map .leaflet-map-pane {
+#map-container .leaflet-map-pane {
     transform-origin: center center;
     will-change: transform;
 }
