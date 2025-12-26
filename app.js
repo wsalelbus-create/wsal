@@ -2904,38 +2904,33 @@ if (backBtn) {
     });
 }
 
-// Compass Button - Toggle map rotation to follow user heading
+// Compass Button - Rotate map once to match current heading
 const compassBtn = document.getElementById('compass-btn');
-let compassRotationActive = false;
+let mapRotated = false;
 
 if (compassBtn) {
     compassBtn.addEventListener('click', () => {
-        compassRotationActive = !compassRotationActive;
+        mapRotated = !mapRotated;
         
-        if (compassRotationActive) {
-            // Enable rotation mode - map follows user heading
+        const mapContainer = document.getElementById('map-container');
+        if (!mapContainer) return;
+        
+        if (mapRotated) {
+            // Rotate map ONCE to current heading
             compassBtn.classList.add('compass-active');
-            console.log('[Compass] Rotation mode ON - map will follow your heading');
+            console.log('[Compass] Rotating map to current heading:', smoothedHeading);
             
-            // Rotate map to current heading if available
-            if (map && smoothedHeading !== null) {
-                const mapContainer = document.getElementById('map-container');
-                if (mapContainer) {
-                    mapContainer.style.transform = `rotate(${-smoothedHeading}deg)`;
-                    mapContainer.style.transition = 'transform 0.3s ease';
-                }
-            }
-        } else {
-            // Disable rotation mode - reset to North up
-            compassBtn.classList.remove('compass-active');
-            console.log('[Compass] Rotation mode OFF - map reset to North up');
-            
-            // Reset map to North up
-            const mapContainer = document.getElementById('map-container');
-            if (mapContainer) {
-                mapContainer.style.transform = 'rotate(0deg)';
+            if (smoothedHeading !== null) {
+                mapContainer.style.transform = `rotate(${-smoothedHeading}deg)`;
                 mapContainer.style.transition = 'transform 0.3s ease';
             }
+        } else {
+            // Reset to North up
+            compassBtn.classList.remove('compass-active');
+            console.log('[Compass] Resetting map to North up');
+            
+            mapContainer.style.transform = 'rotate(0deg)';
+            mapContainer.style.transition = 'transform 0.3s ease';
         }
         
         // Visual feedback
@@ -2946,7 +2941,7 @@ if (compassBtn) {
     });
 }
 
-// Update map rotation when heading changes (if rotation mode is active)
+// Update heading WITHOUT rotating map (map only rotates on compass tap)
 function updateHeadingWithRotation(deg) {
     currentHeading = normalizeBearing(deg);
     hasHeadingFix = true;
@@ -2956,14 +2951,8 @@ function updateHeadingWithRotation(deg) {
     const delta = smallestAngleDelta(smoothedHeading, currentHeading);
     smoothedHeading = normalizeBearing(smoothedHeading + HEADING_SMOOTH * delta);
 
-    // Rotate map if compass rotation mode is active
-    if (compassRotationActive) {
-        const mapContainer = document.getElementById('map-container');
-        if (mapContainer) {
-            mapContainer.style.transform = `rotate(${-smoothedHeading}deg)`;
-            mapContainer.style.transition = 'none'; // smooth during drag
-        }
-    }
+    // DO NOT rotate map automatically - only rotate on compass button tap
+    // Map stays fixed at the rotation angle set by compass button
 
     // Rotate the cone inside the user marker
     if (userMarker) {
