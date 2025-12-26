@@ -2904,36 +2904,12 @@ if (backBtn) {
     });
 }
 
-// Compass Button - Rotate map once to match current heading
+// Compass Button - Simple visual feedback (rotation disabled - causes pan issues)
 const compassBtn = document.getElementById('compass-btn');
-let mapRotated = false;
 
 if (compassBtn) {
     compassBtn.addEventListener('click', () => {
-        mapRotated = !mapRotated;
-        
-        const mapContainer = document.getElementById('map-container');
-        if (!mapContainer) return;
-        
-        if (mapRotated) {
-            // Rotate map ONCE to current heading
-            compassBtn.classList.add('compass-active');
-            console.log('[Compass] Rotating map to current heading:', smoothedHeading);
-            
-            if (smoothedHeading !== null) {
-                mapContainer.style.transform = `rotate(${-smoothedHeading}deg)`;
-                mapContainer.style.transition = 'transform 0.3s ease';
-            }
-        } else {
-            // Reset to North up
-            compassBtn.classList.remove('compass-active');
-            console.log('[Compass] Resetting map to North up');
-            
-            mapContainer.style.transform = 'rotate(0deg)';
-            mapContainer.style.transition = 'transform 0.3s ease';
-        }
-        
-        // Visual feedback
+        // Visual feedback only
         compassBtn.style.transform = 'rotate(360deg) scale(1.1)';
         setTimeout(() => {
             compassBtn.style.transform = '';
@@ -2941,7 +2917,7 @@ if (compassBtn) {
     });
 }
 
-// Update heading WITHOUT rotating map (map only rotates on compass tap)
+// Update heading without map rotation
 function updateHeadingWithRotation(deg) {
     currentHeading = normalizeBearing(deg);
     hasHeadingFix = true;
@@ -2950,9 +2926,6 @@ function updateHeadingWithRotation(deg) {
     if (smoothedHeading == null) smoothedHeading = currentHeading;
     const delta = smallestAngleDelta(smoothedHeading, currentHeading);
     smoothedHeading = normalizeBearing(smoothedHeading + HEADING_SMOOTH * delta);
-
-    // DO NOT rotate map automatically - only rotate on compass button tap
-    // Map stays fixed at the rotation angle set by compass button
 
     // Rotate the cone inside the user marker
     if (userMarker) {

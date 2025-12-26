@@ -93,22 +93,20 @@ html, body {
 }
 
 #map-container {
-    width: 180%; /* Much larger to cover corners when rotated */
-    height: 180%; /* Much larger to cover corners when rotated */
+    width: 120%; /* Oversized to prevent grey edges during parallax */
+    height: 160%; /* Taller to cover vertical movement */
     min-height: 360px;
     /* Leaflet needs explicit height */
     background: #e8e8e8; /* light grey to avoid blue flash during tile loading */
     position: absolute;
     /* Center the oversized map */
-    top: -40%; /* center vertically */
-    left: -40%; /* center horizontally */
+    top: -50%; /* center vertically with extra coverage */
+    left: -10%; /* center horizontally with extra coverage */
     /* Performance optimizations */
     transform: translate3d(0, 0, 0);
     /* Force GPU acceleration */
     will-change: transform;
     /* Hint browser for optimization */
-    /* Allow rotation for compass mode */
-    transform-origin: center center;
 }
 }
 
