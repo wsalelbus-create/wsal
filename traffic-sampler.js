@@ -274,8 +274,8 @@ class TrafficSampler {
                         const normLat = dlat / distance;
                         const normLon = dlon / distance;
                         
-                        // Search at 100m along the route direction (reduced from 4 searches to 1)
-                        const searchDistances = [0.001];
+                        // Search at 100m, 300m, 500m along the route direction
+                        const searchDistances = [0.001, 0.003, 0.005];
                         
                         for (const searchDist of searchDistances) {
                             const nearbyColor = await this.sampleColorAt(
