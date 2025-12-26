@@ -996,35 +996,34 @@ function calculateArrivals(station) {
         }
         const cyclePosition = minutesSinceStart % route.interval;
 
-        // STEP 2: Get REAL-TIME CAR SPEED from Google Traffic
+        // STEP 2: Predict CAR SPEED based on time of day and route type
+        // Manual prediction optimized for Algiers traffic patterns
         let carSpeed;
-        let usingGoogleTraffic = false;
         
-        // Check if we need to refresh traffic data (every 3 minutes)
-        const now = Date.now();
-        const trafficAge = route.trafficTimestamp ? now - route.trafficTimestamp : Infinity;
-        const TRAFFIC_REFRESH_INTERVAL = 3 * 60 * 1000; // 3 minutes
+        // Get route path once for reuse in multiple steps
+        const routePath = ROUTE_PATHS[route.number];
+        const isMainRoad = routePath && (
+            routePath[0].name.includes('Place Audin') || 
+            routePath[0].name.includes('1er Mai') ||
+            routePath[0].name.includes('El Mouradia')
+        );
         
-        if (window.TrafficSampler && route.trafficSpeed !== undefined && route.trafficSpeed !== null && route.trafficSpeed !== 'loading' && trafficAge < TRAFFIC_REFRESH_INTERVAL) {
-            // Use cached Google traffic speed (still fresh)
-            carSpeed = route.trafficSpeed;
-            usingGoogleTraffic = true;
-        } else if (window.TrafficSampler && (route.trafficSpeed === undefined || trafficAge >= TRAFFIC_REFRESH_INTERVAL)) {
-            // Traffic not loaded yet - show loading
-            return {
-                ...route,
-                status: 'Loading',
-                message: 'Loading'
-            };
-        }
-        
-        // If no traffic data available after loading, skip this route
-        if (!usingGoogleTraffic || !carSpeed) {
-            return {
-                ...route,
-                status: 'NoData',
-                message: 'No traffic data'
-            };
+        // Time-based traffic prediction
+        if (currentHour >= 7 && currentHour < 9) {
+            // Morning rush hour (7:00-9:00)
+            carSpeed = isMainRoad ? 20 : 25; // Heavy traffic on main roads
+        } else if (currentHour >= 16 && currentHour < 19) {
+            // Evening rush hour (16:00-19:00)
+            carSpeed = isMainRoad ? 18 : 23; // Heavier evening traffic
+        } else if (currentHour >= 12 && currentHour < 14) {
+            // Lunch hour (12:00-14:00)
+            carSpeed = isMainRoad ? 28 : 32; // Moderate traffic
+        } else if (currentHour >= 22 || currentHour < 6) {
+            // Night time (22:00-6:00)
+            carSpeed = isMainRoad ? 45 : 40; // Free flow
+        } else {
+            // Normal hours
+            carSpeed = isMainRoad ? 35 : 38; // Light traffic
         }
 
         // STEP 3: Calculate BUS SPEED with traffic-aware reduction
@@ -1062,7 +1061,7 @@ function calculateArrivals(station) {
 
         // STEP 4: Calculate DISTANCE using GPS straight-line × 1.7 (Algiers urban factor)
         // Research shows hilly coastal cities like Algiers have 1.7x road distance vs straight-line
-        const routePath = ROUTE_PATHS[route.number];
+        // Reuse routePath from STEP 2
         let totalDistance = 3.5; // Default fallback: 3.5 km (typical Algiers route)
         
         if (routePath && routePath.length >= 2) {
@@ -2332,32 +2331,7 @@ function setUIMode(mode) {
 
     // Render based on mode
     if (mode === 'bus') {
-        // Pre-fetch traffic for all nearby stations BEFORE rendering
-        if (window.TrafficSampler) {
-            const nearbyStations = nearestStations(
-                map && mapInitialized ? map.getCenter().lat : (userLat || 36.7692),
-                map && mapInitialized ? map.getCenter().lng : (userLon || 3.0549),
-                5
-            );
-            
-            // Pre-fetch traffic for all routes in parallel
-            nearbyStations.forEach(({ station }) => {
-                station.routes.forEach(route => {
-                    if (route.trafficSpeed === undefined) {
-                        route.trafficSpeed = 'loading';
-                        window.TrafficSampler.getTrafficSpeed(station.station, route).then(speed => {
-                            route.trafficSpeed = speed;
-                            route.trafficTimestamp = Date.now();
-                        }).catch(() => {
-                            route.trafficSpeed = null;
-                            route.trafficTimestamp = Date.now();
-                        });
-                    }
-                });
-            });
-        }
-        
-        // Show loading spinner while traffic loads (850ms delay)
+        // Show loading spinner briefly for visual feedback (850ms)
         renderBusStations(true);
     } else {
         if (currentStation) {
@@ -3488,11 +3462,6 @@ try {
         enableCompassBtn.classList.remove('hidden');
     }
 } catch {}
-
-// Initialize weather module (handles its own display updates)
-if (window.WeatherModule) {
-    WeatherModule.init();
-}
 
 // Refresh every minute depending on UI mode
 setInterval(() => {
