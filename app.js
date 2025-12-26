@@ -2935,6 +2935,9 @@ if (compassBtn) {
             compassBtn.classList.add('compass-active');
             console.log('[Compass] Rotation mode ON - map follows heading, dragging disabled');
             
+            // Force portrait mode - disable landscape
+            document.body.classList.add('force-portrait');
+            
             // Disable map dragging and zoom
             if (map) {
                 map.dragging.disable();
@@ -2958,6 +2961,9 @@ if (compassBtn) {
             // Disable rotation mode
             compassBtn.classList.remove('compass-active');
             console.log('[Compass] Rotation mode OFF - normal map controls');
+            
+            // Re-enable landscape mode
+            document.body.classList.remove('force-portrait');
             
             // Re-enable map dragging and zoom
             if (map) {
