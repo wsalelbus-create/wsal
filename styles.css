@@ -346,9 +346,7 @@ body.compass-mode .arrivals-panel.compass-collapsed {
     min-height: 20vh !important;
     max-height: 20vh !important;
     overflow: hidden !important;
-    /* Keep panel visible but empty - just the colored bar */
-    background: rgba(48, 209, 88, 0.95) !important;
-    backdrop-filter: blur(20px) !important;
+    /* Keep original panel color - don't override background */
 }
 
 /* Hide all panel content in compass mode - keep only the panel itself */
