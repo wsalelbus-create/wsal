@@ -2931,14 +2931,20 @@ if (compassBtn) {
         console.log('[Compass] Button clicked, active:', compassRotationActive, 'smoothedHeading:', smoothedHeading);
         
         const mapContainer = document.getElementById('map-container');
+        const arrivalsPanel = document.querySelector('.arrivals-panel');
         
         if (compassRotationActive) {
             // Enable rotation mode
             compassBtn.classList.add('compass-active');
+            document.body.classList.add('compass-mode');
             console.log('[Compass] Rotation mode ON - map follows heading, dragging disabled');
             
-            // Force portrait mode - disable landscape
-            document.body.classList.add('force-portrait');
+            // Collapse panel to 20vh and hide content (like Citymapper)
+            if (arrivalsPanel) {
+                arrivalsPanel.style.height = '20vh';
+                arrivalsPanel.style.minHeight = '20vh';
+                arrivalsPanel.classList.add('compass-collapsed');
+            }
             
             // Disable ALL map interactions
             if (map) {
@@ -2967,10 +2973,15 @@ if (compassBtn) {
         } else {
             // Disable rotation mode
             compassBtn.classList.remove('compass-active');
+            document.body.classList.remove('compass-mode');
             console.log('[Compass] Rotation mode OFF - normal map controls');
             
-            // Re-enable landscape mode
-            document.body.classList.remove('force-portrait');
+            // Restore panel
+            if (arrivalsPanel) {
+                arrivalsPanel.style.height = '';
+                arrivalsPanel.style.minHeight = '';
+                arrivalsPanel.classList.remove('compass-collapsed');
+            }
             
             // Re-enable map dragging and zoom
             if (map) {

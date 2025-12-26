@@ -2,15 +2,67 @@
    LANDSCAPE MODE SUPPORT
    iOS Safari ignores manifest orientation lock
    
-   When body.force-portrait is set (compass mode),
-   ALL landscape styles are disabled - app stays portrait
+   When body.compass-mode is set, show full screen map
    ============================================= */
 
 @media screen and (orientation: landscape) {
-    /* Split screen: 60% map, 40% panel - ONLY when NOT in compass mode */
+    /* COMPASS MODE in landscape - full screen map */
+    body.compass-mode .map-view-container {
+        position: fixed !important;
+        top: 0 !important;
+        left: 0 !important;
+        right: 0 !important;
+        bottom: 0 !important;
+        width: 100vw !important;
+        height: 100vh !important;
+        z-index: 1 !important;
+    }
+    
+    body.compass-mode #map-container {
+        width: 250% !important;
+        height: 250% !important;
+        position: absolute !important;
+        top: calc(50vh - 125%) !important;
+        left: -75% !important;
+        transform-origin: center center !important;
+    }
+    
+    /* Hide panel completely in compass landscape mode */
+    body.compass-mode .arrivals-panel {
+        display: none !important;
+    }
+    
+    /* Keep badges visible in compass mode */
+    body.compass-mode .map-controls-stack {
+        position: fixed !important;
+        bottom: calc(16px + env(safe-area-inset-bottom)) !important;
+        right: 16px !important;
+        z-index: 1000 !important;
+    }
+    
+    body.compass-mode .settings-badge {
+        position: fixed !important;
+        top: calc(16px + env(safe-area-inset-top)) !important;
+        left: 16px !important;
+        z-index: 1000 !important;
+    }
+    
+    body.compass-mode .glass-header {
+        position: fixed !important;
+        top: calc(11px + env(safe-area-inset-top)) !important;
+        right: 16px !important;
+        left: auto !important;
+        z-index: 1000 !important;
+    }
+
+    /* ============================================= */
+    /* NORMAL LANDSCAPE MODE (not compass mode)     */
+    /* ============================================= */
+    
+    /* Split screen: 60% map, 40% panel */
     
     /* Map takes left 60% - FULL HEIGHT */
-    body:not(.force-portrait) .map-view-container {
+    body:not(.compass-mode) .map-view-container {
         position: fixed !important;
         top: 0 !important;
         left: 0 !important;
@@ -20,7 +72,7 @@
         z-index: 1 !important;
     }
     
-    body:not(.force-portrait) #map-container {
+    body:not(.compass-mode) #map-container {
         width: 100% !important;
         height: 100% !important;
         position: absolute !important;
@@ -30,7 +82,7 @@
     }
     
     /* Panel takes right 40% - static, no dragging */
-    body:not(.force-portrait) .arrivals-panel {
+    body:not(.compass-mode) .arrivals-panel {
         position: fixed !important;
         top: 0 !important;
         left: 60vw !important;
@@ -50,12 +102,12 @@
     }
     
     /* Disable sheet grabber in landscape */
-    body:not(.force-portrait) .sheet-grabber {
+    body:not(.compass-mode) .sheet-grabber {
         display: none !important;
     }
     
     /* Header - top left of map */
-    body:not(.force-portrait) .glass-header {
+    body:not(.compass-mode) .glass-header {
         position: fixed !important;
         top: calc(8px + env(safe-area-inset-top)) !important;
         left: 8px !important;
@@ -65,12 +117,12 @@
     }
     
     /* Arabic title smaller in landscape */
-    body:not(.force-portrait) .arabic-title {
+    body:not(.compass-mode) .arabic-title {
         font-size: 1.1rem !important;
     }
     
     /* Settings gear - next to logo */
-    body:not(.force-portrait) .settings-badge {
+    body:not(.compass-mode) .settings-badge {
         position: fixed !important;
         top: calc(8px + env(safe-area-inset-top)) !important;
         left: auto !important;
@@ -78,14 +130,14 @@
     }
     
     /* Back button - top left */
-    body:not(.force-portrait) .back-badge {
+    body:not(.compass-mode) .back-badge {
         position: fixed !important;
         top: calc(8px + env(safe-area-inset-top)) !important;
         left: 8px !important;
     }
     
     /* Map controls - bottom right of map area */
-    body:not(.force-portrait) .map-controls-stack {
+    body:not(.compass-mode) .map-controls-stack {
         position: fixed !important;
         top: auto !important;
         bottom: calc(16px + env(safe-area-inset-bottom)) !important;
@@ -94,7 +146,7 @@
     }
     
     /* Walking time badge - top right of map area */
-    body:not(.force-portrait) #walking-time {
+    body:not(.compass-mode) #walking-time {
         position: fixed !important;
         top: calc(60px + env(safe-area-inset-top)) !important;
         bottom: auto !important;
@@ -103,7 +155,7 @@
     }
     
     /* Calorie badge - below walking time */
-    body:not(.force-portrait) #calorie-badge {
+    body:not(.compass-mode) #calorie-badge {
         position: fixed !important;
         top: calc(110px + env(safe-area-inset-top)) !important;
         bottom: auto !important;
@@ -112,7 +164,7 @@
     }
     
     /* Floating controls - top of panel */
-    body:not(.force-portrait) #floating-controls {
+    body:not(.compass-mode) #floating-controls {
         position: fixed !important;
         top: calc(8px + env(safe-area-inset-top)) !important;
         left: calc(60vw + 16px) !important;
@@ -122,13 +174,13 @@
     }
     
     /* Quick actions - in panel, always visible */
-    body:not(.force-portrait) .quick-actions-panel {
+    body:not(.compass-mode) .quick-actions-panel {
         position: relative !important;
         margin-top: 0 !important;
     }
     
     /* Routes list - scrollable */
-    body:not(.force-portrait) .routes-list {
+    body:not(.compass-mode) .routes-list {
         overflow-y: auto !important;
         max-height: none !important;
         padding-bottom: 40px !important;
@@ -137,38 +189,38 @@
     }
     
     /* Skyline - hide in landscape to save space */
-    body:not(.force-portrait) .skyline-inline {
+    body:not(.compass-mode) .skyline-inline {
         display: none !important;
     }
     
     /* Crosshair - center of map area */
-    body:not(.force-portrait) .map-crosshair {
+    body:not(.compass-mode) .map-crosshair {
         left: 30vw !important;
         top: 50vh !important;
         right: auto !important;
     }
     
     /* Distance circles - adjust for map width */
-    body:not(.force-portrait) .distance-circle-label {
+    body:not(.compass-mode) .distance-circle-label {
         font-size: 9px !important;
     }
     
     /* Station cards - adjust for narrower panel */
-    body:not(.force-portrait) .station-card {
+    body:not(.compass-mode) .station-card {
         padding: 12px !important;
     }
     
-    body:not(.force-portrait) .station-name {
+    body:not(.compass-mode) .station-name {
         font-size: 0.9rem !important;
     }
     
     /* Routes header */
-    body:not(.force-portrait) .routes-header {
+    body:not(.compass-mode) .routes-header {
         padding: 12px 0 !important;
     }
     
     /* Detail overlay - adjust for panel */
-    body:not(.force-portrait) .detail-bus-overlay-panel {
+    body:not(.compass-mode) .detail-bus-overlay-panel {
         left: calc(60vw + 16px) !important;
         right: 16px !important;
         width: auto !important;

@@ -338,6 +338,38 @@ html, body {
     color: white;
 }
 
+/* =========================================
+   COMPASS MODE - Full screen map like Citymapper
+   ========================================= */
+body.compass-mode .arrivals-panel.compass-collapsed {
+    height: 20vh !important;
+    min-height: 20vh !important;
+    max-height: 20vh !important;
+    overflow: hidden !important;
+}
+
+/* Hide all panel content in compass mode */
+body.compass-mode .arrivals-panel.compass-collapsed .floating-controls,
+body.compass-mode .arrivals-panel.compass-collapsed .routes-list,
+body.compass-mode .arrivals-panel.compass-collapsed .quick-actions-panel,
+body.compass-mode .arrivals-panel.compass-collapsed .station-selector-card,
+body.compass-mode .arrivals-panel.compass-collapsed .routes-header,
+body.compass-mode .arrivals-panel.compass-collapsed .skyline-inline,
+body.compass-mode .arrivals-panel.compass-collapsed > *:not(.sheet-grabber) {
+    display: none !important;
+}
+
+/* Keep only the grabber bar visible */
+body.compass-mode .arrivals-panel.compass-collapsed .sheet-grabber {
+    display: block !important;
+}
+
+/* Make panel just a simple bar at bottom */
+body.compass-mode .arrivals-panel.compass-collapsed {
+    background: #30D158 !important;
+    border-radius: 20px 20px 0 0 !important;
+}
+
 .compass-label {
     position: absolute;
     top: 50%;
