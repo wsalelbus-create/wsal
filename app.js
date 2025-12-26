@@ -3050,6 +3050,10 @@ function updateHeadingWithRotation(deg) {
 
     // Rotate map when compass rotation mode is active
     if (compassRotationActive) {
+        // Get screen orientation
+        const orientation = (typeof window.orientation === 'number') ? window.orientation : 0;
+        console.log('[Compass Rotation] smoothedHeading:', smoothedHeading, 'orientation:', orientation);
+        
         rotateMap(-smoothedHeading);
         
         // Keep map centered on user
