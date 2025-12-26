@@ -21,6 +21,7 @@
     <link rel="stylesheet" href="./landscape.css?v=20251223-1">
     <link rel="stylesheet" href="./pwa-mobile.css?v=20251217-1">
     <link rel="stylesheet" href="./station-modal.css?v=20251216-2">
+    <link rel="stylesheet" href="./crowd-sourcing.css?v=20251226-2">
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="./leaflet.css" />
@@ -107,6 +108,92 @@
                 </svg>
                 <span class="compass-label">N</span>
             </button>
+            
+            <!-- Crowd-Sourcing Badge (bottom-right) -->
+            <button class="crowd-badge" id="crowd-badge" title="Help improve bus times">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="margin-right: 4px;">
+                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    <circle cx="9" cy="7" r="4" stroke="currentColor" stroke-width="2"/>
+                    <path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                <span id="crowd-badge-text">Help Others</span>
+            </button>
+        </div>
+        
+        <!-- Crowd-Sourcing Report Panel (slides up) -->
+        <div class="crowd-panel hidden" id="crowd-panel">
+            <div class="crowd-panel-header">
+                <h3>Report Bus Status</h3>
+                <button class="crowd-close-btn" id="crowd-close-btn">×</button>
+            </div>
+            <div class="crowd-panel-content">
+                <p class="crowd-help-text">📍 No account needed. One tap helps others.</p>
+                
+                <!-- Step 1: Station Info (Auto-detected) -->
+                <div class="crowd-step" id="crowd-step-station">
+                    <div class="crowd-step-label">Your Location</div>
+                    <div class="crowd-station-card" id="crowd-station-card">
+                        <div class="crowd-station-icon">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z" fill="currentColor"/>
+                            </svg>
+                        </div>
+                        <div class="crowd-station-details">
+                            <div class="crowd-station-name" id="crowd-station-name">—</div>
+                            <div class="crowd-station-distance" id="crowd-station-distance">—</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Step 2: Select Route -->
+                <div class="crowd-step" id="crowd-step-route">
+                    <div class="crowd-step-label">Which bus route?</div>
+                    <div class="crowd-route-grid" id="crowd-route-grid">
+                        <!-- Routes will be populated here -->
+                    </div>
+                </div>
+                
+                <!-- Step 3: Select Action -->
+                <div class="crowd-step hidden" id="crowd-step-action">
+                    <div class="crowd-step-label">What happened?</div>
+                    <div class="crowd-selected-route" id="crowd-selected-route">
+                        <!-- Selected route will be shown here -->
+                    </div>
+                    <div class="crowd-action-buttons">
+                        <button class="crowd-action-btn" data-type="bus_arrived">
+                            <div class="crowd-action-icon">🚌</div>
+                            <div class="crowd-action-text">
+                                <strong>Bus Arrived</strong>
+                                <span>It's here now</span>
+                            </div>
+                        </button>
+                        <button class="crowd-action-btn" data-type="bus_passed">
+                            <div class="crowd-action-icon">✅</div>
+                            <div class="crowd-action-text">
+                                <strong>Bus Passed</strong>
+                                <span>Just left the stop</span>
+                            </div>
+                        </button>
+                        <button class="crowd-action-btn" data-type="bus_delayed">
+                            <div class="crowd-action-icon">⏰</div>
+                            <div class="crowd-action-text">
+                                <strong>Bus Delayed</strong>
+                                <span>Running late</span>
+                            </div>
+                        </button>
+                        <button class="crowd-action-btn" data-type="no_bus">
+                            <div class="crowd-action-icon">❌</div>
+                            <div class="crowd-action-text">
+                                <strong>No Bus Yet</strong>
+                                <span>Still waiting</span>
+                            </div>
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Feedback Message -->
+                <div class="crowd-feedback hidden" id="crowd-feedback"></div>
+            </div>
         </div>
 
         <!-- Arrivals Panel (Bottom 40%) -->
@@ -293,7 +380,8 @@
     <link rel="stylesheet" href="./gpu-acceleration.css">
     <script src="./leaflet.js?v=20251216-2"></script>
     <script src="./tile-cache.js?v=20251216-2"></script>
-    <script src="./app.js?v=20251225-2"></script>
+    <script src="./crowd-sourcing.js?v=20251226-1"></script>
+    <script src="./app.js?v=20251226-1"></script>
 
     <!-- Service Worker Registration for Tile Caching -->
     <script>

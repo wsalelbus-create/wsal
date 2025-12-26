@@ -1887,6 +1887,57 @@ function updateMap() {
                 });
             });
             busStationsLayer = L.layerGroup(markers).addTo(map);
+        } else if (uiMode === 'crowd') {
+            // CROWD MODE: Show user location + nearest station + 100m radius circle
+            if (userLat && userLon && station) {
+                // Add user location marker (blue dot)
+                L.circleMarker([userLat, userLon], {
+                    radius: 8,
+                    fillColor: '#007AFF',
+                    color: '#ffffff',
+                    weight: 3,
+                    opacity: 1,
+                    fillOpacity: 1,
+                    interactive: false
+                }).addTo(map);
+
+                // Add station marker (pole with badge)
+                const badge = stationBadgeFor(station.name);
+                const poleHtml = `
+                    <svg width="56" height="72" viewBox="0 0 56 72" xmlns="http://www.w3.org/2000/svg" style="pointer-events:none; overflow:visible;">
+                      <g opacity="0.20">
+                        <polygon points="17.167 62.875 18.745 64 37.008 45.34 34.408 45.34" fill="#000000"/>
+                        <rect x="29.623" y="25.656" width="20.21" height="17.019" fill="#000000" stroke="none" transform="matrix(0.933681, 0.358105, -0.682581, 0.809231, 22.0098793875, 2.8023018294999957)" rx="6"/>
+                      </g>
+                      <rect x="16.385" y="22.409" width="2.6" height="42" rx="1.3" fill="#9CA3AF"/>
+                      <rect x="9.185" y="26.409" width="16" height="2" rx="1" fill="#9CA3AF"/>
+                      <rect x="6.185" y="12.409" width="22" height="22" rx="6" fill="${badge.color}" stroke="#ffffff" stroke-width="2"/>
+                      <text x="17.185" y="23.409" text-anchor="middle" font-size="11" font-weight="900" fill="#ffffff" font-family="Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial" dy="0.32em">${badge.abbr}</text>
+                    </svg>`;
+                L.marker([station.lat, station.lon], {
+                    interactive: false,
+                    icon: L.divIcon({
+                        className: 'custom-marker',
+                        html: poleHtml,
+                        iconSize: [56, 72],
+                        iconAnchor: [16.385, 64.409]
+                    }),
+                    zIndexOffset: 1000
+                }).addTo(map);
+
+                // Show 100m radius circle around station
+                showCrowdRadiusCircle(station.lat, station.lon);
+
+                // Fit map to show both user + station
+                const bounds = L.latLngBounds([[userLat, userLon], [station.lat, station.lon]]);
+                const basePaddingTop = 280;
+                const basePaddingBottom = 200;
+                map.fitBounds(bounds, { 
+                    paddingTopLeft: [80, basePaddingTop + 100],
+                    paddingBottomRight: [80, basePaddingBottom + 100],
+                    maxZoom: 17
+                });
+            }
         }
 
         if (uiMode === 'walk' && station) {
@@ -2092,6 +2143,96 @@ function hideDistanceCircles() {
     }
 }
 
+// Show crowd-sourcing radius circle (100m around nearest station)
+let crowdRadiusLayer = null;
+
+function showCrowdRadiusCircle(stationLat, stationLon) {
+    if (!map || !stationLat || !stationLon) return;
+    
+    // Remove existing circle
+    hideCrowdRadiusCircle();
+    
+    console.log('[Crowd] 🔵 Showing 100m radius circle');
+    
+    // Create pulsing circle layer
+    crowdRadiusLayer = L.layerGroup();
+    crowdRadiusLayer.addTo(map);
+    
+    // Main circle (100m radius)
+    const mainCircle = L.circle([stationLat, stationLon], {
+        radius: 100, // 100 meters
+        color: '#007AFF',
+        fillColor: '#007AFF',
+        fillOpacity: 0.15,
+        weight: 2,
+        opacity: 0.6,
+        interactive: false
+    });
+    mainCircle.addTo(crowdRadiusLayer);
+    
+    // Pulsing animation circle
+    const pulseCircle = L.circle([stationLat, stationLon], {
+        radius: 100,
+        color: '#007AFF',
+        fillColor: '#007AFF',
+        fillOpacity: 0.3,
+        weight: 0,
+        opacity: 0,
+        interactive: false,
+        className: 'crowd-pulse-circle'
+    });
+    pulseCircle.addTo(crowdRadiusLayer);
+    
+    // Animate pulse
+    let pulseRadius = 100;
+    let pulseOpacity = 0.3;
+    let growing = true;
+    
+    const animatePulse = () => {
+        if (!crowdRadiusLayer) return; // Stop if layer removed
+        
+        if (growing) {
+            pulseRadius += 2;
+            pulseOpacity -= 0.01;
+            if (pulseRadius >= 150) growing = false;
+        } else {
+            pulseRadius -= 2;
+            pulseOpacity += 0.01;
+            if (pulseRadius <= 100) growing = true;
+        }
+        
+        try {
+            pulseCircle.setRadius(pulseRadius);
+            pulseCircle.setStyle({ fillOpacity: Math.max(0, pulseOpacity) });
+        } catch (e) {}
+        
+        requestAnimationFrame(animatePulse);
+    };
+    
+    animatePulse();
+    
+    // Add label
+    const label = L.marker([stationLat, stationLon], {
+        icon: L.divIcon({
+            className: 'crowd-radius-label',
+            html: '<div style="background: #007AFF; color: white; padding: 4px 8px; border-radius: 12px; font-size: 11px; font-weight: 600; white-space: nowrap; box-shadow: 0 2px 8px rgba(0,0,0,0.2);">Report Zone (100m)</div>',
+            iconSize: [100, 20],
+            iconAnchor: [50, -60]
+        }),
+        interactive: false
+    });
+    label.addTo(crowdRadiusLayer);
+}
+
+function hideCrowdRadiusCircle() {
+    if (crowdRadiusLayer && map) {
+        try {
+            map.removeLayer(crowdRadiusLayer);
+            crowdRadiusLayer = null;
+        } catch (e) {}
+    }
+}
+
 // Fetch a street route from user -> station using OSRM and draw it on the map
 async function renderOsrmRoute(fromLat, fromLon, toLat, toLon) {
     // Sequence guard to avoid stale routes drawing over the current one
@@ -2206,8 +2347,8 @@ async function renderOsrmRoute(fromLat, fromLon, toLat, toLon) {
     }
 }
 
-// --- UI Mode switching (idle | walk | bus) ---
-function setUIMode(mode) {
+// --- UI Mode switching (idle | walk | bus | crowd) ---
+function setUIMode(mode, station) {
     // Track prior mode for Back navigation
     previousMode = uiMode;
     uiMode = mode;
@@ -2215,6 +2356,11 @@ function setUIMode(mode) {
     // Hide distance circles when leaving idle mode
     if (mode !== 'idle') {
         hideDistanceCircles();
+    }
+    
+    // Hide crowd radius circle when leaving crowd mode
+    if (mode !== 'crowd') {
+        hideCrowdRadiusCircle();
     }
     
     // ALWAYS center map on GPS location when switching screens
@@ -2229,6 +2375,9 @@ function setUIMode(mode) {
         } else if (mode === 'bus') {
             console.log('[setUIMode] Bus mode - centering on GPS');
             map.setView([userLat, userLon], 14, { animate: true, duration: 0.3 });
+        } else if (mode === 'crowd') {
+            console.log('[setUIMode] Crowd mode - will fit bounds to user + station');
+            // Map will be fitted in updateMap() to show both user and station
         }
     }
     
@@ -2261,9 +2410,9 @@ function setUIMode(mode) {
         else routesHeaderEl.classList.add('hidden');
     }
 
-    // Hide the station selector bar in bus mode AND on detailed (3rd) screen
+    // Hide the station selector bar in bus mode AND on detailed (3rd) screen AND in crowd mode
     if (floatingControlsEl) {
-        if (mode === 'bus' || (mode === 'walk' && busDetailActive)) floatingControlsEl.classList.add('hidden');
+        if (mode === 'bus' || mode === 'crowd' || (mode === 'walk' && busDetailActive)) floatingControlsEl.classList.add('hidden');
         else floatingControlsEl.classList.remove('hidden');
     }
 
@@ -2286,7 +2435,7 @@ function setUIMode(mode) {
         else routesListEl.classList.add('hidden');
     }
 
-    // Home ad: visible only on home (idle), hidden in bus/walk modes
+    // Home ad: visible only on home (idle), hidden in bus/walk/crowd modes
     const homeAdEl = document.getElementById('home-ad-placeholder');
     if (homeAdEl) {
         if (mode === 'idle') homeAdEl.classList.remove('hidden');
@@ -2323,16 +2472,24 @@ function setUIMode(mode) {
     }
 
     // Choose nearest station when switching modes if we have a location
-    // Do NOT override when in bus-detail drilldown
-    if (!busDetailActive && userLat && userLon) {
+    // Do NOT override when in bus-detail drilldown or crowd mode (station passed as param)
+    if (!busDetailActive && mode !== 'crowd' && userLat && userLon) {
         const nearest = findNearestStation(userLat, userLon);
         if (nearest) currentStation = nearest;
+    }
+    
+    // For crowd mode, use the passed station
+    if (mode === 'crowd' && station) {
+        currentStation = station;
     }
 
     // Render based on mode
     if (mode === 'bus') {
         // Show loading spinner briefly for visual feedback (850ms)
         renderBusStations(true);
+    } else if (mode === 'crowd') {
+        // Crowd mode rendering is handled by renderCrowdSteps()
+        // Don't render normal arrivals
     } else {
         if (currentStation) {
             // Unified arrivals design: always render Bus screen card
@@ -2360,7 +2517,7 @@ function setUIMode(mode) {
     // Update the map for the selected mode
     if (mapInitialized) updateMap();
 
-    // Toggle header badges: settings only on idle; back on walk/bus
+    // Toggle header badges: settings only on idle; back on walk/bus/crowd
     if (settingsBtn) {
         if (mode === 'idle') settingsBtn.classList.remove('hidden');
         else settingsBtn.classList.add('hidden');
@@ -2702,11 +2859,21 @@ if (busMapContainer && busMapWrapper && busMapImage) {
 }
 
 // Back button navigation rules:
+// - If on crowd mode, go back to Home (idle).
 // - If on 3rd screen (walk + busDetailActive), go back to Bus list.
 // - Else if on Bus list, go back to Home (idle).
 // - Else (e.g., Walk screen from quick action), go to previous or Home.
 if (backBtn) {
     backBtn.addEventListener('click', () => {
+        if (uiMode === 'crowd') {
+            // Reset badge to white "Help Others" state
+            if (crowdBadge) {
+                crowdBadge.classList.remove('active');
+                crowdBadgeText.textContent = 'Help Others';
+            }
+            setUIMode('idle');
+            return;
+        }
         if (uiMode === 'walk' && busDetailActive) {
             busDetailActive = false;
             setUIMode('bus');
@@ -3497,3 +3664,331 @@ window.addEventListener('orientationchange', () => {
         }
     }, 300); // Wait for orientation to settle
 });
+
+// ============================================================================
+// CROWD-SOURCING INTEGRATION
+// ============================================================================
+
+// DOM Elements
+const crowdBadge = document.getElementById('crowd-badge');
+const crowdBadgeText = document.getElementById('crowd-badge-text');
+const crowdPanel = document.getElementById('crowd-panel');
+const crowdCloseBtn = document.getElementById('crowd-close-btn');
+const crowdStationName = document.getElementById('crowd-station-name');
+const crowdStationDistance = document.getElementById('crowd-station-distance');
+const crowdRouteGrid = document.getElementById('crowd-route-grid');
+const crowdStepRoute = document.getElementById('crowd-step-route');
+const crowdStepAction = document.getElementById('crowd-step-action');
+const crowdSelectedRoute = document.getElementById('crowd-selected-route');
+const crowdFeedback = document.getElementById('crowd-feedback');
+
+let selectedCrowdRoute = null;
+let nearestCrowdStation = null;
+
+// Badge Click: Collapse panel to 20vh and transform badge
+if (crowdBadge) {
+    crowdBadge.addEventListener('click', () => {
+        const isActive = crowdBadge.classList.contains('active');
+        
+        if (!isActive) {
+            // First click: Collapse panel to 20vh
+            console.log('[Crowd] Badge clicked - collapsing panel to 20vh');
+            
+            const panel = document.querySelector('.arrivals-panel');
+            const circlesHook = vhToPx(20);
+            
+            if (panel && window._setPanelVisibleHeight) {
+                // Elastic bounce animation
+                panel.style.transition = 'transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)';
+                window._setPanelVisibleHeight(circlesHook);
+                
+                // Apply parallax to map
+                const mapInner = document.getElementById('map-container');
+                if (mapInner) {
+                    const currentH = window._getPanelVisibleHeight ? window._getPanelVisibleHeight() : 0;
+                    const maxPx = getPanelMaxPx();
+                    const minPx = vhToPx(PANEL_MIN_VH);
+                    const panelDelta = circlesHook - currentH;
+                    const panelRange = maxPx - minPx;
+                    const progress = panelDelta / panelRange;
+                    
+                    const scaleAmount = 1 + (progress * 0.08);
+                    const translateAmount = -panelDelta * 0.5;
+                    const maxTranslate = 200;
+                    const clampedTranslate = Math.max(-maxTranslate, Math.min(maxTranslate, translateAmount));
+                    
+                    mapInner.style.transition = 'transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)';
+                    mapInner.style.transform = `translateY(${clampedTranslate}px) scale(${scaleAmount})`;
+                }
+            }
+            
+            // Transform badge: White → Green, "Help Others" → "GO"
+            crowdBadge.classList.add('active');
+            crowdBadgeText.textContent = 'GO';
+            
+        } else {
+            // Second click: Open report panel
+            console.log('[Crowd] GO clicked - opening report panel');
+            openCrowdPanel();
+        }
+    });
+}
+
+// Open Crowd Panel
+function openCrowdPanel() {
+    if (!crowdPanel) return;
+    
+    // Find nearest station
+    nearestCrowdStation = userLat && userLon ? findNearestStation(userLat, userLon) : currentStation;
+    if (!nearestCrowdStation) {
+        showCrowdFeedback('📍 Please enable location to report', 'error');
+        return;
+    }
+    
+    // Calculate distance and status
+    let distanceText = '';
+    let distanceStatus = 'unknown';
+    if (userLat && userLon) {
+        const distKm = getDistanceFromLatLonInKm(userLat, userLon, nearestCrowdStation.lat, nearestCrowdStation.lon);
+        const distMeters = Math.round(distKm * 1000);
+        
+        if (distMeters < 50) {
+            distanceText = "📍 You're at this stop";
+            distanceStatus = 'at-stop';
+        } else if (distMeters < 100) {
+            distanceText = `📍 Near this stop (${distMeters}m away)`;
+            distanceStatus = 'near';
+        } else {
+            distanceText = `⚠️ Too far from stop (${distMeters}m away)`;
+            distanceStatus = 'too-far';
+        }
+    } else {
+        distanceText = "📍 Location unavailable";
+        distanceStatus = 'no-location';
+    }
+    
+    console.log('[Crowd] Opening crowd mode screen');
+    
+    // Switch to crowd mode (map + panel like home screen)
+    setUIMode('crowd', nearestCrowdStation);
+    
+    // Render crowd-sourcing steps in arrivals panel
+    renderCrowdSteps(nearestCrowdStation, distanceText, distanceStatus);
+}
+
+// Render crowd-sourcing steps in arrivals panel (like home screen)
+function renderCrowdSteps(station, distanceText, distanceStatus) {
+    const panel = document.querySelector('.arrivals-panel');
+    if (!panel) return;
+    
+    // Clear panel and add crowd content
+    panel.innerHTML = `
+        <div class="crowd-panel-content">
+            <div class="crowd-header">
+                <h2>Report Bus Status</h2>
+                <p class="crowd-help-text">📍 No account needed. One tap helps others.</p>
+            </div>
+            
+            <!-- Step 1: Station Info (Auto-detected) -->
+            <div class="crowd-step" id="crowd-step-station">
+                <div class="crowd-step-label">Your Location</div>
+                <div class="crowd-station-card ${distanceStatus}" id="crowd-station-card">
+                    <div class="crowd-station-icon">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z" fill="currentColor"/>
+                        </svg>
+                    </div>
+                    <div class="crowd-station-details">
+                        <div class="crowd-station-name">${station.name}</div>
+                        <div class="crowd-station-distance">${distanceText}</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Step 2: Select Route -->
+            <div class="crowd-step" id="crowd-step-route">
+                <div class="crowd-step-label">Which bus route?</div>
+                <div class="crowd-route-grid" id="crowd-route-grid">
+                    ${station.routes.map(route => `
+                        <button class="crowd-route-btn" data-route="${route.number}" ${distanceStatus === 'too-far' || distanceStatus === 'no-location' ? 'disabled' : ''}>
+                            <div class="crowd-route-number">${route.number}</div>
+                            <div class="crowd-route-dest">${route.destination}</div>
+                        </button>
+                    `).join('')}
+                </div>
+            </div>
+            
+            <!-- Step 3: Select Action (hidden initially) -->
+            <div class="crowd-step hidden" id="crowd-step-action">
+                <div class="crowd-step-label">What happened?</div>
+                <div class="crowd-selected-route" id="crowd-selected-route">
+                    <!-- Selected route will be shown here -->
+                </div>
+                <div class="crowd-action-buttons">
+                    <button class="crowd-action-btn" data-type="bus_arrived">
+                        <div class="crowd-action-icon">🚌</div>
+                        <div class="crowd-action-text">
+                            <strong>Bus Arrived</strong>
+                            <span>It's here now</span>
+                        </div>
+                    </button>
+                    <button class="crowd-action-btn" data-type="bus_passed">
+                        <div class="crowd-action-icon">✅</div>
+                        <div class="crowd-action-text">
+                            <strong>Bus Passed</strong>
+                            <span>Just left the stop</span>
+                        </div>
+                    </button>
+                    <button class="crowd-action-btn" data-type="bus_delayed">
+                        <div class="crowd-action-icon">⏰</div>
+                        <div class="crowd-action-text">
+                            <strong>Bus Delayed</strong>
+                            <span>Running late</span>
+                        </div>
+                    </button>
+                    <button class="crowd-action-btn" data-type="no_bus">
+                        <div class="crowd-action-icon">❌</div>
+                        <div class="crowd-action-text">
+                            <strong>No Bus Yet</strong>
+                            <span>Still waiting</span>
+                        </div>
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Feedback Message -->
+            <div class="crowd-feedback hidden" id="crowd-feedback"></div>
+        </div>
+    `;
+    
+    // Attach event listeners
+    attachCrowdEventListeners(station);
+}
+
+// Attach event listeners for crowd-sourcing UI
+function attachCrowdEventListeners(station) {
+    // Route selection
+    const routeButtons = document.querySelectorAll('.crowd-route-btn');
+    routeButtons.forEach(btn => {
+        btn.addEventListener('click', () => {
+            if (btn.disabled) return;
+            
+            // Deselect all
+            routeButtons.forEach(b => b.classList.remove('selected'));
+            // Select this one
+            btn.classList.add('selected');
+            
+            const routeNumber = btn.dataset.route;
+            selectedCrowdRoute = station.routes.find(r => r.number === routeNumber);
+            
+            // Show Step 3 (action selection)
+            const stepAction = document.getElementById('crowd-step-action');
+            const selectedRouteEl = document.getElementById('crowd-selected-route');
+            
+            if (stepAction && selectedRouteEl) {
+                selectedRouteEl.innerHTML = `
+                    <div class="crowd-selected-route-info">
+                        <div class="crowd-selected-route-number">${selectedCrowdRoute.number}</div>
+                        <div class="crowd-selected-route-dest">${selectedCrowdRoute.destination}</div>
+                    </div>
+                    <button class="crowd-change-btn" id="crowd-change-route">Change</button>
+                `;
+                
+                stepAction.classList.remove('hidden');
+                
+                // Scroll to action buttons
+                stepAction.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                
+                // Change route button
+                const changeBtn = document.getElementById('crowd-change-route');
+                if (changeBtn) {
+                    changeBtn.addEventListener('click', () => {
+                        stepAction.classList.add('hidden');
+                        routeButtons.forEach(b => b.classList.remove('selected'));
+                        selectedCrowdRoute = null;
+                    });
+                }
+            }
+        });
+    });
+    
+    // Action buttons
+    const actionButtons = document.querySelectorAll('.crowd-action-btn');
+    actionButtons.forEach(btn => {
+        btn.addEventListener('click', () => {
+            if (!selectedCrowdRoute) return;
+            
+            const reportType = btn.dataset.type;
+            submitCrowdReport(station, selectedCrowdRoute, reportType);
+        });
+    });
+}
+
+// Submit crowd report
+function submitCrowdReport(station, route, type) {
+    if (!window.CrowdSourcing) {
+        showCrowdFeedback('❌ Crowd-sourcing system not available', 'error');
+        return;
+    }
+    
+    const reportData = {
+        stationId: station.name,
+        stationLat: station.lat,
+        stationLon: station.lon,
+        routeNumber: route.number,
+        type: type,
+        userLat: userLat,
+        userLon: userLon
+    };
+    
+    const result = window.CrowdSourcing.submitReport(reportData);
+    
+    if (result.success) {
+        showCrowdFeedback('✅ Thank you! Your report helps others.', 'success');
+        
+        // Reset badge to white "Help Others" state
+        if (crowdBadge) {
+            crowdBadge.classList.remove('active');
+            crowdBadgeText.textContent = 'Help Others';
+        }
+        
+        // Return to home screen after 2 seconds
+        setTimeout(() => {
+            setUIMode('idle');
+        }, 2000);
+    } else {
+        const errorMessages = {
+            'too_far': '⚠️ You must be within 100m of the stop',
+            'outside_service_hours': '⚠️ Reports only during service hours (6 AM - 5 AM)',
+            'rate_limited': '⏰ Please wait before reporting again',
+            'not_ready': '⏳ System initializing, please try again',
+            'duplicate_fingerprint': '🚨 Suspicious activity detected',
+            'suspicious_ip': '🚨 Too many reports from your network',
+            'too_many_reports': '🚨 Please slow down'
+        };
+        
+        const errorMsg = result.errors.map(e => errorMessages[e] || e).join(', ');
+        showCrowdFeedback(errorMsg, 'error');
+    }
+}
+
+// Show feedback message
+function showCrowdFeedback(message, type) {
+    const feedback = document.getElementById('crowd-feedback');
+    if (!feedback) return;
+    
+    feedback.textContent = message;
+    feedback.className = `crowd-feedback ${type}`;
+    feedback.classList.remove('hidden');
+    
+    // Auto-hide after 5 seconds
+    setTimeout(() => {
+        feedback.classList.add('hidden');
+    }, 5000);
+}
+
+// Log crowd-sourcing stats on startup
+if (window.CrowdSourcing) {
+    console.log('[Crowd] 📊 Crowd-Sourcing Module Loaded');
+    console.log('[Crowd] Stats:', window.CrowdSourcing.getStats());
+}
