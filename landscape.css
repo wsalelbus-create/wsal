@@ -8,14 +8,19 @@
     body.force-portrait .map-view-container,
     body.force-portrait #map-container,
     body.force-portrait .arrivals-panel {
-        /* Reset to portrait mode styles */
-        position: relative !important;
-        width: auto !important;
-        height: auto !important;
-        top: auto !important;
-        left: auto !important;
-        right: auto !important;
-        bottom: auto !important;
+        /* Keep portrait mode styles - don't override anything */
+        all: revert !important;
+    }
+    
+    /* Only apply landscape layout when NOT in compass mode */
+    body:not(.force-portrait) #map-container {
+        /* Override the 250% sizing only in landscape when compass is OFF */
+        width: 100% !important;
+        height: 100% !important;
+        position: absolute !important;
+        top: 0 !important;
+        left: 0 !important;
+        transform: translate3d(0, 0, 0) !important;
     }
     
     /* Split screen: 60% map, 40% panel */

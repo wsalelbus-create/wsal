@@ -2930,6 +2930,8 @@ if (compassBtn) {
         
         console.log('[Compass] Button clicked, active:', compassRotationActive, 'smoothedHeading:', smoothedHeading);
         
+        const mapContainer = document.getElementById('map-container');
+        
         if (compassRotationActive) {
             // Enable rotation mode
             compassBtn.classList.add('compass-active');
@@ -2938,7 +2940,7 @@ if (compassBtn) {
             // Force portrait mode - disable landscape
             document.body.classList.add('force-portrait');
             
-            // Disable map dragging and zoom
+            // Disable ALL map interactions
             if (map) {
                 map.dragging.disable();
                 map.touchZoom.disable();
@@ -2946,6 +2948,11 @@ if (compassBtn) {
                 map.scrollWheelZoom.disable();
                 map.boxZoom.disable();
                 map.keyboard.disable();
+                
+                // Disable pointer events on map to prevent any interaction
+                if (mapContainer) {
+                    mapContainer.style.pointerEvents = 'none';
+                }
                 
                 // Center on user location
                 if (userLat && userLon) {
@@ -2973,6 +2980,11 @@ if (compassBtn) {
                 map.scrollWheelZoom.enable();
                 map.boxZoom.enable();
                 map.keyboard.enable();
+                
+                // Re-enable pointer events
+                if (mapContainer) {
+                    mapContainer.style.pointerEvents = '';
+                }
             }
             
             // Reset map rotation to North up
