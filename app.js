@@ -2901,6 +2901,7 @@ if (backBtn) {
             // Reset badge to white "Help Others" state
             if (crowdBadge) {
                 crowdBadge.classList.remove('active');
+                crowdBadge.classList.remove('panel-collapsed');
                 crowdBadgeText.textContent = 'Help Others';
             }
             setUIMode('idle');
@@ -3756,6 +3757,7 @@ if (crowdBadge) {
             
             // Transform badge: White → Green, "Help Others" → "GO"
             crowdBadge.classList.add('active');
+            crowdBadge.classList.add('panel-collapsed');
             crowdBadgeText.textContent = 'GO';
             
         } else {

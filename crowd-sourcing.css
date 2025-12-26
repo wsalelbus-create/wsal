@@ -2,7 +2,7 @@
 
 /* Crowd-Sourcing Badge (bottom-right of map) */
 .crowd-badge {
-    position: absolute;
+    position: fixed;
     bottom: 20px;
     right: 20px;
     background: white;
@@ -17,8 +17,13 @@
     box-shadow: 0 2px 12px rgba(0, 0, 0, 0.15);
     cursor: pointer;
     transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-    z-index: 900;
+    z-index: 800;
     font-family: 'Outfit', sans-serif;
+}
+
+/* When panel collapses, move GO button above white bar */
+.crowd-badge.panel-collapsed {
+    bottom: calc(20vh + 5px);
 }
 
 .crowd-badge:hover {
@@ -42,70 +47,73 @@
 
 /* Crowd-Sourcing Panel Content (rendered in arrivals panel) */
 .crowd-panel-content {
-    padding: 20px;
+    padding: 24px 20px;
+    min-height: 100vh;
 }
 
 .crowd-header {
-    margin-bottom: 20px;
+    margin-bottom: 24px;
+    text-align: center;
 }
 
 .crowd-header h2 {
-    margin: 0 0 8px;
-    font-size: 24px;
+    margin: 0 0 12px;
+    font-size: 28px;
     font-weight: 700;
-    color: #333;
+    color: white;
 }
 
 .crowd-help-text {
     margin: 0;
-    font-size: 14px;
-    color: #666;
-    text-align: center;
+    font-size: 15px;
+    color: rgba(255, 255, 255, 0.8);
+    line-height: 1.5;
 }
 
 /* Step Container */
 .crowd-step {
-    margin-bottom: 24px;
+    margin-bottom: 28px;
 }
 
 .crowd-step-label {
-    font-size: 13px;
-    font-weight: 600;
-    color: #666;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    margin-bottom: 12px;
+    font-size: 14px;
+    font-weight: 700;
+    color: white;
+    text-transform: none;
+    letter-spacing: 0;
+    margin-bottom: 16px;
 }
 
 /* Station Card (Step 1) */
 .crowd-station-card {
-    background: #F2F2F7;
-    border-radius: 12px;
-    padding: 16px;
+    background: white;
+    border-radius: 16px;
+    padding: 20px;
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 16px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
 .crowd-station-card.at-stop {
-    background: #D1F2EB;
+    background: white;
     border: 2px solid #34C759;
 }
 
 .crowd-station-card.near {
-    background: #FFF3E0;
+    background: white;
     border: 2px solid #FF9500;
 }
 
 .crowd-station-card.too-far {
-    background: #FFEBEE;
+    background: white;
     border: 2px solid #FF3B30;
-    opacity: 0.6;
+    opacity: 0.7;
 }
 
 .crowd-station-icon {
-    width: 40px;
-    height: 40px;
+    width: 48px;
+    height: 48px;
     background: #007AFF;
     border-radius: 50%;
     display: flex;
@@ -132,36 +140,38 @@
 }
 
 .crowd-station-name {
-    font-size: 16px;
+    font-size: 18px;
     font-weight: 700;
-    color: #333;
-    margin-bottom: 4px;
+    color: #1a1a1a;
+    margin-bottom: 6px;
 }
 
 .crowd-station-distance {
-    font-size: 13px;
+    font-size: 15px;
     color: #666;
+    font-weight: 500;
 }
 
 /* Route Grid (Step 2) */
 .crowd-route-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(70px, 1fr));
-    gap: 10px;
+    grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+    gap: 12px;
 }
 
 .crowd-route-btn {
     background: white;
-    border: 2px solid #E5E5EA;
-    border-radius: 12px;
-    padding: 16px 12px;
+    border: none;
+    border-radius: 16px;
+    padding: 20px 12px;
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 6px;
+    gap: 8px;
     cursor: pointer;
     transition: all 0.2s;
     font-family: 'Outfit', sans-serif;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
 .crowd-route-btn:disabled {
@@ -170,20 +180,24 @@
 }
 
 .crowd-route-btn:not(:disabled):hover {
-    border-color: #007AFF;
-    background: #F0F8FF;
     transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.crowd-route-btn:not(:disabled):active {
+    transform: translateY(0);
 }
 
 .crowd-route-btn.selected {
     background: #007AFF;
-    border-color: #007AFF;
     color: white;
+    box-shadow: 0 4px 16px rgba(0, 122, 255, 0.3);
 }
 
 .crowd-route-number {
-    font-size: 20px;
+    font-size: 24px;
     font-weight: 700;
+    color: #1a1a1a;
 }
 
 .crowd-route-btn.selected .crowd-route-number {
@@ -191,14 +205,15 @@
 }
 
 .crowd-route-dest {
-    font-size: 11px;
+    font-size: 12px;
     text-align: center;
     color: #666;
-    line-height: 1.2;
+    line-height: 1.3;
+    font-weight: 500;
 }
 
 .crowd-route-btn.selected .crowd-route-dest {
-    color: rgba(255, 255, 255, 0.9);
+    color: rgba(255, 255, 255, 0.95);
 }
 
 /* Selected Route Display (Step 3) */
@@ -244,27 +259,28 @@
 .crowd-action-buttons {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 12px;
+    gap: 16px;
 }
 
 .crowd-action-btn {
     background: white;
-    border: 2px solid #E5E5EA;
-    border-radius: 12px;
-    padding: 16px 12px;
+    border: none;
+    border-radius: 16px;
+    padding: 20px 16px;
     display: flex;
+    flex-direction: column;
     align-items: center;
     gap: 12px;
     cursor: pointer;
     transition: all 0.2s;
     font-family: 'Outfit', sans-serif;
-    text-align: left;
+    text-align: center;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
 .crowd-action-btn:hover {
-    border-color: #007AFF;
-    background: #F0F8FF;
     transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
 .crowd-action-btn:active {
@@ -272,7 +288,7 @@
 }
 
 .crowd-action-icon {
-    font-size: 32px;
+    font-size: 40px;
     flex-shrink: 0;
 }
 
@@ -282,16 +298,17 @@
 
 .crowd-action-text strong {
     display: block;
-    font-size: 14px;
+    font-size: 16px;
     font-weight: 700;
-    color: #333;
-    margin-bottom: 2px;
+    color: #1a1a1a;
+    margin-bottom: 4px;
 }
 
 .crowd-action-text span {
     display: block;
-    font-size: 12px;
+    font-size: 13px;
     color: #666;
+    line-height: 1.3;
 }
 
 /* Feedback Message */
@@ -357,14 +374,14 @@
 .crowd-mode-buttons {
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: 16px;
 }
 
 .crowd-mode-btn {
     background: white;
-    border: 2px solid #E5E5EA;
-    border-radius: 12px;
-    padding: 16px;
+    border: none;
+    border-radius: 16px;
+    padding: 20px;
     display: flex;
     align-items: center;
     gap: 16px;
@@ -372,16 +389,20 @@
     transition: all 0.2s;
     font-family: 'Outfit', sans-serif;
     text-align: left;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
 .crowd-mode-btn:hover {
-    border-color: #007AFF;
-    background: #F0F8FF;
     transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.crowd-mode-btn:active {
+    transform: translateY(0);
 }
 
 .crowd-mode-icon {
-    font-size: 32px;
+    font-size: 40px;
     flex-shrink: 0;
 }
 
@@ -391,16 +412,17 @@
 
 .crowd-mode-text strong {
     display: block;
-    font-size: 16px;
+    font-size: 18px;
     font-weight: 700;
-    color: #333;
+    color: #1a1a1a;
     margin-bottom: 4px;
 }
 
 .crowd-mode-text span {
     display: block;
-    font-size: 13px;
+    font-size: 14px;
     color: #666;
+    line-height: 1.4;
 }
 
 /* GPS Tracking Screen */
