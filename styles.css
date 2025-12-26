@@ -108,6 +108,8 @@ html, body {
     /* Force GPU acceleration */
     will-change: transform;
     /* Hint browser for optimization */
+    /* Allow rotation for compass mode */
+    transform-origin: center center;
 }
 
 /* Header Floating on Map */

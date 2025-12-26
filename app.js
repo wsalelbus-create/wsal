@@ -2919,7 +2919,11 @@ if (compassBtn) {
             
             // Rotate map to current heading if available
             if (map && smoothedHeading !== null) {
-                map.setBearing(-smoothedHeading); // negative because Leaflet rotates clockwise
+                const mapContainer = document.getElementById('map-container');
+                if (mapContainer) {
+                    mapContainer.style.transform = `rotate(${-smoothedHeading}deg)`;
+                    mapContainer.style.transition = 'transform 0.3s ease';
+                }
             }
         } else {
             // Disable rotation mode - reset to North up
@@ -2927,8 +2931,10 @@ if (compassBtn) {
             console.log('[Compass] Rotation mode OFF - map reset to North up');
             
             // Reset map to North up
-            if (map) {
-                map.setBearing(0);
+            const mapContainer = document.getElementById('map-container');
+            if (mapContainer) {
+                mapContainer.style.transform = 'rotate(0deg)';
+                mapContainer.style.transition = 'transform 0.3s ease';
             }
         }
         
@@ -2951,11 +2957,11 @@ function updateHeadingWithRotation(deg) {
     smoothedHeading = normalizeBearing(smoothedHeading + HEADING_SMOOTH * delta);
 
     // Rotate map if compass rotation mode is active
-    if (compassRotationActive && map) {
-        try {
-            map.setBearing(-smoothedHeading); // negative because Leaflet rotates clockwise
-        } catch (e) {
-            console.warn('[Compass] Map rotation not supported:', e);
+    if (compassRotationActive) {
+        const mapContainer = document.getElementById('map-container');
+        if (mapContainer) {
+            mapContainer.style.transform = `rotate(${-smoothedHeading}deg)`;
+            mapContainer.style.transition = 'none'; // smooth during drag
         }
     }
 
