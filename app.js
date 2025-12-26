@@ -2910,29 +2910,18 @@ let compassRotationActive = false;
 
 // Get the Leaflet map pane for rotation (not the container - avoids grey areas)
 function getMapPane() {
-    const mapContainer = document.getElementById('map-container');
-    if (mapContainer) {
-        // Get the main container that holds all map layers
-        const mapPane = mapContainer.querySelector('.leaflet-map-pane');
-        if (mapPane) {
-            return mapPane;
-        }
-    }
-    return null;
+    return document.getElementById('map-container');
 }
 
-// Apply rotation to map - rotates tile pane and overlay pane
+// Apply rotation to map container
 function rotateMap(degrees) {
     const mapContainer = document.getElementById('map-container');
     if (!mapContainer) return;
     
-    // Find all panes that need rotation
-    const tilePanes = mapContainer.querySelectorAll('.leaflet-tile-pane, .leaflet-overlay-pane, .leaflet-shadow-pane, .leaflet-marker-pane');
-    
-    tilePanes.forEach(pane => {
-        pane.style.transformOrigin = '50% 50%';
-        pane.style.transform = `rotate(${degrees}deg)`;
-    });
+    // Rotate the entire map container
+    // The container is already oversized (120% x 160%) to handle some rotation
+    // For full 360 rotation, we need it even bigger
+    mapContainer.style.transform = `translate3d(0, 0, 0) rotate(${degrees}deg)`;
 }
 
 if (compassBtn) {

@@ -93,32 +93,23 @@ html, body {
 }
 
 #map-container {
-    width: 120%; /* 20% wider to provide horizontal buffer */
-    height: 160%; /* 60% taller to provide vertical buffer for parallax */
+    /* Make container large enough to cover viewport at any rotation angle */
+    /* For 45deg rotation, diagonal = sqrt(2) * side ≈ 1.42x, so 150% should cover it */
+    width: 200%;
+    height: 200%;
     min-height: 360px;
-    /* Leaflet needs explicit height */
-    background: #e8e8e8; /* light grey to avoid blue flash during tile loading */
+    background: #e8e8e8;
     position: absolute;
-    /* Calculation: visible area center is ~30vh, map is 160vh tall
-       To center map at 30vh: top = 30vh - (160vh / 2) = 30vh - 80vh = -50vh = -50% */
-    top: -50%; /* shift up so map center aligns with visible area center (~30vh from viewport top) */
-    left: -10%; /* center the oversized map horizontally - 10% buffer left and right */
+    /* Center the oversized container */
+    top: -50%;
+    left: -50%;
     /* Performance optimizations */
     transform: translate3d(0, 0, 0);
-    /* Force GPU acceleration */
+    transform-origin: center center;
     will-change: transform;
-    /* Hint browser for optimization */
 }
 
-/* Leaflet panes rotation support for compass mode */
-#map-container .leaflet-tile-pane,
-#map-container .leaflet-overlay-pane,
-#map-container .leaflet-shadow-pane,
-#map-container .leaflet-marker-pane {
-    transform-origin: 50% 50%;
-    will-change: transform;
-    transition: transform 0.1s linear;
-}
+/* Remove individual pane rotation - we rotate the whole container */
 
 /* Header Floating on Map */
 .glass-header {
