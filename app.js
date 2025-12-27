@@ -3061,23 +3061,25 @@ function updateHeadingWithRotation(deg) {
     const delta = smallestAngleDelta(smoothedHeading, currentHeading);
     smoothedHeading = normalizeBearing(smoothedHeading + HEADING_SMOOTH * delta);
 
-    // Get screen orientation for both map and cone rotation
-    const orientation = (typeof window.orientation === 'number') ? window.orientation : 0;
-    
-    // Calculate rotation adjustment for screen orientation
-    let orientationAdjustment = 0;
-    if (orientation === 90) {
-        orientationAdjustment = -90; // Landscape right
-    } else if (orientation === -90) {
-        orientationAdjustment = 90; // Landscape left
-    }
-
     // Rotate map when compass rotation mode is active
     if (compassRotationActive) {
-        // Apply heading rotation + orientation adjustment
-        const mapRotation = -smoothedHeading + orientationAdjustment;
+        // Get screen orientation - need to compensate for screen rotation
+        const orientation = (typeof window.orientation === 'number') ? window.orientation : 0;
         
-        console.log('[Compass Rotation] smoothedHeading:', smoothedHeading, 'orientation:', orientation, 'adjustment:', orientationAdjustment, 'mapRotation:', mapRotation);
+        // Calculate map rotation with orientation adjustment
+        let mapRotation = -smoothedHeading;
+        
+        // Adjust for screen orientation:
+        // orientation = 0: portrait (no adjustment)
+        // orientation = 90: landscape right (rotate map additional -90)
+        // orientation = -90: landscape left (rotate map additional 90)
+        if (orientation === 90) {
+            mapRotation -= 90; // Landscape right
+        } else if (orientation === -90) {
+            mapRotation += 90; // Landscape left
+        }
+        
+        console.log('[Compass Rotation] smoothedHeading:', smoothedHeading, 'orientation:', orientation, 'mapRotation:', mapRotation);
         
         rotateMap(mapRotation);
         
@@ -3090,15 +3092,13 @@ function updateHeadingWithRotation(deg) {
         }
     }
 
-    // Rotate the cone inside the user marker (also needs orientation adjustment)
+    // Rotate the cone inside the user marker (no orientation adjustment - cone rotation is already correct)
     if (userMarker) {
         const el = userMarker.getElement();
         if (el) {
             const rotor = el.querySelector('.user-heading-rotor');
             if (rotor) {
-                // Apply same adjustment to cone as map
-                const coneRotation = smoothedHeading - orientationAdjustment;
-                rotor.style.transform = `translate(-50%, -50%) rotate(${coneRotation}deg)`;
+                rotor.style.transform = `translate(-50%, -50%) rotate(${smoothedHeading}deg)`;
                 rotor.style.opacity = shouldShowCone() ? '1' : '0';
             }
         }
