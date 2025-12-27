@@ -88,16 +88,15 @@ html, body {
 }
 
 #map-container {
-    /* Oversized to accommodate parallax transform AND prevent grey gaps on zoom out */
-    /* Need extra buffer for: parallax scale (1.08), translate (200px), and zoom out */
-    width: 200%;
-    height: 200%;
+    /* Moderate oversizing for parallax without performance hit */
+    width: 130%;
+    height: 130%;
     min-height: 360px;
     background: #e8e8e8;
     position: absolute;
     /* Center the oversized container */
-    top: -50%;
-    left: -50%;
+    top: -15%;
+    left: -15%;
     /* Performance optimizations */
     transform: translate3d(0, 0, 0);
     transform-origin: center center;
