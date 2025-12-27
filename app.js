@@ -1609,9 +1609,9 @@ function initMap() {
         attribution: '&copy; OpenStreetMap contributors &copy; CARTO',
         maxZoom: 19,
         subdomains: 'abcd',
-        keepBuffer: 8, // keep 8 tile rows/cols in buffer (default is 2) - prevents grey during parallax
-        updateWhenIdle: false, // update tiles during pan/zoom for smoother experience
-        updateWhenZooming: true
+        keepBuffer: 2, // default buffer size for better performance
+        updateWhenIdle: true, // only update tiles when idle for smoother zooming
+        updateWhenZooming: false // don't update during zoom animation
     });
     // Fallback to OSM base if Carto tiles fail to load
     try {
@@ -1635,9 +1635,9 @@ function initMap() {
         subdomains: 'abcd',
         pane: 'labels',
         opacity: 0.95,
-        keepBuffer: 8, // keep 8 tile rows/cols in buffer - prevents grey during parallax
-        updateWhenIdle: false,
-        updateWhenZooming: true
+        keepBuffer: 2, // default buffer size for better performance
+        updateWhenIdle: true,
+        updateWhenZooming: false
     });
 
     // Use clean basemap by default in all modes
@@ -1647,14 +1647,9 @@ function initMap() {
     mapInitialized = true;
     updateMap();
 
-    // Invalidate size to ensure map renders at the oversized dimensions (130% height)
-    // This forces Leaflet to load more tiles to fill the larger area
+    // Invalidate size to ensure map renders correctly
     setTimeout(() => {
         map.invalidateSize();
-        // Force immediate tile load by panning slightly and back
-        const center = map.getCenter();
-        map.panBy([1, 1], {animate: false});
-        map.panBy([-1, -1], {animate: false});
     }, 200);
     
     // Auto-reorder stations when map is moved in bus mode
