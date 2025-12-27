@@ -1584,7 +1584,7 @@ function initMap() {
         markerZoomAnimation: true,
         zoomSnap: 0.5, // Smoother zoom
         zoomDelta: 0.5
-    }).setView([36.7700, 3.0553], 14); // Slightly closer zoom
+    }).setView([36.7700, 3.0553], 14);
 
     // Pane for labels overlay (above routes but does not block interactions)
     try {
@@ -1609,9 +1609,9 @@ function initMap() {
         attribution: '&copy; OpenStreetMap contributors &copy; CARTO',
         maxZoom: 19,
         subdomains: 'abcd',
-        keepBuffer: 2, // default buffer size for better performance
-        updateWhenIdle: true, // only update tiles when idle for smoother zooming
-        updateWhenZooming: false // don't update during zoom animation
+        keepBuffer: 4, // extra buffer to prevent grey gaps during pan/zoom
+        updateWhenIdle: false, // update tiles during movement
+        updateWhenZooming: true // load tiles during zoom for smoother experience
     });
     // Fallback to OSM base if Carto tiles fail to load
     try {
@@ -1635,9 +1635,9 @@ function initMap() {
         subdomains: 'abcd',
         pane: 'labels',
         opacity: 0.95,
-        keepBuffer: 2, // default buffer size for better performance
-        updateWhenIdle: true,
-        updateWhenZooming: false
+        keepBuffer: 4, // extra buffer to prevent grey gaps
+        updateWhenIdle: false,
+        updateWhenZooming: true
     });
 
     // Use clean basemap by default in all modes
@@ -1647,9 +1647,13 @@ function initMap() {
     mapInitialized = true;
     updateMap();
 
-    // Invalidate size to ensure map renders correctly
+    // Invalidate size to ensure map renders at the oversized dimensions
+    // This forces Leaflet to load more tiles to fill the larger area
     setTimeout(() => {
         map.invalidateSize();
+        // Force immediate tile load by panning slightly and back
+        map.panBy([1, 1], {animate: false});
+        map.panBy([-1, -1], {animate: false});
     }, 200);
     
     // Auto-reorder stations when map is moved in bus mode

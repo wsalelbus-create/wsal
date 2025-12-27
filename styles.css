@@ -72,38 +72,35 @@ html, body {
    1. TOP MAP SECTION (60%)
    ========================================= */
 .map-view-container {
-    height: calc(var(--vh, 1vh) * 100); /* full viewport height - extends behind panel */
+    height: calc(var(--vh, 1vh) * 100); /* full viewport - map extends behind panel */
     position: relative;
     width: 100%;
     z-index: 1;
-    overflow: hidden; /* clip map to visible area */
-    background: #e8e8e8; /* light grey to prevent blue flash */
+    overflow: hidden;
+    background: #e8e8e8;
     padding-bottom: 0;
     margin-bottom: 0;
-    transition: height 0.3s ease;
-    /* Smooth expansion */
-    cursor: pointer;
-    /* Indicate clickable - tap to collapse panel and show more map */
 }
 
-/* Expanded map state - 80% */
+/* Expanded map state - when panel is collapsed */
 .map-view-container.expanded {
     height: calc(var(--vh, 1vh) * 82);
-    /* Expands to 82% - extends 2vh behind panel so corners always show against grey map */
 }
 
 #map-container {
-    /* Normal size - no rotation needed */
-    width: 100%;
-    height: 100%;
+    /* Oversized to accommodate parallax transform during panel drag */
+    /* Scale up to 1.08 and translate up to 200px requires extra buffer */
+    width: 120%;
+    height: 150%;
     min-height: 360px;
     background: #e8e8e8;
     position: absolute;
-    top: 0;
-    left: 0;
+    /* Center the oversized container so parallax works in both directions */
+    top: -25%;
+    left: -10%;
     /* Performance optimizations */
     transform: translate3d(0, 0, 0);
-    will-change: auto; /* Remove will-change to reduce memory usage */
+    transform-origin: center center;
 }
 
 /* Remove individual pane rotation - we rotate the whole container */
