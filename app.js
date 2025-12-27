@@ -1440,14 +1440,12 @@ function screenOrientationOffset() {
 function computeHeadingFromEvent(e) {
     try {
         let heading = null;
-        let needsOrientationOffset = true; // Track if we need to apply orientation offset
         
         // Prefer WebKit absolute compass heading (magnetic north)
         if (typeof e.webkitCompassHeading === 'number' && isFinite(e.webkitCompassHeading)) {
             // Accept heading even if accuracy is poor; smoothing will stabilize it
             // Some iOS devices report large webkitCompassAccuracy values persistently
             heading = e.webkitCompassHeading; // already clockwise from North
-            needsOrientationOffset = false; // webkitCompassHeading is already absolute, no offset needed
         } else if (typeof e.alpha === 'number' && isFinite(e.alpha)) {
             // If absolute flag present and true, alpha is true-north referenced in some browsers.
             // Use 360 - alpha to convert to compass bearing (clockwise from North)
@@ -1463,16 +1461,15 @@ function computeHeadingFromEvent(e) {
 
         if (heading == null) return null;
         
-        // Only apply orientation offset for alpha-based headings, not webkitCompassHeading
-        if (needsOrientationOffset) {
-            heading = normalizeBearing(heading + screenOrientationOffset());
-        }
+        // Apply orientation offset for all headings
+        heading = normalizeBearing(heading + screenOrientationOffset());
         
         // Debug log a few early samples
         if (!computeHeadingFromEvent._logged) {
-            const offset = needsOrientationOffset ? screenOrientationOffset() : 0;
+            const offset = screenOrientationOffset();
             console.log('Heading sample', { 
                 heading, 
+                rawHeading: heading - offset,
                 eAlpha: e.alpha, 
                 wkh: e.webkitCompassHeading, 
                 acc: e.webkitCompassAccuracy,
