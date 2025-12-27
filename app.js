@@ -2917,142 +2917,45 @@ if (backBtn) {
     });
 }
 
-// Compass Button - Toggle rotation mode (map follows device heading, dragging disabled)
+// Compass Button - Recalibrate heading cone
 const compassBtn = document.getElementById('compass-btn');
-let compassRotationActive = false;
-
-// Get the Leaflet map pane for rotation (not the container - avoids grey areas)
-function getMapPane() {
-    return document.getElementById('map-container');
-}
-
-// Apply rotation to map container
-function rotateMap(degrees) {
-    const mapContainer = document.getElementById('map-container');
-    if (!mapContainer) return;
-    
-    // Rotate the entire map container using setProperty with 'important' priority
-    // This ensures it overrides any CSS rules including media queries
-    const transformValue = `translate3d(0, 0, 0) rotate(${degrees}deg)`;
-    mapContainer.style.setProperty('transform', transformValue, 'important');
-    console.log('[rotateMap] Applied transform:', transformValue);
-}
-
-// Function to center map based on panel height
-function centerMapForPanelHeight(panelHeightVh) {
-    const mapContainer = document.getElementById('map-container');
-    if (!mapContainer) return;
-    
-    // Calculate visible map area center
-    // If panel is at 40vh, visible area is 0-60vh, center at 30vh
-    // If panel is at 20vh, visible area is 0-80vh, center at 40vh
-    const visibleMapHeight = 100 - panelHeightVh;
-    const centerVh = visibleMapHeight / 2;
-    
-    // Map container is 250% tall (125% on each side of center)
-    // Position so center aligns with visible area center
-    const topPosition = `calc(${centerVh}vh - 125%)`;
-    
-    mapContainer.style.top = topPosition;
-    console.log(`[Map Center] Panel at ${panelHeightVh}vh, map centered at ${centerVh}vh`);
-}
 
 if (compassBtn) {
     compassBtn.addEventListener('click', () => {
-        compassRotationActive = !compassRotationActive;
+        console.log('[Compass] Button clicked - recalibrating heading');
         
-        console.log('[Compass] Button clicked, active:', compassRotationActive, 'smoothedHeading:', smoothedHeading);
+        // Reset smoothed heading to force immediate recalibration
+        smoothedHeading = null;
+        hasHeadingFix = false;
         
-        const mapContainer = document.getElementById('map-container');
-        const arrivalsPanel = document.querySelector('.arrivals-panel');
-        
-        if (compassRotationActive) {
-            // Enable rotation mode
-            compassBtn.classList.add('compass-active');
-            document.body.classList.add('compass-mode');
-            console.log('[Compass] Rotation mode ON - map follows heading, dragging disabled');
-            
-            // Collapse panel to 20vh with smooth animation
-            if (arrivalsPanel) {
-                arrivalsPanel.style.height = '20vh';
-                arrivalsPanel.style.minHeight = '20vh';
-                arrivalsPanel.style.transform = 'translateY(0)'; // Reset transform to show panel at bottom
-                arrivalsPanel.style.transition = 'transform 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94), height 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
-                arrivalsPanel.classList.add('compass-collapsed');
-            }
-            
-            // Re-center map for 20vh panel with smooth transition
-            setTimeout(() => {
-                centerMapForPanelHeight(20);
-            }, 100);
-            
-            // Disable ALL map interactions
-            if (map) {
-                map.dragging.disable();
-                map.touchZoom.disable();
-                map.doubleClickZoom.disable();
-                map.scrollWheelZoom.disable();
-                map.boxZoom.disable();
-                map.keyboard.disable();
-                
-                // Disable pointer events on map to prevent any interaction
-                if (mapContainer) {
-                    mapContainer.style.pointerEvents = 'none';
-                }
-                
-                // Center on user location
-                if (userLat && userLon) {
-                    map.setView([userLat, userLon], map.getZoom(), { animate: true });
-                }
-            }
-            
-            // Apply current heading rotation
-            const heading = smoothedHeading !== null ? smoothedHeading : 0;
-            rotateMap(-heading);
-            console.log('[Compass] Applied rotation:', -heading, 'deg');
-        } else {
-            // Disable rotation mode
+        // Visual feedback - brief active state
+        compassBtn.classList.add('compass-active');
+        setTimeout(() => {
             compassBtn.classList.remove('compass-active');
-            document.body.classList.remove('compass-mode');
-            console.log('[Compass] Rotation mode OFF - normal map controls');
+        }, 500);
+        
+        // If we have a current heading, reapply it immediately
+        if (currentHeading !== null) {
+            smoothedHeading = currentHeading;
+            hasHeadingFix = true;
             
-            // Restore panel with smooth animation
-            if (arrivalsPanel) {
-                arrivalsPanel.style.height = '';
-                arrivalsPanel.style.minHeight = '';
-                arrivalsPanel.style.transform = ''; // Let JS control transform again
-                arrivalsPanel.style.transition = '';
-                arrivalsPanel.classList.remove('compass-collapsed');
-            }
-            
-            // Re-center map for default panel height
-            setTimeout(() => {
-                centerMapForPanelHeight(40);
-            }, 100);
-            
-            // Re-enable map dragging and zoom
-            if (map) {
-                map.dragging.enable();
-                map.touchZoom.enable();
-                map.doubleClickZoom.enable();
-                map.scrollWheelZoom.enable();
-                map.boxZoom.enable();
-                map.keyboard.enable();
-                
-                // Re-enable pointer events
-                if (mapContainer) {
-                    mapContainer.style.pointerEvents = '';
+            // Update cone rotation
+            if (userMarker) {
+                const el = userMarker.getElement();
+                if (el) {
+                    const rotor = el.querySelector('.user-heading-rotor');
+                    if (rotor) {
+                        rotor.style.transform = `translate(-50%, -50%) rotate(${smoothedHeading}deg)`;
+                        rotor.style.opacity = shouldShowCone() ? '1' : '0';
+                    }
                 }
             }
-            
-            // Reset map rotation to North up
-            rotateMap(0);
-            console.log('[Compass] Reset rotation to 0deg');
+            console.log('[Compass] Recalibrated to heading:', smoothedHeading);
         }
     });
 }
 
-// Update heading - rotates map when compass mode is active
+// Update heading - updates the cone direction
 function updateHeadingWithRotation(deg) {
     currentHeading = normalizeBearing(deg);
     hasHeadingFix = true;
@@ -3061,25 +2964,6 @@ function updateHeadingWithRotation(deg) {
     if (smoothedHeading == null) smoothedHeading = currentHeading;
     const delta = smallestAngleDelta(smoothedHeading, currentHeading);
     smoothedHeading = normalizeBearing(smoothedHeading + HEADING_SMOOTH * delta);
-
-    // Rotate map when compass rotation mode is active
-    if (compassRotationActive) {
-        // The heading is already adjusted for screen orientation by computeHeadingFromEvent()
-        // So we just rotate the map by -smoothedHeading (negative because CSS rotation is opposite)
-        const mapRotation = -smoothedHeading;
-        
-        console.log('[Compass Rotation] smoothedHeading:', smoothedHeading, 'mapRotation:', mapRotation);
-        
-        rotateMap(mapRotation);
-        
-        // Keep map centered on user
-        if (map && userLat && userLon) {
-            const center = map.getCenter();
-            if (Math.abs(center.lat - userLat) > 0.0001 || Math.abs(center.lng - userLon) > 0.0001) {
-                map.setView([userLat, userLon], map.getZoom(), { animate: false });
-            }
-        }
-    }
 
     // Rotate the cone inside the user marker
     if (userMarker) {
@@ -3868,40 +3752,6 @@ setInterval(() => {
 window.addEventListener('orientationchange', () => {
     console.log('[Orientation] Changed - reinitializing layout');
     
-    // Don't reinitialize if compass mode is active
-    if (compassRotationActive) {
-        console.log('[Compass] Orientation changed - preserving rotation');
-        
-        // Save current rotation before anything resets it
-        const currentRotation = smoothedHeading !== null ? -smoothedHeading : 0;
-        console.log('[Compass] Saving rotation:', currentRotation);
-        
-        // Wait for CSS media queries to apply, then reapply rotation
-        setTimeout(() => {
-            if (map) {
-                // Resize map
-                map.invalidateSize({ pan: false });
-                
-                // Re-center on user
-                if (userLat && userLon) {
-                    map.setView([userLat, userLon], map.getZoom(), { animate: false });
-                }
-                
-                // Reapply rotation after CSS and invalidateSize
-                rotateMap(currentRotation);
-                console.log('[Compass] Reapplied rotation:', currentRotation);
-                
-                // Also reapply after another short delay to catch any late CSS changes
-                setTimeout(() => {
-                    rotateMap(currentRotation);
-                    // Re-center map for panel height
-                    centerMapForPanelHeight(20);
-                }, 100);
-            }
-        }, 350);
-        return;
-    }
-    
     setTimeout(() => {
         try {
             // Reinitialize viewport polyfill
@@ -3914,17 +3764,6 @@ window.addEventListener('orientationchange', () => {
             console.error('[Orientation] Error:', e);
         }
     }, 300); // Wait for orientation to settle
-});
-
-// Preserve compass rotation on resize events (which fire during orientation change)
-window.addEventListener('resize', () => {
-    if (compassRotationActive && smoothedHeading !== null) {
-        // Reapply rotation after a short delay to catch any CSS resets
-        requestAnimationFrame(() => {
-            const rotation = -smoothedHeading;
-            rotateMap(rotation);
-        });
-    }
 });
 
 // ============================================================================
