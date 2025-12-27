@@ -3063,23 +3063,11 @@ function updateHeadingWithRotation(deg) {
 
     // Rotate map when compass rotation mode is active
     if (compassRotationActive) {
-        // Get screen orientation - need to compensate for screen rotation
-        const orientation = (typeof window.orientation === 'number') ? window.orientation : 0;
+        // The heading is already adjusted for screen orientation by computeHeadingFromEvent()
+        // So we just rotate the map by -smoothedHeading (negative because CSS rotation is opposite)
+        const mapRotation = -smoothedHeading;
         
-        // Calculate map rotation with orientation adjustment
-        let mapRotation = -smoothedHeading;
-        
-        // Adjust for screen orientation:
-        // orientation = 0: portrait (no adjustment)
-        // orientation = 90: landscape right (rotate map additional -90)
-        // orientation = -90: landscape left (rotate map additional 90)
-        if (orientation === 90) {
-            mapRotation -= 90; // Landscape right
-        } else if (orientation === -90) {
-            mapRotation += 90; // Landscape left
-        }
-        
-        console.log('[Compass Rotation] smoothedHeading:', smoothedHeading, 'orientation:', orientation, 'mapRotation:', mapRotation);
+        console.log('[Compass Rotation] smoothedHeading:', smoothedHeading, 'mapRotation:', mapRotation);
         
         rotateMap(mapRotation);
         
@@ -3092,7 +3080,7 @@ function updateHeadingWithRotation(deg) {
         }
     }
 
-    // Rotate the cone inside the user marker (no orientation adjustment - cone rotation is already correct)
+    // Rotate the cone inside the user marker
     if (userMarker) {
         const el = userMarker.getElement();
         if (el) {
