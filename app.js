@@ -3867,9 +3867,26 @@ window.addEventListener('orientationchange', () => {
     
     // Don't reinitialize if compass mode is active
     if (compassRotationActive) {
-        console.log('[Orientation] Compass mode active - skipping reinitialization');
+        console.log('[Orientation] Compass mode active - preserving rotation');
         setTimeout(() => {
-            if (map) map.invalidateSize();
+            if (map) {
+                // Save current rotation
+                const mapContainer = document.getElementById('map-container');
+                const currentTransform = mapContainer ? mapContainer.style.transform : '';
+                
+                // Resize map
+                map.invalidateSize();
+                
+                // Restore rotation
+                if (mapContainer && currentTransform) {
+                    mapContainer.style.transform = currentTransform;
+                }
+                
+                // Re-center on user
+                if (userLat && userLon) {
+                    map.setView([userLat, userLon], map.getZoom(), { animate: false });
+                }
+            }
         }, 300);
         return;
     }
