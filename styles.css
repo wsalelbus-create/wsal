@@ -94,8 +94,10 @@ html, body {
     min-height: 360px;
     background: #e8e8e8;
     position: absolute;
-    /* Center the oversized container */
-    top: -15%;
+    /* Position so map center is at ~30vh (center of visible area when panel at 40vh) */
+    /* With 130% height, center is at 65% from top */
+    /* To place center at 30vh: top = 30vh - 65% = 30vh - 0.65*100vh = -35vh */
+    top: calc(30vh - 65%);
     left: -15%;
     /* Performance optimizations */
     transform: translate3d(0, 0, 0);
@@ -1283,10 +1285,7 @@ html, body {
     height: auto;
     user-select: none;
     -webkit-user-select: none;
-}
     -webkit-user-drag: none;
-    user-select: none;
-    -webkit-user-select: none;
 }
 
 .bus-map-image:active {

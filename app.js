@@ -1645,40 +1645,6 @@ function initMap() {
     if (walkLabelsLayer && !map.hasLayer(walkLabelsLayer)) walkLabelsLayer.addTo(map);
 
     mapInitialized = true;
-    
-    // Dynamic map centering - GPS dot always centered in visible area
-    window.centerMapInVisibleArea = function() {
-        if (!map) return;
-        
-        const panelEl = document.querySelector('.arrivals-panel');
-        if (!panelEl) return;
-        
-        // Get current map center (the GPS location we want to keep)
-        const currentCenter = map.getCenter();
-        
-        // Get panel position
-        const rect = panelEl.getBoundingClientRect();
-        const panelTop = rect.top;
-        const viewportHeight = window.innerHeight;
-        
-        // Calculate where the visible center should be
-        const visibleCenter = panelTop / 2; // middle of visible area (0 to panelTop)
-        
-        // Calculate offset from viewport center to visible center
-        const viewportCenter = viewportHeight / 2;
-        const offsetPixels = viewportCenter - visibleCenter;
-        
-        console.log('[Center] Panel at:', panelTop, 'px, Visible center should be at:', visibleCenter, 'px, Offset:', offsetPixels, 'px');
-        
-        // Convert the offset to lat/lng
-        const point = map.latLngToContainerPoint(currentCenter);
-        const newPoint = L.point(point.x, point.y - offsetPixels);
-        const newCenter = map.containerPointToLatLng(newPoint);
-        
-        // Set the new center
-        map.setView(newCenter, map.getZoom(), { animate: false });
-    };
-    
     updateMap();
 
     // Invalidate size to ensure map renders at the oversized dimensions
@@ -1688,11 +1654,6 @@ function initMap() {
         // Force immediate tile load by panning slightly and back
         map.panBy([1, 1], {animate: false});
         map.panBy([-1, -1], {animate: false});
-        
-        // Apply initial centering if user location is available
-        if (userLat && userLon) {
-            setTimeout(() => window.centerMapInVisibleArea(), 100);
-        }
     }, 200);
     
     // Auto-reorder stations when map is moved in bus mode
@@ -2029,13 +1990,11 @@ function updateMap() {
             });
         } else if (uiMode === 'idle') {
             map.setView([userLat, userLon], 16);
-            setTimeout(() => window.centerMapInVisibleArea(), 50);
         }
     } else {
         // No user location
         if (uiMode === 'walk' && station) {
             map.setView([station.lat, station.lon], 15);
-            setTimeout(() => window.centerMapInVisibleArea(), 50);
         }
         mapDistanceEl.textContent = '📍 Location unavailable';
     }
@@ -2436,17 +2395,14 @@ function setUIMode(mode, station) {
     // Apply dynamic offset based on current panel position
     if (map && userLat && userLon) {
         if (mode === 'idle') {
-            console.log('[setUIMode] Idle mode - centering on GPS dynamically');
+            console.log('[setUIMode] Idle mode - centering on GPS');
             map.setView([userLat, userLon], 16, { animate: true, duration: 0.3 });
-            setTimeout(() => window.centerMapInVisibleArea(), 350);
         } else if (mode === 'walk') {
-            console.log('[setUIMode] Walk mode - centering on GPS dynamically');
+            console.log('[setUIMode] Walk mode - centering on GPS');
             map.setView([userLat, userLon], 15, { animate: true, duration: 0.3 });
-            setTimeout(() => window.centerMapInVisibleArea(), 350);
         } else if (mode === 'bus') {
-            console.log('[setUIMode] Bus mode - centering on GPS dynamically');
+            console.log('[setUIMode] Bus mode - centering on GPS');
             map.setView([userLat, userLon], 14, { animate: true, duration: 0.3 });
-            setTimeout(() => window.centerMapInVisibleArea(), 350);
         } else if (mode === 'crowd') {
             console.log('[setUIMode] Crowd mode - will fit bounds to user + station');
             // Map will be fitted in updateMap() to show both user and station
@@ -2626,8 +2582,6 @@ if (locateBtn) {
                 duration: 1.5,
                 easeLinearity: 0.5
             });
-            // Apply dynamic centering after flyTo completes
-            setTimeout(() => window.centerMapInVisibleArea(), 1600);
 
             // Visual feedback
             locateBtn.style.background = 'var(--primary-color)';
@@ -3474,7 +3428,6 @@ function setupPanelDrag() {
                         console.log('[MAP] Re-centering on GPS after pulling up from 20vh');
                         isGPSRecentering = true; // Set flag to prevent reordering
                         map.setView([userLat, userLon], map.getZoom(), { animate: true, duration: 0.3 });
-                        setTimeout(() => window.centerMapInVisibleArea(), 350);
                     }
                     
                     lastMoves = [];
@@ -3557,7 +3510,6 @@ function setupPanelDrag() {
                 console.log('[MAP] Re-centering on GPS after pulling up from 20vh');
                 isGPSRecentering = true; // Set flag to prevent reordering
                 map.setView([userLat, userLon], map.getZoom(), { animate: true, duration: 0.3 });
-                setTimeout(() => window.centerMapInVisibleArea(), 350);
             }
             
             lastMoves = [];
