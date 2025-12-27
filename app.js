@@ -1646,36 +1646,37 @@ function initMap() {
 
     mapInitialized = true;
     
-    // Dynamic map centering based on panel position
-    // This ensures GPS dot is always centered in the VISIBLE area above the panel
+    // Dynamic map centering - GPS dot always centered in visible area
     window.centerMapInVisibleArea = function() {
-        if (!map || !userLat || !userLon) return;
+        if (!map) return;
         
         const panelEl = document.querySelector('.arrivals-panel');
         if (!panelEl) return;
         
-        // Get actual panel position
+        // Get current map center (the GPS location we want to keep)
+        const currentCenter = map.getCenter();
+        
+        // Get panel position
         const rect = panelEl.getBoundingClientRect();
         const panelTop = rect.top;
         const viewportHeight = window.innerHeight;
         
-        // Visible map area is from 0 to panelTop
-        const visibleHeight = panelTop;
-        const visibleCenter = visibleHeight / 2;
+        // Calculate where the visible center should be
+        const visibleCenter = panelTop / 2; // middle of visible area (0 to panelTop)
         
-        // Map container center is at 50% of viewport (where Leaflet centers by default)
-        const containerCenter = viewportHeight / 2;
+        // Calculate offset from viewport center to visible center
+        const viewportCenter = viewportHeight / 2;
+        const offsetPixels = viewportCenter - visibleCenter;
         
-        // We need to move the map DOWN so the GPS dot (which is at container center)
-        // appears at the visible center
-        // If visible center is at 30vh and container center is at 50vh,
-        // we need to pan DOWN by 20vh to move content UP visually
-        const offsetPixels = visibleCenter - containerCenter;
+        console.log('[Center] Panel at:', panelTop, 'px, Visible center should be at:', visibleCenter, 'px, Offset:', offsetPixels, 'px');
         
-        console.log('[Center] Panel top:', panelTop, 'Visible center:', visibleCenter, 'Container center:', containerCenter, 'Offset:', offsetPixels);
+        // Convert the offset to lat/lng
+        const point = map.latLngToContainerPoint(currentCenter);
+        const newPoint = L.point(point.x, point.y - offsetPixels);
+        const newCenter = map.containerPointToLatLng(newPoint);
         
-        // Apply offset - positive offset pans map down (moves content up visually)
-        map.panBy([0, offsetPixels], { animate: false });
+        // Set the new center
+        map.setView(newCenter, map.getZoom(), { animate: false });
     };
     
     updateMap();
