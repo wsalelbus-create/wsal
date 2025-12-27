@@ -2931,10 +2931,11 @@ function rotateMap(degrees) {
     const mapContainer = document.getElementById('map-container');
     if (!mapContainer) return;
     
-    // Rotate the entire map container
-    // The container is already oversized (120% x 160%) to handle some rotation
-    // For full 360 rotation, we need it even bigger
-    mapContainer.style.transform = `translate3d(0, 0, 0) rotate(${degrees}deg)`;
+    // Rotate the entire map container using setProperty with 'important' priority
+    // This ensures it overrides any CSS rules including media queries
+    const transformValue = `translate3d(0, 0, 0) rotate(${degrees}deg)`;
+    mapContainer.style.setProperty('transform', transformValue, 'important');
+    console.log('[rotateMap] Applied transform:', transformValue);
 }
 
 // Function to center map based on panel height
@@ -3871,13 +3872,14 @@ window.addEventListener('orientationchange', () => {
     if (compassRotationActive) {
         console.log('[Compass] Orientation changed - preserving rotation');
         
-        // Save current rotation before invalidateSize resets it
+        // Save current rotation before anything resets it
         const currentRotation = smoothedHeading !== null ? -smoothedHeading : 0;
         console.log('[Compass] Saving rotation:', currentRotation);
         
+        // Wait for CSS media queries to apply, then reapply rotation
         setTimeout(() => {
             if (map) {
-                // Resize map - this will reset the transform
+                // Resize map
                 map.invalidateSize({ pan: false });
                 
                 // Re-center on user
@@ -3885,11 +3887,18 @@ window.addEventListener('orientationchange', () => {
                     map.setView([userLat, userLon], map.getZoom(), { animate: false });
                 }
                 
-                // IMMEDIATELY reapply the rotation that was reset by invalidateSize
+                // Reapply rotation after CSS and invalidateSize
                 rotateMap(currentRotation);
-                console.log('[Compass] Reapplied rotation after invalidateSize:', currentRotation);
+                console.log('[Compass] Reapplied rotation:', currentRotation);
+                
+                // Also reapply after another short delay to catch any late CSS changes
+                setTimeout(() => {
+                    rotateMap(currentRotation);
+                    // Re-center map for panel height
+                    centerMapForPanelHeight(20);
+                }, 100);
             }
-        }, 300);
+        }, 350);
         return;
     }
     
@@ -3905,6 +3914,17 @@ window.addEventListener('orientationchange', () => {
             console.error('[Orientation] Error:', e);
         }
     }, 300); // Wait for orientation to settle
+});
+
+// Preserve compass rotation on resize events (which fire during orientation change)
+window.addEventListener('resize', () => {
+    if (compassRotationActive && smoothedHeading !== null) {
+        // Reapply rotation after a short delay to catch any CSS resets
+        requestAnimationFrame(() => {
+            const rotation = -smoothedHeading;
+            rotateMap(rotation);
+        });
+    }
 });
 
 // ============================================================================

@@ -2,59 +2,63 @@
    LANDSCAPE MODE SUPPORT
    iOS Safari ignores manifest orientation lock
    
-   When body.compass-mode is set, show full screen map
+   When body.compass-mode is set, keep same layout as portrait
    ============================================= */
 
 @media screen and (orientation: landscape) {
-    /* COMPASS MODE in landscape - full screen map */
+    /* ============================================= */
+    /* COMPASS MODE in landscape - KEEP PORTRAIT LAYOUT */
+    /* Map stays full width, panel at bottom, rotation preserved */
+    /* ============================================= */
+    
     body.compass-mode .map-view-container {
         position: fixed !important;
         top: 0 !important;
         left: 0 !important;
-        right: 0 !important;
-        bottom: 0 !important;
         width: 100vw !important;
         height: 100vh !important;
+        bottom: 0 !important;
+        right: 0 !important;
         z-index: 1 !important;
+        overflow: hidden !important;
     }
     
+    /* CRITICAL: Don't reset transform on map container in compass mode */
+    /* Let JavaScript control the rotation transform */
     body.compass-mode #map-container {
         width: 250% !important;
         height: 250% !important;
         position: absolute !important;
-        top: calc(50vh - 125%) !important;
         left: -75% !important;
+        top: calc(30vh - 125%) !important;
+        /* DO NOT set transform here - let JS control rotation */
+        /* transform is controlled by rotateMap() function */
         transform-origin: center center !important;
+        will-change: transform !important;
     }
     
-    /* Hide panel completely in compass landscape mode */
+    /* Panel stays at bottom like portrait */
     body.compass-mode .arrivals-panel {
-        display: none !important;
+        position: fixed !important;
+        bottom: 0 !important;
+        left: 0 !important;
+        right: 0 !important;
+        top: auto !important;
+        width: 100vw !important;
+        height: 20vh !important;
+        min-height: 20vh !important;
+        z-index: 1001 !important;
     }
     
-    /* Keep badges visible in compass mode */
+    /* Keep map controls in portrait position for compass mode */
     body.compass-mode .map-controls-stack {
         position: fixed !important;
-        bottom: calc(16px + env(safe-area-inset-bottom)) !important;
-        right: 16px !important;
-        z-index: 1000 !important;
-    }
-    
-    body.compass-mode .settings-badge {
-        position: fixed !important;
-        top: calc(16px + env(safe-area-inset-top)) !important;
-        left: 16px !important;
-        z-index: 1000 !important;
-    }
-    
-    body.compass-mode .glass-header {
-        position: fixed !important;
-        top: calc(11px + env(safe-area-inset-top)) !important;
+        bottom: calc(20vh + 16px) !important;
         right: 16px !important;
         left: auto !important;
-        z-index: 1000 !important;
+        top: auto !important;
     }
-
+    
     /* ============================================= */
     /* NORMAL LANDSCAPE MODE (not compass mode)     */
     /* ============================================= */
