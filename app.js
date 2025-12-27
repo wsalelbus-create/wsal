@@ -3063,11 +3063,26 @@ function updateHeadingWithRotation(deg) {
 
     // Rotate map when compass rotation mode is active
     if (compassRotationActive) {
-        // Get screen orientation
+        // Get screen orientation - need to compensate for screen rotation
         const orientation = (typeof window.orientation === 'number') ? window.orientation : 0;
-        console.log('[Compass Rotation] smoothedHeading:', smoothedHeading, 'orientation:', orientation);
         
-        rotateMap(-smoothedHeading);
+        // In landscape mode, the device heading needs additional rotation
+        // because the screen itself is rotated relative to the device
+        let mapRotation = -smoothedHeading;
+        
+        // Adjust for screen orientation:
+        // orientation = 0: portrait (no adjustment)
+        // orientation = 90: landscape right (rotate map additional -90)
+        // orientation = -90: landscape left (rotate map additional 90)
+        if (orientation === 90) {
+            mapRotation -= 90; // Landscape right
+        } else if (orientation === -90) {
+            mapRotation += 90; // Landscape left
+        }
+        
+        console.log('[Compass Rotation] smoothedHeading:', smoothedHeading, 'orientation:', orientation, 'mapRotation:', mapRotation);
+        
+        rotateMap(mapRotation);
         
         // Keep map centered on user
         if (map && userLat && userLon) {
