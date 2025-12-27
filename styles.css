@@ -72,16 +72,14 @@ html, body {
    1. TOP MAP SECTION (60%)
    ========================================= */
 .map-view-container {
-    /* Full viewport height - map extends behind panel */
-    height: calc(var(--vh, 1vh) * 100);
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
+    height: calc(var(--vh, 1vh) * 100); /* full viewport - map extends behind panel */
+    position: relative;
     width: 100%;
     z-index: 1;
     overflow: hidden;
     background: #e8e8e8;
+    padding-bottom: 0;
+    margin-bottom: 0;
 }
 
 /* Expanded map state - when panel is collapsed */
@@ -90,16 +88,19 @@ html, body {
 }
 
 #map-container {
-    /* Full size - Leaflet handles centering via padding */
-    width: 100%;
-    height: 100%;
+    /* Oversized to accommodate parallax transform AND prevent grey gaps on zoom out */
+    /* Need extra buffer for: parallax scale (1.08), translate (200px), and zoom out */
+    width: 200%;
+    height: 200%;
     min-height: 360px;
     background: #e8e8e8;
     position: absolute;
-    top: 0;
-    left: 0;
+    /* Center the oversized container */
+    top: -50%;
+    left: -50%;
     /* Performance optimizations */
     transform: translate3d(0, 0, 0);
+    transform-origin: center center;
 }
 
 /* Remove individual pane rotation - we rotate the whole container */

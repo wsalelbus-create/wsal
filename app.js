@@ -1585,32 +1585,6 @@ function initMap() {
         zoomSnap: 0.5, // Smoother zoom
         zoomDelta: 0.5
     }).setView([36.7700, 3.0553], 14);
-    
-    // Helper function to center map accounting for panel overlay
-    // Panel covers bottom 40vh, so visible area center is at 30vh from top
-    window.centerMapOnLocation = function(lat, lon, zoom, options = {}) {
-        if (!map) return;
-        const panelHeight = window.innerHeight * 0.4; // 40vh panel
-        const offsetY = panelHeight / 2; // Shift center up by half panel height
-        
-        // Get the target point, offset it, then set view
-        const targetPoint = map.project([lat, lon], zoom || map.getZoom());
-        targetPoint.y += offsetY; // Move target down so map shifts up
-        const offsetLatLng = map.unproject(targetPoint, zoom || map.getZoom());
-        
-        map.setView(offsetLatLng, zoom || map.getZoom(), options);
-    };
-    
-    // Override default setView to account for panel (optional - use centerMapOnLocation for explicit control)
-    const originalSetView = map.setView.bind(map);
-    map.setViewWithOffset = function(latlng, zoom, options) {
-        const panelHeight = window.innerHeight * 0.4;
-        const offsetY = panelHeight / 2;
-        const targetPoint = map.project(latlng, zoom || map.getZoom());
-        targetPoint.y += offsetY;
-        const offsetLatLng = map.unproject(targetPoint, zoom || map.getZoom());
-        return originalSetView(offsetLatLng, zoom, options);
-    };
 
     // Pane for labels overlay (above routes but does not block interactions)
     try {
@@ -1671,6 +1645,16 @@ function initMap() {
     if (walkLabelsLayer && !map.hasLayer(walkLabelsLayer)) walkLabelsLayer.addTo(map);
 
     mapInitialized = true;
+    
+    // Helper: Get panel offset in pixels for centering map in visible area
+    window.getPanelOffset = function() {
+        const panelEl = document.querySelector('.arrivals-panel');
+        if (!panelEl) return window.innerHeight * 0.2; // default 20% offset
+        const rect = panelEl.getBoundingClientRect();
+        const panelHeight = Math.max(0, window.innerHeight - rect.top);
+        return panelHeight / 2; // half of panel height
+    };
+    
     updateMap();
 
     // Invalidate size to ensure map renders at the oversized dimensions
@@ -1714,12 +1698,32 @@ function initMap() {
             
             // Only collapse if panel is at 40vh or higher (not already collapsed)
             if (currentH >= minPx - 10) {
-                console.log('[Map Click] Collapsing panel to 20vh with elastic bounce');
+                console.log('[Map Click] Collapsing panel to 20vh with elastic bounce and parallax');
                 const panel = document.querySelector('.arrivals-panel');
                 if (panel && window._setPanelVisibleHeight) {
                     // Use ELASTIC BOUNCE easing for satisfying overshoot effect (same as pull down)
                     panel.style.transition = 'transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)';
                     window._setPanelVisibleHeight(circlesHook);
+                    
+                    // Apply parallax effect to map (same as manual drag)
+                    const mapInner = document.getElementById('map-container');
+                    if (mapInner) {
+                        const parallaxFactor = 0.5; // 50% of panel movement
+                        const panelDelta = circlesHook - currentH; // negative (moving down)
+                        const panelRange = maxPx - minPx;
+                        const progress = panelDelta / panelRange;
+                        
+                        // Calculate parallax transform
+                        const scaleAmount = 1 + (progress * 0.08); // 8% scale
+                        const translateAmount = -panelDelta * parallaxFactor;
+                        const maxTranslate = 200;
+                        const clampedTranslate = Math.max(-maxTranslate, Math.min(maxTranslate, translateAmount));
+                        
+                        // Apply with elastic bounce animation
+                        mapInner.style.transition = 'transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)';
+                        mapInner.style.transform = `translateY(${clampedTranslate}px) scale(${scaleAmount})`;
+                        mapInner.style.transformOrigin = 'center center';
+                    }
                     
                     // Show circles only in idle mode
                     if (uiMode === 'idle' && userLat && userLon) {
@@ -1995,12 +1999,16 @@ function updateMap() {
                 maxZoom: 15 // allow zooming out more for long distances
             });
         } else if (uiMode === 'idle') {
-            map.setViewWithOffset([userLat, userLon], 16);
+            const offset = window.getPanelOffset ? window.getPanelOffset() : window.innerHeight * 0.2;
+            map.setView([userLat, userLon], 16);
+            setTimeout(() => map.panBy([0, offset], { animate: false }), 50);
         }
     } else {
         // No user location
         if (uiMode === 'walk' && station) {
-            map.setViewWithOffset([station.lat, station.lon], 15);
+            const offset = window.getPanelOffset ? window.getPanelOffset() : window.innerHeight * 0.2;
+            map.setView([station.lat, station.lon], 15);
+            setTimeout(() => map.panBy([0, offset], { animate: false }), 50);
         }
         mapDistanceEl.textContent = '📍 Location unavailable';
     }
@@ -2398,16 +2406,22 @@ function setUIMode(mode, station) {
     
     // ALWAYS center map on GPS location when switching screens
     // This ensures user always sees where they are (blue dot centered)
+    // Apply offset to center in visible area (above panel)
     if (map && userLat && userLon) {
+        const offset = window.getPanelOffset ? window.getPanelOffset() : window.innerHeight * 0.2;
+        
         if (mode === 'idle') {
-            console.log('[setUIMode] Idle mode - centering on GPS');
-            map.setViewWithOffset([userLat, userLon], 16, { animate: true, duration: 0.3 });
+            console.log('[setUIMode] Idle mode - centering on GPS with offset');
+            map.setView([userLat, userLon], 16, { animate: true, duration: 0.3 });
+            setTimeout(() => map.panBy([0, offset], { animate: false }), 350);
         } else if (mode === 'walk') {
-            console.log('[setUIMode] Walk mode - centering on GPS');
-            map.setViewWithOffset([userLat, userLon], 15, { animate: true, duration: 0.3 });
+            console.log('[setUIMode] Walk mode - centering on GPS with offset');
+            map.setView([userLat, userLon], 15, { animate: true, duration: 0.3 });
+            setTimeout(() => map.panBy([0, offset], { animate: false }), 350);
         } else if (mode === 'bus') {
-            console.log('[setUIMode] Bus mode - centering on GPS');
-            map.setViewWithOffset([userLat, userLon], 14, { animate: true, duration: 0.3 });
+            console.log('[setUIMode] Bus mode - centering on GPS with offset');
+            map.setView([userLat, userLon], 14, { animate: true, duration: 0.3 });
+            setTimeout(() => map.panBy([0, offset], { animate: false }), 350);
         } else if (mode === 'crowd') {
             console.log('[setUIMode] Crowd mode - will fit bounds to user + station');
             // Map will be fitted in updateMap() to show both user and station
@@ -2582,17 +2596,14 @@ if (stationSelectorTrigger) {
 if (locateBtn) {
     locateBtn.addEventListener('click', () => {
         if (userLat && userLon) {
-            // Center map on user location with animation (using offset for panel)
-            const panelHeight = window.innerHeight * 0.4;
-            const offsetY = panelHeight / 2;
-            const targetPoint = map.project([userLat, userLon], 16);
-            targetPoint.y += offsetY;
-            const offsetLatLng = map.unproject(targetPoint, 16);
-            
-            map.flyTo(offsetLatLng, 16, {
+            // Center map on user location with animation
+            const offset = window.getPanelOffset ? window.getPanelOffset() : window.innerHeight * 0.2;
+            map.flyTo([userLat, userLon], 16, {
                 duration: 1.5,
                 easeLinearity: 0.5
             });
+            // Apply offset after flyTo completes
+            setTimeout(() => map.panBy([0, offset], { animate: false }), 1600);
 
             // Visual feedback
             locateBtn.style.background = 'var(--primary-color)';
@@ -3267,8 +3278,30 @@ function setupPanelDrag() {
         // DON'T show/hide circles during drag - only after release in handleEnd
         // This prevents circles from appearing while dragging
         
-        // Parallax disabled - map is now 100% size, no room for transform
-        // The map will stay fixed while panel moves
+        // Citymapper-style parallax: VISUAL effect only, don't actually move map tiles
+        // Apply transform to map-container (the visual layer), not map-view-container
+        if (mapViewContainer) {
+            const parallaxFactor = 0.5; // 50% of panel movement (more aggressive, follows closely)
+            const panelDelta = next - startVisible; // how much panel moved from start
+            const panelRange = maxPx - minPx; // total possible movement
+            const progress = panelDelta / panelRange; // normalized progress [-1..1]
+            
+            // Only apply VISUAL transform to the inner map container
+            const mapInner = document.getElementById('map-container');
+            if (mapInner) {
+                // More noticeable scale and translate for better parallax feel
+                const scaleAmount = 1 + (progress * 0.08); // 8% scale for more dramatic effect
+                const translateAmount = -panelDelta * parallaxFactor; // more aggressive translate
+                
+                // Clamp translate to prevent revealing edges (map is now 180% height with 40% buffer)
+                const maxTranslate = 200; // max 200px movement in either direction (we have 40% buffer = ~240px at typical viewport)
+                const clampedTranslate = Math.max(-maxTranslate, Math.min(maxTranslate, translateAmount));
+                
+                mapInner.style.transform = `translateY(${clampedTranslate}px) scale(${scaleAmount})`;
+                mapInner.style.transformOrigin = 'center center'; // scale from center
+                mapInner.style.transition = 'none'; // no transition during drag
+            }
+        }
         
         // record movement for velocity calculation
         const now = performance.now();
@@ -3372,6 +3405,13 @@ function setupPanelDrag() {
                     arrivalsPanel.style.transition = 'transform 0.22s cubic-bezier(0.25, 0.46, 0.45, 0.94)'; // iOS-like easing
                     setPanelVisibleHeight(target);
                     
+                    // Reset map parallax synchronized with panel snap
+                    const mapInner = document.getElementById('map-container');
+                    if (mapInner) {
+                        mapInner.style.transition = 'transform 0.24s cubic-bezier(.2,.7,.2,1)';
+                        mapInner.style.transform = 'translateY(0) scale(1)';
+                    }
+                    
                     if (target >= (minPx + maxPx) / 2) {
                         arrivalsPanel.classList.add('expanded');
                     } else {
@@ -3409,7 +3449,9 @@ function setupPanelDrag() {
                     if (userLat && userLon && target > circlesHook + 10) {
                         console.log('[MAP] Re-centering on GPS after pulling up from 20vh');
                         isGPSRecentering = true; // Set flag to prevent reordering
-                        map.setViewWithOffset([userLat, userLon], map.getZoom(), { animate: true, duration: 0.3 });
+                        const offset = window.getPanelOffset ? window.getPanelOffset() : window.innerHeight * 0.2;
+                        map.setView([userLat, userLon], map.getZoom(), { animate: true, duration: 0.3 });
+                        setTimeout(() => map.panBy([0, offset], { animate: false }), 350);
                     }
                     
                     lastMoves = [];
@@ -3446,6 +3488,13 @@ function setupPanelDrag() {
             
             arrivalsPanel.style.transition = easing;
             setPanelVisibleHeight(target);
+            
+            // Reset map parallax synchronized with panel snap
+            const mapInner = document.getElementById('map-container');
+            if (mapInner) {
+                mapInner.style.transition = easing; // use same easing as panel
+                mapInner.style.transform = 'translateY(0) scale(1)';
+            }
             
             if (target >= (minPx + maxPx) / 2) {
                 arrivalsPanel.classList.add('expanded');
@@ -3484,7 +3533,9 @@ function setupPanelDrag() {
             if (userLat && userLon && target > circlesHook + 10) {
                 console.log('[MAP] Re-centering on GPS after pulling up from 20vh');
                 isGPSRecentering = true; // Set flag to prevent reordering
-                map.setViewWithOffset([userLat, userLon], map.getZoom(), { animate: true, duration: 0.3 });
+                const offset = window.getPanelOffset ? window.getPanelOffset() : window.innerHeight * 0.2;
+                map.setView([userLat, userLon], map.getZoom(), { animate: true, duration: 0.3 });
+                setTimeout(() => map.panBy([0, offset], { animate: false }), 350);
             }
             
             lastMoves = [];
@@ -3777,6 +3828,25 @@ if (crowdBadge) {
                 // Elastic bounce animation
                 panel.style.transition = 'transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)';
                 window._setPanelVisibleHeight(circlesHook);
+                
+                // Apply parallax to map
+                const mapInner = document.getElementById('map-container');
+                if (mapInner) {
+                    const currentH = window._getPanelVisibleHeight ? window._getPanelVisibleHeight() : 0;
+                    const maxPx = getPanelMaxPx();
+                    const minPx = vhToPx(PANEL_MIN_VH);
+                    const panelDelta = circlesHook - currentH;
+                    const panelRange = maxPx - minPx;
+                    const progress = panelDelta / panelRange;
+                    
+                    const scaleAmount = 1 + (progress * 0.08);
+                    const translateAmount = -panelDelta * 0.5;
+                    const maxTranslate = 200;
+                    const clampedTranslate = Math.max(-maxTranslate, Math.min(maxTranslate, translateAmount));
+                    
+                    mapInner.style.transition = 'transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)';
+                    mapInner.style.transform = `translateY(${clampedTranslate}px) scale(${scaleAmount})`;
+                }
             }
             
             // Transform badge: White → Grey with arrow, "Help Others" → hidden
