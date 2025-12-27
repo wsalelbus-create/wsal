@@ -2920,7 +2920,6 @@ if (backBtn) {
 // Compass Button - Toggle rotation mode (map follows device heading, dragging disabled)
 const compassBtn = document.getElementById('compass-btn');
 let compassRotationActive = false;
-let orientationChanging = false; // Flag to pause heading updates during orientation change
 
 // Get the Leaflet map pane for rotation (not the container - avoids grey areas)
 function getMapPane() {
@@ -3054,12 +3053,6 @@ if (compassBtn) {
 
 // Update heading - rotates map when compass mode is active
 function updateHeadingWithRotation(deg) {
-    // Skip updates during orientation change to avoid wrong rotation
-    if (orientationChanging) {
-        console.log('[Compass] Skipping heading update during orientation change');
-        return;
-    }
-    
     currentHeading = normalizeBearing(deg);
     hasHeadingFix = true;
     
@@ -3876,14 +3869,15 @@ window.addEventListener('orientationchange', () => {
     
     // Don't reinitialize if compass mode is active
     if (compassRotationActive) {
-        console.log('[Compass] Orientation changed - pausing heading updates');
+        console.log('[Compass] Orientation changed - preserving rotation');
         
-        // Pause heading updates during orientation transition
-        orientationChanging = true;
+        // Save current rotation before invalidateSize resets it
+        const currentRotation = smoothedHeading !== null ? -smoothedHeading : 0;
+        console.log('[Compass] Saving rotation:', currentRotation);
         
         setTimeout(() => {
             if (map) {
-                // Resize map without resetting rotation
+                // Resize map - this will reset the transform
                 map.invalidateSize({ pan: false });
                 
                 // Re-center on user
@@ -3891,12 +3885,9 @@ window.addEventListener('orientationchange', () => {
                     map.setView([userLat, userLon], map.getZoom(), { animate: false });
                 }
                 
-                // Resume heading updates after orientation settles
-                // The next deviceorientation event will have the correct offset
-                setTimeout(() => {
-                    orientationChanging = false;
-                    console.log('[Compass] Orientation settled - resuming heading updates');
-                }, 200);
+                // IMMEDIATELY reapply the rotation that was reset by invalidateSize
+                rotateMap(currentRotation);
+                console.log('[Compass] Reapplied rotation after invalidateSize:', currentRotation);
             }
         }, 300);
         return;
