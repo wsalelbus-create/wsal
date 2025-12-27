@@ -1647,6 +1647,7 @@ function initMap() {
     mapInitialized = true;
     
     // Dynamic map centering based on panel position
+    // This ensures GPS dot is always centered in the VISIBLE area above the panel
     window.centerMapInVisibleArea = function() {
         if (!map || !userLat || !userLon) return;
         
@@ -1662,13 +1663,18 @@ function initMap() {
         const visibleHeight = panelTop;
         const visibleCenter = visibleHeight / 2;
         
-        // Map container center is at 50% of viewport
+        // Map container center is at 50% of viewport (where Leaflet centers by default)
         const containerCenter = viewportHeight / 2;
         
-        // Offset needed to align map center with visible area center
-        const offsetPixels = containerCenter - visibleCenter;
+        // We need to move the map DOWN so the GPS dot (which is at container center)
+        // appears at the visible center
+        // If visible center is at 30vh and container center is at 50vh,
+        // we need to pan DOWN by 20vh to move content UP visually
+        const offsetPixels = visibleCenter - containerCenter;
         
-        // Apply offset immediately
+        console.log('[Center] Panel top:', panelTop, 'Visible center:', visibleCenter, 'Container center:', containerCenter, 'Offset:', offsetPixels);
+        
+        // Apply offset - positive offset pans map down (moves content up visually)
         map.panBy([0, offsetPixels], { animate: false });
     };
     
