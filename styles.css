@@ -812,19 +812,19 @@ html, body {
 
 .route-time .time-inline {
     display: inline-flex;
-    align-items: flex-end; /* align to bottom baseline */
-    gap: 2px; /* radar close to countdown */
-    white-space: nowrap; /* prevent wrapping */
-    flex-wrap: nowrap; /* never wrap */
+    align-items: baseline; /* align to text baseline */
+    gap: 2px;
+    white-space: nowrap;
+    flex-wrap: nowrap;
 }
 .route-time .live-radar {
     transform: rotate(-50deg);
     transform-origin: center;
-    margin-right: 2px; /* small space after radar */
-    margin-bottom: 2px; /* lift radar up slightly so it aligns with middle of number */
+    margin-right: 2px;
     width: 14px;
     height: 14px;
     flex-shrink: 0;
+    align-self: center; /* radar stays centered, not baseline */
 }
 
 .time-big {
@@ -832,7 +832,8 @@ html, body {
     font-weight: 600;
     color: #666;
     line-height: 1;
-    flex-shrink: 0; /* don't shrink */
+    flex-shrink: 0;
+    align-self: baseline; /* number aligns to baseline */
 }
 
 .time-unit {
@@ -841,8 +842,9 @@ html, body {
     font-weight: 600;
     text-transform: lowercase;
     line-height: 1;
-    margin-left: 4px; /* space from countdown number */
-    flex-shrink: 0; /* don't shrink */
+    margin-left: 4px;
+    flex-shrink: 0;
+    align-self: baseline; /* min aligns to baseline (bottom of number) */
 }
 
 /* Stack for live signal icon above minutes */
