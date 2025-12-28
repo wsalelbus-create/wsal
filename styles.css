@@ -840,7 +840,7 @@ html, body {
     font-weight: 600;
     text-transform: lowercase;
     line-height: 1.2;
-    margin-left: 3px; /* closer to match walk screen spacing */
+    margin-left: 4px; /* exact spacing */
     flex-shrink: 0;
     padding-top: 3px;
 }
@@ -1119,7 +1119,7 @@ html, body {
 }
 .qa-icon { display: flex; align-items: center; justify-content: center; }
 .qa-icon svg { width: 28px; height: 28px; }
-.qa-icon-walk svg { width: 25px; height: 25px; transform: translateY(1px); }
+.qa-icon-walk svg { width: 25px; height: 25px; } /* removed translateY */
 .qa-icon-bus svg { transform: translateY(1px); }
 .qa-label { font-size: 0.8rem; font-weight: 700; line-height: 1; }
 
