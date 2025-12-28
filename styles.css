@@ -804,10 +804,10 @@ html, body {
 /* Arrival Time Styling */
 .route-time {
     text-align: right;
-    min-width: 110px; /* more space for countdown + min + arrow */
-    flex-shrink: 0; /* don't shrink */
+    min-width: 120px; /* more space to prevent compression */
+    flex-shrink: 0;
     display: flex;
-    justify-content: flex-end; /* align to right */
+    justify-content: flex-end;
 }
 
 .route-time .time-inline {
@@ -1121,7 +1121,7 @@ html, body {
 .qa-icon svg { width: 28px; height: 28px; }
 .qa-icon-walk svg { width: 25px; height: 25px; transform: translateY(1px); }
 .qa-icon-bus svg { transform: translateY(1px); }
-.qa-label { font-size: 0.8rem; font-weight: 700; line-height: 1; transform: translateY(-1px); }
+.qa-label { font-size: 0.8rem; font-weight: 700; line-height: 1; }
 
 /* Ad Placeholder - Citymapper style */
 .ad-placeholder {
