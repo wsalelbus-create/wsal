@@ -813,14 +813,14 @@ html, body {
 .route-time .time-inline {
     display: inline-flex;
     align-items: center;
-    gap: 2px;
+    gap: 0px; /* remove gap, use margins instead */
     white-space: nowrap;
     flex-wrap: nowrap;
 }
 .route-time .live-radar {
     transform: rotate(-50deg);
     transform-origin: center;
-    margin-right: 1px; /* reduced to match min spacing */
+    margin-right: 4px; /* same as min spacing */
     width: 14px;
     height: 14px;
     flex-shrink: 0;
@@ -1117,11 +1117,21 @@ html, body {
     transform: scale(0.98); 
     background: #267821;  /* slightly darker on press */
 }
-.qa-icon { display: flex; align-items: center; justify-content: center; }
+.qa-icon { 
+    display: flex; 
+    align-items: center; 
+    justify-content: center;
+    height: 28px; /* fixed height for all icons */
+}
 .qa-icon svg { width: 28px; height: 28px; }
-.qa-icon-walk svg { width: 25px; height: 25px; } /* removed translateY */
+.qa-icon-walk svg { width: 25px; height: 25px; }
 .qa-icon-bus svg { transform: translateY(1px); }
-.qa-label { font-size: 0.8rem; font-weight: 700; line-height: 1; }
+.qa-label { 
+    font-size: 0.8rem; 
+    font-weight: 700; 
+    line-height: 1;
+    height: 12px; /* fixed height for consistent alignment */
+}
 
 /* Ad Placeholder - Citymapper style */
 .ad-placeholder {
