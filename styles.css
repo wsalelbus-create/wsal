@@ -733,11 +733,16 @@ html, body {
     display: inline-flex;
     align-items: center;
     gap: 10px;
+    flex: 1; /* take available space but don't push countdown */
+    min-width: 0; /* allow text truncation */
 }
 .chip-dest {
     font-weight: 600; /* lighter weight like Citymapper */
     color: #666;
     font-size: 0.95rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .route-chip {
@@ -749,7 +754,12 @@ html, body {
     border-radius: 10px;
     background: transparent;
 }
-.route-chip .mini-bus { width: 16px; height: 16px; display: block; }
+.route-chip .mini-bus { 
+    width: 16px; 
+    height: 16px; 
+    display: block; 
+    flex-shrink: 0; /* prevent shrinking */
+}
 .route-chip .chip-number { font-weight: 600; font-size: 1.1rem; color: #666; } /* bigger, lighter weight, gray */
 
 /* Route Item Card */
@@ -800,6 +810,7 @@ html, body {
 .route-time {
     text-align: right;
     min-width: 70px;
+    flex-shrink: 0; /* prevent countdown from shrinking */
 }
 
 .route-time .time-inline {
