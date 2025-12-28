@@ -2652,34 +2652,42 @@ if (actionCabBtn) {
         const yassirApp = 'yassir://';
         const startTime = Date.now();
         
-        // Detect iOS or Android
-        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
-        const isAndroid = /Android/.test(navigator.userAgent);
+        // Detect iOS or Android - improved detection
+        const userAgent = navigator.userAgent || navigator.vendor || window.opera;
+        const isIOS = /iPad|iPhone|iPod/.test(userAgent) && !window.MSStream;
         
         const appStoreURL = isIOS 
             ? 'https://apps.apple.com/dz/app/yassir/id1441357238'
             : 'https://play.google.com/store/apps/details?id=com.yatechnologies.yassir_rider';
         
-        // Try to open the app
-        window.location.href = yassirApp;
+        // Create hidden iframe to try opening app (prevents Safari error dialog)
+        const iframe = document.createElement('iframe');
+        iframe.style.display = 'none';
+        iframe.src = yassirApp;
+        document.body.appendChild(iframe);
         
-        // If app doesn't open in 2.5 seconds, assume it's not installed
-        setTimeout(() => {
-            const timeElapsed = Date.now() - startTime;
-            // If less than 3 seconds passed and page is still visible, app didn't open
-            if (timeElapsed < 3000 && !document.hidden) {
-                window.location.href = appStoreURL;
-            }
-        }, 2500);
+        // If app doesn't open in 2 seconds, redirect to store
+        const redirectTimer = setTimeout(() => {
+            document.body.removeChild(iframe);
+            window.location.href = appStoreURL;
+        }, 2000);
         
-        // Also check if page becomes hidden (app opened)
+        // If page becomes hidden (app opened), cancel redirect
         const visibilityHandler = () => {
             if (document.hidden) {
-                // App opened successfully, clear the timeout
+                clearTimeout(redirectTimer);
+                document.body.removeChild(iframe);
                 document.removeEventListener('visibilitychange', visibilityHandler);
             }
         };
         document.addEventListener('visibilitychange', visibilityHandler);
+        
+        // Also listen for blur event (app opened)
+        const blurHandler = () => {
+            clearTimeout(redirectTimer);
+            window.removeEventListener('blur', blurHandler);
+        };
+        window.addEventListener('blur', blurHandler);
     });
 }
 
