@@ -2703,13 +2703,13 @@ if (actionCabBtn) {
         // Try to open app
         window.location.href = 'yassir://';
         
-        // Wait 10 seconds before redirecting to store (gives plenty of time for popup + app opening)
+        // Wait 5 seconds before redirecting to store (gives time for popup + app opening)
         redirectTimer = setTimeout(() => {
             if (!cancelled && !document.hidden) {
                 window.location.href = appStoreURL;
             }
             cleanup();
-        }, 10000);
+        }, 5000);
     });
 }
 
