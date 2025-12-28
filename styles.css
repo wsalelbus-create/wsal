@@ -1,9 +1,9 @@
 :root {
-    --primary-color: #35C759;
-    /* Citymapper Green */
+    --primary-color: #5CB85C;
+    /* Citymapper-style vibrant green */
     --etusa-blue: #00d2ff;
     /* ETUSA Blue for Buses */
-    --accent-color: #35C759;
+    --accent-color: #5CB85C;
     /* Green accent */
     --bg-color: #ffffff;
     /* Clean background */
@@ -439,7 +439,8 @@ html, body {
     bottom: 0;
     height: calc(var(--vh, 1vh) * 85); /* start at max height, JS will position via transform */
     max-height: none;
-    background: white;
+    background: var(--primary-color);
+    /* Citymapper-style green background */
     border-radius: 16px 16px 0 0;   /* match selector bar radius */
     box-shadow: none;               /* remove hairline */
     z-index: 1000;                  /* above map/controls; under header/back badge */
@@ -472,7 +473,7 @@ html, body {
     width: 48px;
     height: 6px;
     border-radius: 3px;
-    background: rgba(0,0,0,0.18);
+    background: rgba(255, 255, 255, 0.4);
     pointer-events: auto; /* receive touch events for reliable drag start */
 }
 
@@ -521,7 +522,7 @@ html, body {
 
 .routes-header h3 {
     font-size: 1.1rem;
-    color: var(--text-main);
+    color: white;
 }
 
 .live-indicator {
@@ -606,11 +607,12 @@ html, body {
    BUS SCREEN: Station Cards
    ============================= */
 .station-card {
-    background: #fff;
-    border: 1px solid #f0f0f0;
+    background: rgba(255, 255, 255, 0.15);
+    /* Semi-transparent white on green background */
+    border: 1px solid rgba(255, 255, 255, 0.2);
     border-radius: 16px;
     padding: 14px 16px 10px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
     position: relative; /* anchor overlay icon */
 }
 
@@ -660,10 +662,10 @@ html, body {
 .station-badge span { line-height: 1; }
 
 .station-title { flex: 1; min-width: 0; }
-.station-name { font-weight: 800; font-size: 1.05rem; color: var(--text-main); }
-.station-serves { font-size: 0.85rem; color: var(--text-muted); margin-top: 2px; font-weight: 700; }
+.station-name { font-weight: 800; font-size: 1.05rem; color: white; }
+.station-serves { font-size: 0.85rem; color: rgba(255, 255, 255, 0.8); margin-top: 2px; font-weight: 700; }
 
-.station-distance { font-weight: 800; font-size: 0.9rem; color: var(--text-main); }
+.station-distance { font-weight: 800; font-size: 0.9rem; color: white; }
 
 .station-divider {
     border-top: 1px solid #eaeaea;
@@ -731,7 +733,7 @@ html, body {
 }
 .chip-dest {
     font-weight: 800;
-    color: var(--text-main);
+    color: white;
     font-size: 0.95rem;
 }
 
@@ -1060,7 +1062,7 @@ html, body {
    QUICK ACTIONS (Citymapper-style)
    ============================= */
 .quick-actions-panel {
-    background: rgb(64, 115, 148);  /* blend with panel */
+    background: rgba(0, 0, 0, 0.15);  /* darker semi-transparent on green */
     border-radius: 16px;
     padding: 6px 8px;               /* tighter container padding */
     display: flex;
@@ -1074,7 +1076,7 @@ html, body {
 .qa-btn {
     appearance: none;
     border: none;                   /* no outline */
-    background: rgb(60, 107, 139);  /* badge background */
+    background: rgba(0, 0, 0, 0.2);  /* darker green badge background like Citymapper */
     color: #fff;
     width: 70px;                    /* rectangular - wider */
     height: 56px;                   /* rectangular - shorter */
@@ -1091,7 +1093,10 @@ html, body {
     transition: transform .15s ease, background .2s ease;
 }
 
-.qa-btn:active { transform: scale(0.98); }
+.qa-btn:active { 
+    transform: scale(0.98); 
+    background: rgba(0, 0, 0, 0.3);
+}
 .qa-icon { display: flex; align-items: center; justify-content: center; }
 .qa-icon svg { width: 28px; height: 28px; }
 .qa-icon-walk svg { width: 25px; height: 25px; transform: translateY(1px); }
