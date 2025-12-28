@@ -725,6 +725,7 @@ html, body {
     display: flex;
     align-items: center;
     justify-content: space-between;
+    gap: 20px; /* more space pushes countdown group to the right */
 }
 
 /* Left side of arrival row: chip + destination */
@@ -803,42 +804,44 @@ html, body {
 
 .route-time .time-inline {
     display: inline-flex;
-    align-items: center; /* center align like Citymapper */
-    gap: 4px; /* small gap between number and "min" */
+    align-items: flex-start; /* align to top like Citymapper */
+    gap: 4px; /* more space between number and "min" */
 }
 .route-time .live-radar {
     transform: rotate(-50deg);
     transform-origin: center;
-    margin-right: 0px; /* closer to number */
+    margin-right: 0px;
     width: 14px;
     height: 14px;
+    flex-shrink: 0;
 }
 
 .time-big {
-    font-size: 1.1rem; /* smaller like Citymapper */
-    font-weight: 700; /* slightly lighter */
-    color: #E89B00; /* darker orange like Citymapper */
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #333; /* darker gray for countdown numbers */
     line-height: 1;
 }
 
 .time-unit {
-    font-size: 0.7rem; /* smaller */
-    color: #666; /* gray not orange */
+    font-size: 0.7rem;
+    color: #999; /* lighter gray for "min" text */
     font-weight: 600;
-    text-transform: lowercase; /* "min" not "MIN" */
+    text-transform: lowercase;
+    line-height: 1;
 }
 
 /* Stack for live signal icon above minutes */
 .route-time .time-stack {
-    display: inline-flex; /* horizontal not vertical */
-    flex-direction: row; /* side by side */
-    align-items: center;
-    gap: 2px; /* tighter gap */
-    color: #E89B00; /* darker orange */
+    display: inline-flex;
+    flex-direction: row;
+    align-items: flex-start; /* align to top */
+    gap: 1px; /* very tight */
+    color: #333; /* darker gray */
 }
 .route-time .time-stack .live-signal {
     display: block;
-    margin-bottom: 4px;
+    margin-bottom: 0;
     color: var(--primary-color);
     opacity: 0.95;
 }
