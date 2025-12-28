@@ -664,10 +664,10 @@ html, body {
 .station-badge span { line-height: 1; }
 
 .station-title { flex: 1; min-width: 0; }
-.station-name { font-weight: 800; font-size: 1.05rem; color: #666; }
-.station-serves { font-size: 0.85rem; color: #666; margin-top: 2px; font-weight: 700; }
+.station-name { font-weight: 800; font-size: 1.05rem; color: #666; } /* only this stays bold */
+.station-serves { font-size: 0.85rem; color: #666; margin-top: 2px; font-weight: 600; } /* lighter weight */
 
-.station-distance { font-weight: 800; font-size: 0.9rem; color: #666; }
+.station-distance { font-weight: 600; font-size: 0.9rem; color: #666; } /* lighter weight */
 
 .station-divider {
     border-top: 1px solid #eaeaea;
@@ -734,7 +734,7 @@ html, body {
     gap: 10px;
 }
 .chip-dest {
-    font-weight: 800;
+    font-weight: 600; /* lighter weight like Citymapper */
     color: #666;
     font-size: 0.95rem;
 }
@@ -809,21 +809,21 @@ html, body {
 .route-time .live-radar {
     transform: rotate(-50deg);
     transform-origin: center;
-    margin-right: 2px;
+    margin-right: 0px; /* closer to number */
     width: 14px;
     height: 14px;
 }
 
 .time-big {
     font-size: 1.1rem; /* smaller like Citymapper */
-    font-weight: 800;
-    color: #FFA500; /* orange like Citymapper countdown */
+    font-weight: 700; /* slightly lighter */
+    color: #E89B00; /* darker orange like Citymapper */
     line-height: 1;
 }
 
 .time-unit {
     font-size: 0.7rem; /* smaller */
-    color: #FFA500; /* orange to match number */
+    color: #666; /* gray not orange */
     font-weight: 600;
     text-transform: lowercase; /* "min" not "MIN" */
 }
@@ -833,8 +833,8 @@ html, body {
     display: inline-flex; /* horizontal not vertical */
     flex-direction: row; /* side by side */
     align-items: center;
-    gap: 4px;
-    color: #FFA500; /* orange */
+    gap: 2px; /* tighter gap */
+    color: #E89B00; /* darker orange */
 }
 .route-time .time-stack .live-signal {
     display: block;
