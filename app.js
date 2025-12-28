@@ -2650,11 +2650,21 @@ const actionCabBtn = document.getElementById('action-cab');
 if (actionCabBtn) {
     actionCabBtn.addEventListener('click', () => {
         const yassirApp = 'yassir://';
-        const startTime = Date.now();
         
-        // Detect iOS or Android - improved detection
+        // Comprehensive iOS detection
         const userAgent = navigator.userAgent || navigator.vendor || window.opera;
-        const isIOS = /iPad|iPhone|iPod/.test(userAgent) && !window.MSStream;
+        const platform = navigator.platform || '';
+        
+        // Multiple checks for iOS
+        const isIOSUserAgent = /iPad|iPhone|iPod/.test(userAgent);
+        const isIOSPlatform = /iPad|iPhone|iPod/.test(platform);
+        const isIOSMaxTouchPoints = navigator.maxTouchPoints && navigator.maxTouchPoints > 2 && /MacIntel/.test(platform);
+        const isMSStream = !!window.MSStream;
+        
+        const isIOS = (isIOSUserAgent || isIOSPlatform || isIOSMaxTouchPoints) && !isMSStream;
+        
+        // Show detection info on screen for debugging
+        alert(`iOS Detection:\nUserAgent: ${userAgent.substring(0, 50)}...\nPlatform: ${platform}\nIs iOS: ${isIOS}`);
         
         const appStoreURL = isIOS 
             ? 'https://apps.apple.com/dz/app/yassir/id1441357238'
@@ -2668,7 +2678,9 @@ if (actionCabBtn) {
         
         // If app doesn't open in 2 seconds, redirect to store
         const redirectTimer = setTimeout(() => {
-            document.body.removeChild(iframe);
+            if (iframe.parentNode) {
+                document.body.removeChild(iframe);
+            }
             window.location.href = appStoreURL;
         }, 2000);
         
@@ -2676,7 +2688,9 @@ if (actionCabBtn) {
         const visibilityHandler = () => {
             if (document.hidden) {
                 clearTimeout(redirectTimer);
-                document.body.removeChild(iframe);
+                if (iframe.parentNode) {
+                    document.body.removeChild(iframe);
+                }
                 document.removeEventListener('visibilitychange', visibilityHandler);
             }
         };
