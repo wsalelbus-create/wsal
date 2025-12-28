@@ -2649,60 +2649,30 @@ if (busMapBackBtn && busMapScreen) {
 const actionCabBtn = document.getElementById('action-cab');
 if (actionCabBtn) {
     actionCabBtn.addEventListener('click', () => {
-        const yassirApp = 'yassir://';
-        
         // Comprehensive iOS detection
         const userAgent = navigator.userAgent || navigator.vendor || window.opera;
         const platform = navigator.platform || '';
         
-        // Multiple checks for iOS
         const isIOSUserAgent = /iPad|iPhone|iPod/.test(userAgent);
         const isIOSPlatform = /iPad|iPhone|iPod/.test(platform);
         const isIOSMaxTouchPoints = navigator.maxTouchPoints && navigator.maxTouchPoints > 2 && /MacIntel/.test(platform);
         const isMSStream = !!window.MSStream;
-        
-        // Also check for Safari on iOS (even in desktop mode)
         const isSafari = /Safari/.test(userAgent) && !/Chrome/.test(userAgent) && !/Android/.test(userAgent);
         
         const isIOS = (isIOSUserAgent || isIOSPlatform || isIOSMaxTouchPoints || (isSafari && /MacIntel/.test(platform))) && !isMSStream;
         
-        // App Store link with correct Yassir app ID
+        // App Store link
         const appStoreURL = isIOS 
             ? 'https://apps.apple.com/app/yassir/id1239926325'
             : 'https://play.google.com/store/apps/details?id=com.yatechnologies.yassir_rider';
         
-        // Create hidden iframe to try opening app (prevents Safari error dialog)
-        const iframe = document.createElement('iframe');
-        iframe.style.display = 'none';
-        iframe.src = yassirApp;
-        document.body.appendChild(iframe);
+        // Try to open app directly
+        window.location.href = 'yassir://';
         
-        // If app doesn't open in 2 seconds, redirect to store
-        const redirectTimer = setTimeout(() => {
-            if (iframe.parentNode) {
-                document.body.removeChild(iframe);
-            }
+        // After 2.5 seconds, if still on page, go to store
+        setTimeout(() => {
             window.location.href = appStoreURL;
-        }, 2000);
-        
-        // If page becomes hidden (app opened), cancel redirect
-        const visibilityHandler = () => {
-            if (document.hidden) {
-                clearTimeout(redirectTimer);
-                if (iframe.parentNode) {
-                    document.body.removeChild(iframe);
-                }
-                document.removeEventListener('visibilitychange', visibilityHandler);
-            }
-        };
-        document.addEventListener('visibilitychange', visibilityHandler);
-        
-        // Also listen for blur event (app opened)
-        const blurHandler = () => {
-            clearTimeout(redirectTimer);
-            window.removeEventListener('blur', blurHandler);
-        };
-        window.addEventListener('blur', blurHandler);
+        }, 2500);
     });
 }
 
