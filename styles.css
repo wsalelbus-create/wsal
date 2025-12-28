@@ -19,8 +19,8 @@
     --shadow-strong: 0 10px 40px rgba(0, 0, 0, 0.2);
     /* Dark blue used for quick-action icons (consistent with map icons) */
     --icon-dark-blue: #0A5AA3;
-    /* Arrivals panel blue (for back badge) */
-    --arrivals-blue: rgb(64, 115, 148);
+    /* Arrivals panel color */
+    --arrivals-green: #5CB85C;
     /* Live radar orange (Citymapper-style) */
     --live-orange: #FFC400;
 }
@@ -172,7 +172,7 @@ html, body {
     appearance: none;
     border: none;
     cursor: pointer;
-    background: var(--arrivals-blue);
+    background: var(--arrivals-green);
     color: #fff;
     width: 44px;
     height: 44px;
@@ -1054,9 +1054,9 @@ html, body {
 .hidden { display: none !important; }
 
 /* =============================
-   ARRIVALS PANEL THEME (ALWAYS GREEN)
+   ARRIVALS PANEL THEME (GREEN)
    ============================= */
-.arrivals-panel.panel-green { background: rgb(64, 115, 148); }
+.arrivals-panel.panel-green { background: var(--primary-color); }
 
 /* =============================
    QUICK ACTIONS (Citymapper-style)
