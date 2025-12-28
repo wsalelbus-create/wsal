@@ -2653,33 +2653,23 @@ if (actionCabBtn) {
         const lat = userLat || 36.7538; // Default to Algiers center if no GPS
         const lon = userLon || 3.0588;
         
-        // Yassir deep link format
-        const yassirDeepLink = `yassir://ride?pickup_latitude=${lat}&pickup_longitude=${lon}`;
+        // Try different Yassir deep link formats
+        // Format 1: Simple app open
+        const yassirApp = `yassir://`;
         
-        // Fallback to Yassir website if app not installed
-        const yassirWebsite = `https://yassir.com/dz/ride`;
+        // Format 2: Universal link (works on both iOS and Android)
+        const yassirUniversal = `https://yassir.com/ride?pickup_lat=${lat}&pickup_lng=${lon}`;
         
-        // Track if user left the page (app opened)
-        let appOpened = false;
+        // Fallback to Yassir Algeria website
+        const yassirWebsite = `https://yassir.com/dz`;
         
-        // Detect if user comes back (app didn't open)
-        const visibilityHandler = () => {
-            if (document.hidden) {
-                appOpened = true;
-            }
-        };
-        document.addEventListener('visibilitychange', visibilityHandler);
+        // Try to open Yassir app with universal link (best compatibility)
+        window.location.href = yassirUniversal;
         
-        // Try to open Yassir app
-        window.location.href = yassirDeepLink;
-        
-        // If app doesn't open in 2.5 seconds, redirect to website
+        // Fallback: if universal link doesn't work, try simple app scheme
         setTimeout(() => {
-            document.removeEventListener('visibilitychange', visibilityHandler);
-            if (!appOpened) {
-                window.location.href = yassirWebsite;
-            }
-        }, 2500);
+            window.location.href = yassirApp;
+        }, 500);
     });
 }
 
