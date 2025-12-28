@@ -725,7 +725,7 @@ html, body {
     display: flex;
     align-items: center; /* center align the whole row */
     justify-content: space-between;
-    gap: 12px;
+    gap: 8px; /* reduce gap to prevent wrapping */
 }
 
 /* Left side of arrival row: chip + destination */
@@ -733,16 +733,16 @@ html, body {
     display: inline-flex;
     align-items: center;
     gap: 10px;
-    flex: 1; /* take available space but don't push countdown */
+    flex: 1; /* allow to shrink if needed */
     min-width: 0; /* allow text truncation */
 }
 .chip-dest {
     font-weight: 600; /* lighter weight like Citymapper */
     color: #666;
     font-size: 0.95rem;
-    white-space: nowrap;
+    white-space: nowrap; /* prevent wrapping */
     overflow: hidden;
-    text-overflow: ellipsis;
+    text-overflow: ellipsis; /* truncate if too long */
 }
 
 .route-chip {
@@ -754,12 +754,7 @@ html, body {
     border-radius: 10px;
     background: transparent;
 }
-.route-chip .mini-bus { 
-    width: 16px; 
-    height: 16px; 
-    display: block; 
-    flex-shrink: 0; /* prevent shrinking */
-}
+.route-chip .mini-bus { width: 16px; height: 16px; display: block; }
 .route-chip .chip-number { font-weight: 600; font-size: 1.1rem; color: #666; } /* bigger, lighter weight, gray */
 
 /* Route Item Card */
@@ -809,14 +804,15 @@ html, body {
 /* Arrival Time Styling */
 .route-time {
     text-align: right;
-    min-width: 70px;
-    flex-shrink: 0; /* prevent countdown from shrinking */
+    min-width: 90px; /* ensure enough space for countdown + min + arrow */
+    flex-shrink: 0; /* don't shrink */
 }
 
 .route-time .time-inline {
     display: inline-flex;
     align-items: center; /* center align all elements */
     gap: 1px; /* radar very close to countdown */
+    white-space: nowrap; /* prevent wrapping */
 }
 .route-time .live-radar {
     transform: rotate(-50deg);
