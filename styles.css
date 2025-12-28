@@ -723,9 +723,9 @@ html, body {
 
 .station-arrival-row {
     display: flex;
-    align-items: center;
+    align-items: center; /* center align the whole row */
     justify-content: space-between;
-    gap: 12px; /* moderate gap */
+    gap: 12px;
 }
 
 /* Left side of arrival row: chip + destination */
@@ -804,33 +804,34 @@ html, body {
 
 .route-time .time-inline {
     display: inline-flex;
-    align-items: flex-end; /* align everything to bottom */
-    gap: 3px; /* tight spacing */
+    align-items: center; /* center align all elements */
+    gap: 1px; /* radar very close to countdown */
 }
 .route-time .live-radar {
     transform: rotate(-50deg);
     transform-origin: center;
-    margin-right: 0px;
-    margin-bottom: 2px; /* lift radar slightly to align with number baseline */
+    margin-right: 2px; /* small space after radar */
     width: 14px;
     height: 14px;
     flex-shrink: 0;
 }
 
 .time-big {
-    font-size: 0.95rem; /* smaller countdown */
-    font-weight: 700;
-    color: #555;
+    font-size: 1rem; /* slightly bigger */
+    font-weight: 600; /* lighter weight */
+    color: #666; /* lighter gray */
     line-height: 1;
 }
 
 .time-unit {
     font-size: 0.7rem;
-    color: #999;
+    color: #999; /* lighter gray */
     font-weight: 600;
     text-transform: lowercase;
     line-height: 1;
-    margin-left: 3px; /* space from number */
+    margin-left: 5px; /* MORE space from countdown number */
+    align-self: flex-end; /* align to bottom */
+    padding-bottom: 1px; /* fine-tune baseline alignment */
 }
 
 /* Stack for live signal icon above minutes */
