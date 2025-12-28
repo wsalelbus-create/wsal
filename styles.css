@@ -804,15 +804,18 @@ html, body {
 /* Arrival Time Styling */
 .route-time {
     text-align: right;
-    min-width: 90px; /* ensure enough space for countdown + min + arrow */
+    min-width: 110px; /* more space for countdown + min + arrow */
     flex-shrink: 0; /* don't shrink */
+    display: flex;
+    justify-content: flex-end; /* align to right */
 }
 
 .route-time .time-inline {
     display: inline-flex;
     align-items: center; /* center align all elements */
-    gap: 1px; /* radar very close to countdown */
+    gap: 2px; /* radar close to countdown */
     white-space: nowrap; /* prevent wrapping */
+    flex-wrap: nowrap; /* never wrap */
 }
 .route-time .live-radar {
     transform: rotate(-50deg);
@@ -824,21 +827,21 @@ html, body {
 }
 
 .time-big {
-    font-size: 1rem; /* slightly bigger */
-    font-weight: 600; /* lighter weight */
-    color: #666; /* lighter gray */
+    font-size: 1rem;
+    font-weight: 600;
+    color: #666;
     line-height: 1;
+    flex-shrink: 0; /* don't shrink */
 }
 
 .time-unit {
     font-size: 0.7rem;
-    color: #999; /* lighter gray */
+    color: #999;
     font-weight: 600;
     text-transform: lowercase;
     line-height: 1;
-    margin-left: 5px; /* MORE space from countdown number */
-    align-self: flex-end; /* align to bottom */
-    padding-bottom: 1px; /* fine-tune baseline alignment */
+    margin-left: 4px; /* space from countdown number */
+    flex-shrink: 0; /* don't shrink */
 }
 
 /* Stack for live signal icon above minutes */
