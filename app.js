@@ -2649,26 +2649,37 @@ if (busMapBackBtn && busMapScreen) {
 const actionCabBtn = document.getElementById('action-cab');
 if (actionCabBtn) {
     actionCabBtn.addEventListener('click', () => {
-        // Simple deep link to open Yassir app
         const yassirApp = 'yassir://';
+        const startTime = Date.now();
+        
+        // Detect iOS or Android
+        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+        const isAndroid = /Android/.test(navigator.userAgent);
+        
+        const appStoreURL = isIOS 
+            ? 'https://apps.apple.com/dz/app/yassir/id1441357238'
+            : 'https://play.google.com/store/apps/details?id=com.yatechnologies.yassir_rider';
         
         // Try to open the app
-        const appOpened = window.open(yassirApp, '_blank');
+        window.location.href = yassirApp;
         
-        // If app doesn't open (not installed), redirect to Play Store/App Store
-        if (!appOpened || appOpened.closed || typeof appOpened.closed === 'undefined') {
-            setTimeout(() => {
-                // Detect iOS or Android
-                const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
-                const isAndroid = /Android/.test(navigator.userAgent);
-                
-                if (isIOS) {
-                    window.location.href = 'https://apps.apple.com/dz/app/yassir/id1441357238';
-                } else if (isAndroid) {
-                    window.location.href = 'https://play.google.com/store/apps/details?id=com.yatechnologies.yassir_rider';
-                }
-            }, 1000);
-        }
+        // If app doesn't open in 2.5 seconds, assume it's not installed
+        setTimeout(() => {
+            const timeElapsed = Date.now() - startTime;
+            // If less than 3 seconds passed and page is still visible, app didn't open
+            if (timeElapsed < 3000 && !document.hidden) {
+                window.location.href = appStoreURL;
+            }
+        }, 2500);
+        
+        // Also check if page becomes hidden (app opened)
+        const visibilityHandler = () => {
+            if (document.hidden) {
+                // App opened successfully, clear the timeout
+                document.removeEventListener('visibilitychange', visibilityHandler);
+            }
+        };
+        document.addEventListener('visibilitychange', visibilityHandler);
     });
 }
 
