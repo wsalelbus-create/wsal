@@ -2653,19 +2653,33 @@ if (actionCabBtn) {
         const lat = userLat || 36.7538; // Default to Algiers center if no GPS
         const lon = userLon || 3.0588;
         
-        // Yassir deep link format: yassir://ride?pickup_latitude=LAT&pickup_longitude=LON
+        // Yassir deep link format
         const yassirDeepLink = `yassir://ride?pickup_latitude=${lat}&pickup_longitude=${lon}`;
         
         // Fallback to Yassir website if app not installed
         const yassirWebsite = `https://yassir.com/dz/ride`;
         
-        // Try to open Yassir app, fallback to website
+        // Track if user left the page (app opened)
+        let appOpened = false;
+        
+        // Detect if user comes back (app didn't open)
+        const visibilityHandler = () => {
+            if (document.hidden) {
+                appOpened = true;
+            }
+        };
+        document.addEventListener('visibilitychange', visibilityHandler);
+        
+        // Try to open Yassir app
         window.location.href = yassirDeepLink;
         
-        // If app doesn't open in 2 seconds, redirect to website
+        // If app doesn't open in 2.5 seconds, redirect to website
         setTimeout(() => {
-            window.location.href = yassirWebsite;
-        }, 2000);
+            document.removeEventListener('visibilitychange', visibilityHandler);
+            if (!appOpened) {
+                window.location.href = yassirWebsite;
+            }
+        }, 2500);
     });
 }
 
