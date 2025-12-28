@@ -1,10 +1,12 @@
 :root {
-    --primary-color: #5CB85C;
-    /* Citymapper-style vibrant green */
+    --primary-color: #5AA843;
+    /* Citymapper-style vibrant green - arrival panel color */
     --etusa-blue: #00d2ff;
     /* ETUSA Blue for Buses */
-    --accent-color: #5CB85C;
+    --accent-color: #5AA843;
     /* Green accent */
+    --badge-green: #4C8D39;
+    /* Darker green for badge rectangles */
     --bg-color: #ffffff;
     /* Clean background */
     --text-main: #333333;
@@ -20,7 +22,7 @@
     /* Dark blue used for quick-action icons (consistent with map icons) */
     --icon-dark-blue: #0A5AA3;
     /* Arrivals panel color */
-    --arrivals-green: #5CB85C;
+    --arrivals-green: #5AA843;
     /* Live radar orange (Citymapper-style) */
     --live-orange: #FFC400;
 }
@@ -1062,7 +1064,7 @@ html, body {
    QUICK ACTIONS (Citymapper-style)
    ============================= */
 .quick-actions-panel {
-    background: rgba(0, 0, 0, 0.15);  /* darker semi-transparent on green */
+    background: var(--primary-color);  /* same as arrival panel #5AA843 */
     border-radius: 16px;
     padding: 6px 8px;               /* tighter container padding */
     display: flex;
@@ -1076,7 +1078,7 @@ html, body {
 .qa-btn {
     appearance: none;
     border: none;                   /* no outline */
-    background: rgba(0, 0, 0, 0.2);  /* darker green badge background like Citymapper */
+    background: var(--badge-green);  /* darker green badge background #4C8D39 */
     color: #fff;
     width: 70px;                    /* rectangular - wider */
     height: 56px;                   /* rectangular - shorter */
@@ -1095,7 +1097,7 @@ html, body {
 
 .qa-btn:active { 
     transform: scale(0.98); 
-    background: rgba(0, 0, 0, 0.3);
+    background: #3d7030;  /* even darker on press */
 }
 .qa-icon { display: flex; align-items: center; justify-content: center; }
 .qa-icon svg { width: 28px; height: 28px; }
