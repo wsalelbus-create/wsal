@@ -2666,9 +2666,9 @@ if (actionCabBtn) {
         
         const isIOS = (isIOSUserAgent || isIOSPlatform || isIOSMaxTouchPoints || (isSafari && /MacIntel/.test(platform))) && !isMSStream;
         
-        // Force Apple App Store URL for iOS - use international link (works from any region)
+        // App Store link with correct Yassir app ID
         const appStoreURL = isIOS 
-            ? 'https://apps.apple.com/app/yassir/id1441357238'
+            ? 'https://apps.apple.com/app/yassir/id1239926325'
             : 'https://play.google.com/store/apps/details?id=com.yatechnologies.yassir_rider';
         
         // Create hidden iframe to try opening app (prevents Safari error dialog)
