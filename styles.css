@@ -725,7 +725,7 @@ html, body {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 20px; /* more space pushes countdown group to the right */
+    gap: 12px; /* moderate gap */
 }
 
 /* Left side of arrival row: chip + destination */
@@ -805,12 +805,12 @@ html, body {
 .route-time .time-inline {
     display: inline-flex;
     align-items: flex-start; /* align to top like Citymapper */
-    gap: 4px; /* more space between number and "min" */
+    gap: 5px; /* more space between number and "min" */
 }
 .route-time .live-radar {
     transform: rotate(-50deg);
     transform-origin: center;
-    margin-right: 0px;
+    margin-right: 1px; /* very close to countdown */
     width: 14px;
     height: 14px;
     flex-shrink: 0;
@@ -819,7 +819,7 @@ html, body {
 .time-big {
     font-size: 1.1rem;
     font-weight: 700;
-    color: #333; /* darker gray for countdown numbers */
+    color: #555; /* slightly darker than #666 but not as dark as #333 */
     line-height: 1;
 }
 
@@ -836,8 +836,8 @@ html, body {
     display: inline-flex;
     flex-direction: row;
     align-items: flex-start; /* align to top */
-    gap: 1px; /* very tight */
-    color: #333; /* darker gray */
+    gap: 0px; /* radar very close to countdown */
+    color: #555; /* slightly darker gray */
 }
 .route-time .time-stack .live-signal {
     display: block;
