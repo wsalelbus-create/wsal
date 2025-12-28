@@ -2666,13 +2666,36 @@ if (actionCabBtn) {
             ? 'https://apps.apple.com/app/yassir/id1239926325'
             : 'https://play.google.com/store/apps/details?id=com.yatechnologies.yassir_rider';
         
-        // Try to open app directly
+        let redirectTimer;
+        let appOpened = false;
+        
+        // Listen for page visibility change (app opened)
+        const checkAppOpened = () => {
+            if (document.hidden || document.webkitHidden) {
+                appOpened = true;
+                clearTimeout(redirectTimer);
+            }
+        };
+        
+        document.addEventListener('visibilitychange', checkAppOpened);
+        document.addEventListener('webkitvisibilitychange', checkAppOpened);
+        window.addEventListener('blur', checkAppOpened);
+        window.addEventListener('pagehide', checkAppOpened);
+        
+        // Try to open app
         window.location.href = 'yassir://';
         
-        // After 2.5 seconds, if still on page, go to store
-        setTimeout(() => {
-            window.location.href = appStoreURL;
-        }, 2500);
+        // Only redirect to store if app didn't open after 3 seconds
+        redirectTimer = setTimeout(() => {
+            if (!appOpened && !document.hidden) {
+                window.location.href = appStoreURL;
+            }
+            // Cleanup listeners
+            document.removeEventListener('visibilitychange', checkAppOpened);
+            document.removeEventListener('webkitvisibilitychange', checkAppOpened);
+            window.removeEventListener('blur', checkAppOpened);
+            window.removeEventListener('pagehide', checkAppOpened);
+        }, 3000);
     });
 }
 
