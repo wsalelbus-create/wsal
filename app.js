@@ -2649,27 +2649,26 @@ if (busMapBackBtn && busMapScreen) {
 const actionCabBtn = document.getElementById('action-cab');
 if (actionCabBtn) {
     actionCabBtn.addEventListener('click', () => {
-        // Get user's current location
-        const lat = userLat || 36.7538; // Default to Algiers center if no GPS
-        const lon = userLon || 3.0588;
+        // Simple deep link to open Yassir app
+        const yassirApp = 'yassir://';
         
-        // Try different Yassir deep link formats
-        // Format 1: Simple app open
-        const yassirApp = `yassir://`;
+        // Try to open the app
+        const appOpened = window.open(yassirApp, '_blank');
         
-        // Format 2: Universal link (works on both iOS and Android)
-        const yassirUniversal = `https://yassir.com/ride?pickup_lat=${lat}&pickup_lng=${lon}`;
-        
-        // Fallback to Yassir Algeria website
-        const yassirWebsite = `https://yassir.com/dz`;
-        
-        // Try to open Yassir app with universal link (best compatibility)
-        window.location.href = yassirUniversal;
-        
-        // Fallback: if universal link doesn't work, try simple app scheme
-        setTimeout(() => {
-            window.location.href = yassirApp;
-        }, 500);
+        // If app doesn't open (not installed), redirect to Play Store/App Store
+        if (!appOpened || appOpened.closed || typeof appOpened.closed === 'undefined') {
+            setTimeout(() => {
+                // Detect iOS or Android
+                const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+                const isAndroid = /Android/.test(navigator.userAgent);
+                
+                if (isIOS) {
+                    window.location.href = 'https://apps.apple.com/dz/app/yassir/id1441357238';
+                } else if (isAndroid) {
+                    window.location.href = 'https://play.google.com/store/apps/details?id=com.yatechnologies.yassir_rider';
+                }
+            }, 1000);
+        }
     });
 }
 
