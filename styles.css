@@ -1,12 +1,12 @@
 :root {
-    --primary-color: #5AA843;
+    --primary-color: #37AB2F;
     /* Citymapper-style vibrant green - arrival panel color */
     --etusa-blue: #00d2ff;
     /* ETUSA Blue for Buses */
-    --accent-color: #5AA843;
+    --accent-color: #37AB2F;
     /* Green accent */
-    --badge-green: #4C8D39;
-    /* Darker green for badge rectangles */
+    --badge-green: #2A8023;
+    /* Darker green for badge rectangles (about 25% darker) */
     --bg-color: #ffffff;
     /* Clean background */
     --text-main: #333333;
@@ -22,7 +22,7 @@
     /* Dark blue used for quick-action icons (consistent with map icons) */
     --icon-dark-blue: #0A5AA3;
     /* Arrivals panel color */
-    --arrivals-green: #5AA843;
+    --arrivals-green: #37AB2F;
     /* Live radar orange (Citymapper-style) */
     --live-orange: #FFC400;
 }
@@ -1097,7 +1097,7 @@ html, body {
 
 .qa-btn:active { 
     transform: scale(0.98); 
-    background: #3d7030;  /* even darker on press */
+    background: #1f5e1a;  /* even darker on press */
 }
 .qa-icon { display: flex; align-items: center; justify-content: center; }
 .qa-icon svg { width: 28px; height: 28px; }
