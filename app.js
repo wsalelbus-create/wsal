@@ -2670,10 +2670,17 @@ if (actionCabBtn) {
         let redirectTimer;
         let cancelled = false;
         
+        // Use iframe to prevent error dialog
+        const iframe = document.createElement('iframe');
+        iframe.style.display = 'none';
+        iframe.src = 'yassir://';
+        document.body.appendChild(iframe);
+        
         // Listen for page visibility/focus changes
         const cancelRedirect = () => {
             cancelled = true;
             clearTimeout(redirectTimer);
+            if (iframe.parentNode) document.body.removeChild(iframe);
             cleanup();
         };
         
@@ -2700,16 +2707,14 @@ if (actionCabBtn) {
         window.addEventListener('pagehide', cancelRedirect);
         window.addEventListener('focus', checkIfAppOpened);
         
-        // Try to open app
-        window.location.href = 'yassir://';
-        
-        // Wait 5 seconds before redirecting to store (gives time for popup + app opening)
+        // Wait 2 seconds before redirecting to store
         redirectTimer = setTimeout(() => {
             if (!cancelled && !document.hidden) {
+                if (iframe.parentNode) document.body.removeChild(iframe);
                 window.location.href = appStoreURL;
             }
             cleanup();
-        }, 5000);
+        }, 2000);
     });
 }
 
