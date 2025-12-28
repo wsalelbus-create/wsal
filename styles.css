@@ -804,31 +804,34 @@ html, body {
 
 .route-time .time-inline {
     display: inline-flex;
-    align-items: center; /* CENTER vertically */
-    gap: 6px; /* MORE space between number and "min" */
+    align-items: baseline; /* align to baseline so "min" sits lower */
+    gap: 2px; /* tight gap between radar and number */
 }
 .route-time .live-radar {
     transform: rotate(-50deg);
     transform-origin: center;
-    margin-right: -2px; /* CLOSER to countdown - negative margin */
+    margin-right: 0px;
     width: 14px;
     height: 14px;
     flex-shrink: 0;
+    align-self: center; /* radar centered, not baseline */
 }
 
 .time-big {
     font-size: 1.1rem;
     font-weight: 700;
-    color: #555; /* slightly darker than #666 but not as dark as #333 */
+    color: #555;
     line-height: 1;
+    margin-right: 4px; /* space before "min" */
 }
 
 .time-unit {
     font-size: 0.7rem;
-    color: #999; /* lighter gray for "min" text */
+    color: #999;
     font-weight: 600;
     text-transform: lowercase;
     line-height: 1;
+    align-self: baseline; /* align to bottom */
 }
 
 /* Stack for live signal icon above minutes */
