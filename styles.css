@@ -416,7 +416,7 @@ html, body {
 .selector-text h2 {
     font-size: 1.05rem;
     font-weight: 600;
-    color: var(--text-main);
+    color: #666; /* gray text */
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -664,10 +664,10 @@ html, body {
 .station-badge span { line-height: 1; }
 
 .station-title { flex: 1; min-width: 0; }
-.station-name { font-weight: 700; font-size: 1.05rem; color: #666; } /* gray color */
-.station-serves { font-size: 0.85rem; color: #999; margin-top: 2px; font-weight: 600; } /* lighter gray */
+.station-name { font-weight: 800; font-size: 1.05rem; color: #666; } /* only this stays bold */
+.station-serves { font-size: 0.85rem; color: #666; margin-top: 2px; font-weight: 600; } /* lighter weight */
 
-.station-distance { font-weight: 600; font-size: 0.9rem; color: #999; } /* lighter gray */
+.station-distance { font-weight: 600; font-size: 0.9rem; color: #666; } /* lighter weight */
 
 .station-divider {
     border-top: 1px solid #eaeaea;
@@ -723,9 +723,9 @@ html, body {
 
 .station-arrival-row {
     display: flex;
-    align-items: center; /* center align the whole row */
+    align-items: center; /* center align vertically */
     justify-content: space-between;
-    gap: 8px; /* reduce gap to prevent wrapping */
+    gap: 8px;
 }
 
 /* Left side of arrival row: chip + destination */
@@ -812,7 +812,7 @@ html, body {
 
 .route-time .time-inline {
     display: inline-flex;
-    align-items: center; /* center everything first */
+    align-items: center; /* center everything */
     gap: 2px;
     white-space: nowrap;
     flex-wrap: nowrap;
@@ -830,20 +830,19 @@ html, body {
     font-size: 1rem;
     font-weight: 600;
     color: #666;
-    line-height: 1.2; /* slightly more line height */
+    line-height: 1;
     flex-shrink: 0;
 }
 
 .time-unit {
-    font-size: 0.65rem; /* smaller */
+    font-size: 0.7rem;
     color: #999;
     font-weight: 600;
     text-transform: lowercase;
-    line-height: 1;
-    margin-left: 3px;
+    line-height: 1.2; /* slightly taller line-height */
+    margin-left: 4px;
     flex-shrink: 0;
-    align-self: flex-end; /* only min goes to bottom */
-    margin-bottom: 1px; /* fine-tune to sit at baseline of number */
+    padding-top: 3px; /* push down to align with bottom of number */
 }
 
 /* Stack for live signal icon above minutes */
