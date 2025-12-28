@@ -664,10 +664,10 @@ html, body {
 .station-badge span { line-height: 1; }
 
 .station-title { flex: 1; min-width: 0; }
-.station-name { font-weight: 800; font-size: 1.05rem; color: #666; } /* only this stays bold */
-.station-serves { font-size: 0.85rem; color: #666; margin-top: 2px; font-weight: 600; } /* lighter weight */
+.station-name { font-weight: 700; font-size: 1.05rem; color: #666; } /* gray color */
+.station-serves { font-size: 0.85rem; color: #999; margin-top: 2px; font-weight: 600; } /* lighter gray */
 
-.station-distance { font-weight: 600; font-size: 0.9rem; color: #666; } /* lighter weight */
+.station-distance { font-weight: 600; font-size: 0.9rem; color: #999; } /* lighter gray */
 
 .station-divider {
     border-top: 1px solid #eaeaea;
@@ -812,7 +812,7 @@ html, body {
 
 .route-time .time-inline {
     display: inline-flex;
-    align-items: baseline; /* align to text baseline */
+    align-items: center; /* center everything first */
     gap: 2px;
     white-space: nowrap;
     flex-wrap: nowrap;
@@ -824,27 +824,26 @@ html, body {
     width: 14px;
     height: 14px;
     flex-shrink: 0;
-    align-self: center; /* radar stays centered, not baseline */
 }
 
 .time-big {
     font-size: 1rem;
     font-weight: 600;
     color: #666;
-    line-height: 1;
+    line-height: 1.2; /* slightly more line height */
     flex-shrink: 0;
-    align-self: baseline; /* number aligns to baseline */
 }
 
 .time-unit {
-    font-size: 0.7rem;
+    font-size: 0.65rem; /* smaller */
     color: #999;
     font-weight: 600;
     text-transform: lowercase;
     line-height: 1;
-    margin-left: 4px;
+    margin-left: 3px;
     flex-shrink: 0;
-    align-self: baseline; /* min aligns to baseline (bottom of number) */
+    align-self: flex-end; /* only min goes to bottom */
+    margin-bottom: 1px; /* fine-tune to sit at baseline of number */
 }
 
 /* Stack for live signal icon above minutes */
