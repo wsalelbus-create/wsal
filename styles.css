@@ -812,7 +812,7 @@ html, body {
 
 .route-time .time-inline {
     display: inline-flex;
-    align-items: center; /* center everything */
+    align-items: center;
     gap: 2px;
     white-space: nowrap;
     flex-wrap: nowrap;
@@ -820,7 +820,7 @@ html, body {
 .route-time .live-radar {
     transform: rotate(-50deg);
     transform-origin: center;
-    margin-right: 2px;
+    margin-right: 1px; /* reduced to match min spacing */
     width: 14px;
     height: 14px;
     flex-shrink: 0;
@@ -839,10 +839,10 @@ html, body {
     color: #999;
     font-weight: 600;
     text-transform: lowercase;
-    line-height: 1.2; /* slightly taller line-height */
-    margin-left: 4px;
+    line-height: 1.2;
+    margin-left: 3px; /* closer to match walk screen spacing */
     flex-shrink: 0;
-    padding-top: 3px; /* push down to align with bottom of number */
+    padding-top: 3px;
 }
 
 /* Stack for live signal icon above minutes */
