@@ -2666,55 +2666,37 @@ if (actionCabBtn) {
             ? 'https://apps.apple.com/app/yassir/id1239926325'
             : 'https://play.google.com/store/apps/details?id=com.yatechnologies.yassir_rider';
         
-        const startTime = Date.now();
-        let redirectTimer;
-        let cancelled = false;
+        let redirectTimer = null;
+        let hasLeftPage = false;
         
-        // Use iframe to prevent error dialog
-        const iframe = document.createElement('iframe');
-        iframe.style.display = 'none';
-        iframe.src = 'yassir://';
-        document.body.appendChild(iframe);
-        
-        // Listen for page visibility/focus changes
-        const cancelRedirect = () => {
-            cancelled = true;
-            clearTimeout(redirectTimer);
-            if (iframe.parentNode) document.body.removeChild(iframe);
-            cleanup();
-        };
-        
-        const cleanup = () => {
-            document.removeEventListener('visibilitychange', cancelRedirect);
-            document.removeEventListener('webkitvisibilitychange', cancelRedirect);
-            window.removeEventListener('blur', cancelRedirect);
-            window.removeEventListener('pagehide', cancelRedirect);
-            window.removeEventListener('focus', checkIfAppOpened);
-        };
-        
-        // When page regains focus, check if enough time passed (app was open)
-        const checkIfAppOpened = () => {
-            const timeElapsed = Date.now() - startTime;
-            if (timeElapsed > 1000) {
-                // If more than 1 second passed, user was in the app
-                cancelRedirect();
+        // Cancel redirect when leaving page
+        const onLeave = () => {
+            hasLeftPage = true;
+            if (redirectTimer) {
+                clearTimeout(redirectTimer);
+                redirectTimer = null;
             }
         };
         
-        document.addEventListener('visibilitychange', cancelRedirect);
-        document.addEventListener('webkitvisibilitychange', cancelRedirect);
-        window.addEventListener('blur', cancelRedirect);
-        window.addEventListener('pagehide', cancelRedirect);
-        window.addEventListener('focus', checkIfAppOpened);
+        // Add listeners before trying to open app
+        document.addEventListener('visibilitychange', onLeave);
+        window.addEventListener('blur', onLeave);
+        window.addEventListener('pagehide', onLeave);
         
-        // Wait 2 seconds before redirecting to store
+        // Try to open app directly (will show popup if app installed)
+        window.location.href = 'yassir://';
+        
+        // Set redirect timer - only fires if we're still on page
         redirectTimer = setTimeout(() => {
-            if (!cancelled && !document.hidden) {
-                if (iframe.parentNode) document.body.removeChild(iframe);
+            // Only redirect if page is still visible and we haven't left
+            if (!hasLeftPage && document.visibilityState === 'visible') {
                 window.location.href = appStoreURL;
             }
-            cleanup();
-        }, 2000);
+            // Cleanup
+            document.removeEventListener('visibilitychange', onLeave);
+            window.removeEventListener('blur', onLeave);
+            window.removeEventListener('pagehide', onLeave);
+        }, 2500);
     });
 }
 
