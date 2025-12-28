@@ -804,13 +804,13 @@ html, body {
 
 .route-time .time-inline {
     display: inline-flex;
-    align-items: flex-start; /* align to top like Citymapper */
-    gap: 5px; /* more space between number and "min" */
+    align-items: center; /* CENTER vertically */
+    gap: 6px; /* MORE space between number and "min" */
 }
 .route-time .live-radar {
     transform: rotate(-50deg);
     transform-origin: center;
-    margin-right: 1px; /* very close to countdown */
+    margin-right: -2px; /* CLOSER to countdown - negative margin */
     width: 14px;
     height: 14px;
     flex-shrink: 0;
@@ -835,13 +835,14 @@ html, body {
 .route-time .time-stack {
     display: inline-flex;
     flex-direction: row;
-    align-items: flex-start; /* align to top */
+    align-items: center; /* CENTER vertically */
     gap: 0px; /* radar very close to countdown */
     color: #555; /* slightly darker gray */
 }
 .route-time .time-stack .live-signal {
     display: block;
     margin-bottom: 0;
+    margin-right: -2px; /* CLOSER to countdown */
     color: var(--primary-color);
     opacity: 0.95;
 }
