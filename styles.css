@@ -750,7 +750,7 @@ html, body {
     background: transparent;
 }
 .route-chip .mini-bus { width: 16px; height: 16px; display: block; }
-.route-chip .chip-number { font-weight: 800; font-size: 0.95rem; color: var(--text-main); }
+.route-chip .chip-number { font-weight: 600; font-size: 1.1rem; color: #666; } /* bigger, lighter weight, gray */
 
 /* Route Item Card */
 .route-item {
@@ -804,25 +804,24 @@ html, body {
 
 .route-time .time-inline {
     display: inline-flex;
-    align-items: baseline; /* align to baseline so "min" sits lower */
-    gap: 2px; /* tight gap between radar and number */
+    align-items: flex-end; /* align everything to bottom */
+    gap: 3px; /* tight spacing */
 }
 .route-time .live-radar {
     transform: rotate(-50deg);
     transform-origin: center;
     margin-right: 0px;
+    margin-bottom: 2px; /* lift radar slightly to align with number baseline */
     width: 14px;
     height: 14px;
     flex-shrink: 0;
-    align-self: center; /* radar centered, not baseline */
 }
 
 .time-big {
-    font-size: 1.1rem;
+    font-size: 0.95rem; /* smaller countdown */
     font-weight: 700;
     color: #555;
     line-height: 1;
-    margin-right: 4px; /* space before "min" */
 }
 
 .time-unit {
@@ -831,7 +830,7 @@ html, body {
     font-weight: 600;
     text-transform: lowercase;
     line-height: 1;
-    align-self: baseline; /* align to bottom */
+    margin-left: 3px; /* space from number */
 }
 
 /* Stack for live signal icon above minutes */
