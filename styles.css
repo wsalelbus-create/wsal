@@ -664,10 +664,10 @@ html, body {
 .station-badge span { line-height: 1; }
 
 .station-title { flex: 1; min-width: 0; }
-.station-name { font-weight: 800; font-size: 1.05rem; color: #333; }
+.station-name { font-weight: 800; font-size: 1.05rem; color: #666; }
 .station-serves { font-size: 0.85rem; color: #666; margin-top: 2px; font-weight: 700; }
 
-.station-distance { font-weight: 800; font-size: 0.9rem; color: #333; }
+.station-distance { font-weight: 800; font-size: 0.9rem; color: #666; }
 
 .station-divider {
     border-top: 1px solid #eaeaea;
@@ -735,7 +735,7 @@ html, body {
 }
 .chip-dest {
     font-weight: 800;
-    color: #333;
+    color: #666;
     font-size: 0.95rem;
 }
 
@@ -803,38 +803,38 @@ html, body {
 
 .route-time .time-inline {
     display: inline-flex;
-    align-items: flex-start; /* align icon with top of number */
-    gap: 0; /* touch the number */
+    align-items: center; /* center align like Citymapper */
+    gap: 4px; /* small gap between number and "min" */
 }
 .route-time .live-radar {
     transform: rotate(-50deg);
     transform-origin: center;
-    margin-top: 0; /* sit on the same top line as the number */
+    margin-right: 2px;
     width: 14px;
     height: 14px;
 }
 
 .time-big {
-    font-size: 1.4rem;
+    font-size: 1.1rem; /* smaller like Citymapper */
     font-weight: 800;
-    color: var(--primary-color);
-    /* Green time */
+    color: #FFA500; /* orange like Citymapper countdown */
     line-height: 1;
 }
 
 .time-unit {
-    font-size: 0.75rem;
-    color: var(--text-muted);
+    font-size: 0.7rem; /* smaller */
+    color: #FFA500; /* orange to match number */
     font-weight: 600;
-    text-transform: uppercase;
+    text-transform: lowercase; /* "min" not "MIN" */
 }
 
 /* Stack for live signal icon above minutes */
 .route-time .time-stack {
-    display: flex;
-    flex-direction: column;
+    display: inline-flex; /* horizontal not vertical */
+    flex-direction: row; /* side by side */
     align-items: center;
-    color: var(--primary-color); /* syncs svg stroke via currentColor with minutes color */
+    gap: 4px;
+    color: #FFA500; /* orange */
 }
 .route-time .time-stack .live-signal {
     display: block;
