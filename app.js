@@ -2645,6 +2645,31 @@ if (busMapBackBtn && busMapScreen) {
     }, { passive: false });
 }
 
+// Cab button - open Yassir Algeria app
+const actionCabBtn = document.getElementById('action-cab');
+if (actionCabBtn) {
+    actionCabBtn.addEventListener('click', () => {
+        // Get user's current location
+        const lat = userLat || 36.7538; // Default to Algiers center if no GPS
+        const lon = userLon || 3.0588;
+        
+        // Yassir deep link format: yassir://ride?pickup_latitude=LAT&pickup_longitude=LON
+        const yassirDeepLink = `yassir://ride?pickup_latitude=${lat}&pickup_longitude=${lon}`;
+        
+        // Fallback to Yassir website if app not installed
+        const yassirWebsite = `https://yassir.com/dz/ride`;
+        
+        // Try to open Yassir app, fallback to website
+        window.location.href = yassirDeepLink;
+        
+        // If app doesn't open in 2 seconds, redirect to website
+        setTimeout(() => {
+            window.location.href = yassirWebsite;
+        }, 2000);
+    });
+}
+
+
 
 // Bus Map Zoom and Pan - Citymapper style with smart boundaries
 const busMapContainer = document.querySelector('.bus-map-container');
