@@ -2661,11 +2661,12 @@ if (actionCabBtn) {
         const isIOSMaxTouchPoints = navigator.maxTouchPoints && navigator.maxTouchPoints > 2 && /MacIntel/.test(platform);
         const isMSStream = !!window.MSStream;
         
-        const isIOS = (isIOSUserAgent || isIOSPlatform || isIOSMaxTouchPoints) && !isMSStream;
+        // Also check for Safari on iOS (even in desktop mode)
+        const isSafari = /Safari/.test(userAgent) && !/Chrome/.test(userAgent) && !/Android/.test(userAgent);
         
-        // Show detection info on screen for debugging
-        alert(`iOS Detection:\nUserAgent: ${userAgent.substring(0, 50)}...\nPlatform: ${platform}\nIs iOS: ${isIOS}`);
+        const isIOS = (isIOSUserAgent || isIOSPlatform || isIOSMaxTouchPoints || (isSafari && /MacIntel/.test(platform))) && !isMSStream;
         
+        // Force Apple App Store URL for iOS
         const appStoreURL = isIOS 
             ? 'https://apps.apple.com/dz/app/yassir/id1441357238'
             : 'https://play.google.com/store/apps/details?id=com.yatechnologies.yassir_rider';
