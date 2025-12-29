@@ -2652,7 +2652,6 @@ if (actionCabBtn) {
         // iOS/Android detection
         const userAgent = navigator.userAgent || '';
         const platform = navigator.platform || '';
-        const isSafari = /Safari/.test(userAgent) && !/Chrome/.test(userAgent);
         const isIOS = /iPad|iPhone|iPod/.test(userAgent) || 
                       (navigator.maxTouchPoints > 2 && /MacIntel/.test(platform));
         
@@ -2662,9 +2661,7 @@ if (actionCabBtn) {
         
         let appOpened = false;
         let timer = null;
-        let iframe = null;
         
-        // Mark app as opened when page loses focus
         const markAppOpened = () => {
             appOpened = true;
             if (timer) {
@@ -2674,38 +2671,30 @@ if (actionCabBtn) {
             cleanup();
         };
         
-        // Cleanup function to remove listeners and iframe
         const cleanup = () => {
             window.removeEventListener('blur', markAppOpened);
             window.removeEventListener('pagehide', markAppOpened);
             document.removeEventListener('visibilitychange', visibilityHandler);
-            if (iframe && iframe.parentNode) {
-                document.body.removeChild(iframe);
-            }
         };
         
         const visibilityHandler = () => {
             if (document.hidden) markAppOpened();
         };
         
-        // Add listeners
         window.addEventListener('blur', markAppOpened);
         window.addEventListener('pagehide', markAppOpened);
         document.addEventListener('visibilitychange', visibilityHandler);
         
-        // Try to open app using hidden iframe (prevents error dialog on iOS)
-        iframe = document.createElement('iframe');
-        iframe.style.display = 'none';
-        iframe.src = 'yassir://';
-        document.body.appendChild(iframe);
+        // Try to open app directly
+        window.location.href = 'yassir://';
         
-        // Wait 2.5 seconds before redirecting to store
+        // Wait 5 seconds before redirecting to store
         timer = setTimeout(() => {
             if (!appOpened) {
                 window.location.href = appStoreURL;
             }
             cleanup();
-        }, 2500);
+        }, 5000);
     });
 }
 
