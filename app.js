@@ -2649,7 +2649,7 @@ if (busMapBackBtn && busMapScreen) {
 const actionCabBtn = document.getElementById('action-cab');
 if (actionCabBtn) {
     actionCabBtn.addEventListener('click', (e) => {
-        e.preventDefault(); // Prevent any default behavior
+        e.preventDefault();
         
         // iOS/Android detection
         const userAgent = navigator.userAgent || '';
@@ -2664,17 +2664,14 @@ if (actionCabBtn) {
         let appOpened = false;
         let timer = null;
         
-        // Mark app as opened when page loses focus
+        // Mark app as opened
         const markAppOpened = () => {
             appOpened = true;
-            if (timer) {
-                clearTimeout(timer);
-                timer = null;
-            }
+            if (timer) clearTimeout(timer);
             cleanup();
         };
         
-        // Cleanup function
+        // Cleanup
         const cleanup = () => {
             window.removeEventListener('blur', markAppOpened);
             window.removeEventListener('pagehide', markAppOpened);
@@ -2690,12 +2687,15 @@ if (actionCabBtn) {
         window.addEventListener('pagehide', markAppOpened);
         document.addEventListener('visibilitychange', visibilityHandler);
         
-        // Try to open app - use setTimeout to ensure it doesn't block
-        setTimeout(() => {
-            window.location.href = 'yassir://';
-        }, 100);
+        // Create temporary link and click it (doesn't break page state like window.location)
+        const link = document.createElement('a');
+        link.href = 'yassir://';
+        link.style.display = 'none';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
         
-        // Wait 5 seconds before redirecting to store
+        // Redirect to store after 5 seconds if app didn't open
         timer = setTimeout(() => {
             cleanup();
             if (!appOpened) {
