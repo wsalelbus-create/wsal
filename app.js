@@ -2652,7 +2652,6 @@ if (actionCabBtn) {
         // iOS/Android detection
         const userAgent = navigator.userAgent || '';
         const platform = navigator.platform || '';
-        const isSafari = /Safari/.test(userAgent) && !/Chrome/.test(userAgent);
         const isIOS = /iPad|iPhone|iPod/.test(userAgent) || 
                       (navigator.maxTouchPoints > 2 && /MacIntel/.test(platform));
         
@@ -2662,6 +2661,7 @@ if (actionCabBtn) {
         
         let appOpened = false;
         let timer = null;
+        let iframe = null;
         
         // Mark app as opened when page loses focus
         const markAppOpened = () => {
@@ -2673,24 +2673,31 @@ if (actionCabBtn) {
             cleanup();
         };
         
-        // Cleanup function to remove listeners
+        // Cleanup function
         const cleanup = () => {
             window.removeEventListener('blur', markAppOpened);
             window.removeEventListener('pagehide', markAppOpened);
             document.removeEventListener('visibilitychange', visibilityHandler);
+            if (iframe && iframe.parentNode) {
+                document.body.removeChild(iframe);
+                iframe = null;
+            }
         };
         
         const visibilityHandler = () => {
             if (document.hidden) markAppOpened();
         };
         
-        // Add listeners (NOT with once:true, we'll remove them manually)
+        // Add listeners
         window.addEventListener('blur', markAppOpened);
         window.addEventListener('pagehide', markAppOpened);
         document.addEventListener('visibilitychange', visibilityHandler);
         
-        // Try to open app
-        window.location.href = 'yassir://';
+        // Try to open app using iframe (doesn't break page state)
+        iframe = document.createElement('iframe');
+        iframe.style.display = 'none';
+        iframe.src = 'yassir://';
+        document.body.appendChild(iframe);
         
         // Wait 5 seconds before redirecting to store
         timer = setTimeout(() => {
