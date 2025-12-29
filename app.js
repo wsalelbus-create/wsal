@@ -2660,21 +2660,31 @@ if (actionCabBtn) {
             ? 'https://apps.apple.com/app/yassir/id1239926325'
             : 'https://play.google.com/store/apps/details?id=com.yatechnologies.yassir_rider';
         
-        // Track time when we try to open app
-        const clickTime = Date.now();
+        let appOpened = false;
+        let timer = null;
+        
+        // Mark app as opened when page loses focus
+        const markAppOpened = () => {
+            appOpened = true;
+            if (timer) clearTimeout(timer);
+        };
+        
+        // Listen for all events that indicate leaving the page
+        window.addEventListener('blur', markAppOpened, { once: true });
+        window.addEventListener('pagehide', markAppOpened, { once: true });
+        document.addEventListener('visibilitychange', () => {
+            if (document.hidden) markAppOpened();
+        }, { once: true });
         
         // Try to open app
         window.location.href = 'yassir://';
         
-        // Check after delay if we should redirect to store
-        setTimeout(() => {
-            // If less than 4 seconds passed since click AND page is visible,
-            // it means app didn't open (user dismissed error or popup)
-            const elapsed = Date.now() - clickTime;
-            if (elapsed < 4500 && document.visibilityState === 'visible' && !document.hidden) {
+        // Only redirect to store if app didn't open
+        timer = setTimeout(() => {
+            if (!appOpened) {
                 window.location.href = appStoreURL;
             }
-        }, 4000);
+        }, 3000);
     });
 }
 
