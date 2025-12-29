@@ -2662,6 +2662,7 @@ if (actionCabBtn) {
         
         let appOpened = false;
         let timer = null;
+        let iframe = null;
         
         // Mark app as opened when page loses focus
         const markAppOpened = () => {
@@ -2670,24 +2671,41 @@ if (actionCabBtn) {
                 clearTimeout(timer);
                 timer = null;
             }
+            cleanup();
         };
         
-        // Listen for all events that indicate leaving the page
-        window.addEventListener('blur', markAppOpened, { once: true });
-        window.addEventListener('pagehide', markAppOpened, { once: true });
-        document.addEventListener('visibilitychange', () => {
+        // Cleanup function to remove listeners and iframe
+        const cleanup = () => {
+            window.removeEventListener('blur', markAppOpened);
+            window.removeEventListener('pagehide', markAppOpened);
+            document.removeEventListener('visibilitychange', visibilityHandler);
+            if (iframe && iframe.parentNode) {
+                document.body.removeChild(iframe);
+            }
+        };
+        
+        const visibilityHandler = () => {
             if (document.hidden) markAppOpened();
-        }, { once: true });
+        };
         
-        // Try to open app
-        window.location.href = 'yassir://';
+        // Add listeners
+        window.addEventListener('blur', markAppOpened);
+        window.addEventListener('pagehide', markAppOpened);
+        document.addEventListener('visibilitychange', visibilityHandler);
         
-        // Wait longer (5 seconds) to give time for popup + clicking Open + blur event
+        // Try to open app using hidden iframe (prevents error dialog on iOS)
+        iframe = document.createElement('iframe');
+        iframe.style.display = 'none';
+        iframe.src = 'yassir://';
+        document.body.appendChild(iframe);
+        
+        // Wait 2.5 seconds before redirecting to store
         timer = setTimeout(() => {
             if (!appOpened) {
                 window.location.href = appStoreURL;
             }
-        }, 5000);
+            cleanup();
+        }, 2500);
     });
 }
 
