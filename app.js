@@ -2666,7 +2666,10 @@ if (actionCabBtn) {
         // Mark app as opened when page loses focus
         const markAppOpened = () => {
             appOpened = true;
-            if (timer) clearTimeout(timer);
+            if (timer) {
+                clearTimeout(timer);
+                timer = null;
+            }
         };
         
         // Listen for all events that indicate leaving the page
@@ -2679,12 +2682,12 @@ if (actionCabBtn) {
         // Try to open app
         window.location.href = 'yassir://';
         
-        // Only redirect to store if app didn't open
+        // Wait longer (5 seconds) to give time for popup + clicking Open + blur event
         timer = setTimeout(() => {
             if (!appOpened) {
                 window.location.href = appStoreURL;
             }
-        }, 3000);
+        }, 5000);
     });
 }
 
