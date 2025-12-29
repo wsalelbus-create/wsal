@@ -2645,25 +2645,11 @@ if (busMapBackBtn && busMapScreen) {
     }, { passive: false });
 }
 
-// Cab button - open Yassir Algeria app
+// Cab button - open Yassir Algeria app or App Store
 const actionCabBtn = document.getElementById('action-cab');
 if (actionCabBtn) {
-    let isProcessing = false; // Prevent multiple simultaneous clicks
-    
-    // Reset state when page becomes visible again (coming back from App Store)
-    window.addEventListener('pageshow', () => {
-        isProcessing = false;
-    });
-    
     actionCabBtn.addEventListener('click', (e) => {
         e.preventDefault();
-        
-        // Prevent multiple clicks while processing
-        if (isProcessing) {
-            console.log('Already processing, ignoring click');
-            return;
-        }
-        isProcessing = true;
         
         // iOS/Android detection
         const userAgent = navigator.userAgent || '';
@@ -2671,62 +2657,13 @@ if (actionCabBtn) {
         const isIOS = /iPad|iPhone|iPod/.test(userAgent) || 
                       (navigator.maxTouchPoints > 2 && /MacIntel/.test(platform));
         
+        // Just open App Store directly - most reliable approach
+        // User can open Yassir from there if installed, or install if not
         const appStoreURL = isIOS 
             ? 'https://apps.apple.com/app/yassir/id1239926325'
             : 'https://play.google.com/store/apps/details?id=com.yatechnologies.yassir_rider';
         
-        let appOpened = false;
-        let timer = null;
-        
-        // Mark app as opened
-        const markAppOpened = () => {
-            appOpened = true;
-            if (timer) clearTimeout(timer);
-            cleanup();
-        };
-        
-        // Cleanup
-        const cleanup = () => {
-            window.removeEventListener('blur', markAppOpened);
-            window.removeEventListener('pagehide', markAppOpened);
-            document.removeEventListener('visibilitychange', visibilityHandler);
-            isProcessing = false;
-        };
-        
-        const visibilityHandler = () => {
-            if (document.hidden) markAppOpened();
-        };
-        
-        // Add listeners
-        window.addEventListener('blur', markAppOpened);
-        window.addEventListener('pagehide', markAppOpened);
-        document.addEventListener('visibilitychange', visibilityHandler);
-        
-        // Add timestamp to make URL unique each time
-        const timestamp = Date.now();
-        const yassirURL = `yassir://?t=${timestamp}`;
-        
-        // Create temporary link and click it
-        const link = document.createElement('a');
-        link.href = yassirURL;
-        link.style.display = 'none';
-        document.body.appendChild(link);
-        link.click();
-        
-        // Remove link after a short delay
-        setTimeout(() => {
-            if (link.parentNode) {
-                document.body.removeChild(link);
-            }
-        }, 100);
-        
-        // Redirect to store after 5 seconds if app didn't open
-        timer = setTimeout(() => {
-            cleanup();
-            if (!appOpened) {
-                window.location.href = appStoreURL;
-            }
-        }, 5000);
+        window.location.href = appStoreURL;
     });
 }
 
