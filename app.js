@@ -2652,6 +2652,7 @@ if (actionCabBtn) {
         // iOS/Android detection
         const userAgent = navigator.userAgent || '';
         const platform = navigator.platform || '';
+        const isSafari = /Safari/.test(userAgent) && !/Chrome/.test(userAgent);
         const isIOS = /iPad|iPhone|iPod/.test(userAgent) || 
                       (navigator.maxTouchPoints > 2 && /MacIntel/.test(platform));
         
@@ -2662,6 +2663,7 @@ if (actionCabBtn) {
         let appOpened = false;
         let timer = null;
         
+        // Mark app as opened when page loses focus
         const markAppOpened = () => {
             appOpened = true;
             if (timer) {
@@ -2671,6 +2673,7 @@ if (actionCabBtn) {
             cleanup();
         };
         
+        // Cleanup function to remove listeners
         const cleanup = () => {
             window.removeEventListener('blur', markAppOpened);
             window.removeEventListener('pagehide', markAppOpened);
@@ -2681,11 +2684,12 @@ if (actionCabBtn) {
             if (document.hidden) markAppOpened();
         };
         
+        // Add listeners (NOT with once:true, we'll remove them manually)
         window.addEventListener('blur', markAppOpened);
         window.addEventListener('pagehide', markAppOpened);
         document.addEventListener('visibilitychange', visibilityHandler);
         
-        // Try to open app directly
+        // Try to open app
         window.location.href = 'yassir://';
         
         // Wait 5 seconds before redirecting to store
