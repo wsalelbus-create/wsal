@@ -2648,8 +2648,22 @@ if (busMapBackBtn && busMapScreen) {
 // Cab button - open Yassir Algeria app
 const actionCabBtn = document.getElementById('action-cab');
 if (actionCabBtn) {
+    let isProcessing = false; // Prevent multiple simultaneous clicks
+    
+    // Reset state when page becomes visible again (coming back from App Store)
+    window.addEventListener('pageshow', () => {
+        isProcessing = false;
+    });
+    
     actionCabBtn.addEventListener('click', (e) => {
         e.preventDefault();
+        
+        // Prevent multiple clicks while processing
+        if (isProcessing) {
+            console.log('Already processing, ignoring click');
+            return;
+        }
+        isProcessing = true;
         
         // iOS/Android detection
         const userAgent = navigator.userAgent || '';
@@ -2676,6 +2690,7 @@ if (actionCabBtn) {
             window.removeEventListener('blur', markAppOpened);
             window.removeEventListener('pagehide', markAppOpened);
             document.removeEventListener('visibilitychange', visibilityHandler);
+            isProcessing = false;
         };
         
         const visibilityHandler = () => {
@@ -2687,7 +2702,7 @@ if (actionCabBtn) {
         window.addEventListener('pagehide', markAppOpened);
         document.addEventListener('visibilitychange', visibilityHandler);
         
-        // Add timestamp to make URL unique each time (prevents Safari caching)
+        // Add timestamp to make URL unique each time
         const timestamp = Date.now();
         const yassirURL = `yassir://?t=${timestamp}`;
         
