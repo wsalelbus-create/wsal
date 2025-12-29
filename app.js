@@ -2648,7 +2648,9 @@ if (busMapBackBtn && busMapScreen) {
 // Cab button - open Yassir Algeria app
 const actionCabBtn = document.getElementById('action-cab');
 if (actionCabBtn) {
-    actionCabBtn.addEventListener('click', () => {
+    actionCabBtn.addEventListener('click', (e) => {
+        e.preventDefault(); // Prevent any default behavior
+        
         // iOS/Android detection
         const userAgent = navigator.userAgent || '';
         const platform = navigator.platform || '';
@@ -2661,7 +2663,6 @@ if (actionCabBtn) {
         
         let appOpened = false;
         let timer = null;
-        let iframe = null;
         
         // Mark app as opened when page loses focus
         const markAppOpened = () => {
@@ -2678,10 +2679,6 @@ if (actionCabBtn) {
             window.removeEventListener('blur', markAppOpened);
             window.removeEventListener('pagehide', markAppOpened);
             document.removeEventListener('visibilitychange', visibilityHandler);
-            if (iframe && iframe.parentNode) {
-                document.body.removeChild(iframe);
-                iframe = null;
-            }
         };
         
         const visibilityHandler = () => {
@@ -2693,18 +2690,17 @@ if (actionCabBtn) {
         window.addEventListener('pagehide', markAppOpened);
         document.addEventListener('visibilitychange', visibilityHandler);
         
-        // Try to open app using iframe (doesn't break page state)
-        iframe = document.createElement('iframe');
-        iframe.style.display = 'none';
-        iframe.src = 'yassir://';
-        document.body.appendChild(iframe);
+        // Try to open app - use setTimeout to ensure it doesn't block
+        setTimeout(() => {
+            window.location.href = 'yassir://';
+        }, 100);
         
         // Wait 5 seconds before redirecting to store
         timer = setTimeout(() => {
+            cleanup();
             if (!appOpened) {
                 window.location.href = appStoreURL;
             }
-            cleanup();
         }, 5000);
     });
 }
