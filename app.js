@@ -2649,54 +2649,9 @@ if (busMapBackBtn && busMapScreen) {
 const actionCabBtn = document.getElementById('action-cab');
 if (actionCabBtn) {
     actionCabBtn.addEventListener('click', () => {
-        // Comprehensive iOS detection
-        const userAgent = navigator.userAgent || navigator.vendor || window.opera;
-        const platform = navigator.platform || '';
-        
-        const isIOSUserAgent = /iPad|iPhone|iPod/.test(userAgent);
-        const isIOSPlatform = /iPad|iPhone|iPod/.test(platform);
-        const isIOSMaxTouchPoints = navigator.maxTouchPoints && navigator.maxTouchPoints > 2 && /MacIntel/.test(platform);
-        const isMSStream = !!window.MSStream;
-        const isSafari = /Safari/.test(userAgent) && !/Chrome/.test(userAgent) && !/Android/.test(userAgent);
-        
-        const isIOS = (isIOSUserAgent || isIOSPlatform || isIOSMaxTouchPoints || (isSafari && /MacIntel/.test(platform))) && !isMSStream;
-        
-        // App Store link
-        const appStoreURL = isIOS 
-            ? 'https://apps.apple.com/app/yassir/id1239926325'
-            : 'https://play.google.com/store/apps/details?id=com.yatechnologies.yassir_rider';
-        
-        let redirectTimer = null;
-        let hasLeftPage = false;
-        
-        // Cancel redirect when leaving page
-        const onLeave = () => {
-            hasLeftPage = true;
-            if (redirectTimer) {
-                clearTimeout(redirectTimer);
-                redirectTimer = null;
-            }
-        };
-        
-        // Add listeners before trying to open app
-        document.addEventListener('visibilitychange', onLeave);
-        window.addEventListener('blur', onLeave);
-        window.addEventListener('pagehide', onLeave);
-        
-        // Try to open app directly (will show popup if app installed)
+        // Just try to open the app - no automatic store redirect
+        // If app not installed, user will see error and can install manually
         window.location.href = 'yassir://';
-        
-        // Set redirect timer - only fires if we're still on page
-        redirectTimer = setTimeout(() => {
-            // Only redirect if page is still visible and we haven't left
-            if (!hasLeftPage && document.visibilityState === 'visible') {
-                window.location.href = appStoreURL;
-            }
-            // Cleanup
-            document.removeEventListener('visibilitychange', onLeave);
-            window.removeEventListener('blur', onLeave);
-            window.removeEventListener('pagehide', onLeave);
-        }, 2500);
     });
 }
 
