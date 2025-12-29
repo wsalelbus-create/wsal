@@ -2687,13 +2687,23 @@ if (actionCabBtn) {
         window.addEventListener('pagehide', markAppOpened);
         document.addEventListener('visibilitychange', visibilityHandler);
         
-        // Create temporary link and click it (doesn't break page state like window.location)
+        // Add timestamp to make URL unique each time (prevents Safari caching)
+        const timestamp = Date.now();
+        const yassirURL = `yassir://?t=${timestamp}`;
+        
+        // Create temporary link and click it
         const link = document.createElement('a');
-        link.href = 'yassir://';
+        link.href = yassirURL;
         link.style.display = 'none';
         document.body.appendChild(link);
         link.click();
-        document.body.removeChild(link);
+        
+        // Remove link after a short delay
+        setTimeout(() => {
+            if (link.parentNode) {
+                document.body.removeChild(link);
+            }
+        }, 100);
         
         // Redirect to store after 5 seconds if app didn't open
         timer = setTimeout(() => {
