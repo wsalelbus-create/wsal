@@ -2649,9 +2649,32 @@ if (busMapBackBtn && busMapScreen) {
 const actionCabBtn = document.getElementById('action-cab');
 if (actionCabBtn) {
     actionCabBtn.addEventListener('click', () => {
-        // Just try to open the app - no automatic store redirect
-        // If app not installed, user will see error and can install manually
+        // iOS/Android detection
+        const userAgent = navigator.userAgent || '';
+        const platform = navigator.platform || '';
+        const isSafari = /Safari/.test(userAgent) && !/Chrome/.test(userAgent);
+        const isIOS = /iPad|iPhone|iPod/.test(userAgent) || 
+                      (navigator.maxTouchPoints > 2 && /MacIntel/.test(platform));
+        
+        const appStoreURL = isIOS 
+            ? 'https://apps.apple.com/app/yassir/id1239926325'
+            : 'https://play.google.com/store/apps/details?id=com.yatechnologies.yassir_rider';
+        
+        // Track time when we try to open app
+        const clickTime = Date.now();
+        
+        // Try to open app
         window.location.href = 'yassir://';
+        
+        // Check after delay if we should redirect to store
+        setTimeout(() => {
+            // If less than 4 seconds passed since click AND page is visible,
+            // it means app didn't open (user dismissed error or popup)
+            const elapsed = Date.now() - clickTime;
+            if (elapsed < 4500 && document.visibilityState === 'visible' && !document.hidden) {
+                window.location.href = appStoreURL;
+            }
+        }, 4000);
     });
 }
 
