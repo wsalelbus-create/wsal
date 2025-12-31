@@ -2354,9 +2354,9 @@ function setUIMode(mode, station) {
     }
 
     // Hide the station selector bar in bus mode AND on detailed (3rd) screen AND in crowd mode
-    if (floatingControlsEl) {
-        if (mode === 'bus' || mode === 'crowd' || (mode === 'walk' && busDetailActive)) floatingControlsEl.classList.add('hidden');
-        else floatingControlsEl.classList.remove('hidden');
+    if (AppState.floatingControlsEl) {
+        if (mode === 'bus' || mode === 'crowd' || (mode === 'walk' && AppState.busDetailActive)) AppState.floatingControlsEl.classList.add('hidden');
+        else AppState.floatingControlsEl.classList.remove('hidden');
     }
 
     // Crosshair: hide on mode change, will show when user starts moving map
