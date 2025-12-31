@@ -1309,18 +1309,18 @@ function initHeadingSensors() {
         if (granted) {
             AppState.orientationPermissionGranted = true;
             attachOrientationListener();
-            if (enableCompassBtn) enableCompassBtn.classList.add('hidden');
+            if (AppState.enableCompassBtn) AppState.enableCompassBtn.classList.add('hidden');
         } else {
             // Keep the UI button visible for another try
-            if (enableCompassBtn) enableCompassBtn.classList.remove('hidden');
+            if (AppState.enableCompassBtn) AppState.enableCompassBtn.classList.remove('hidden');
         }
         return granted;
     }
     // Expose globally so other modules/UI can trigger it (e.g., map container)
     try { window.requestCompassPermission = requestCompassPermission; } catch {}
 
-    if (locateBtn) locateBtn.addEventListener('click', requestCompassPermission);
-    if (enableCompassBtn) enableCompassBtn.addEventListener('click', () => {
+    if (AppState.locateBtn) AppState.locateBtn.addEventListener('click', requestCompassPermission);
+    if (AppState.enableCompassBtn) AppState.enableCompassBtn.addEventListener('click', () => {
         requestCompassPermission();
     });
     // First-chance: capture the very first gesture anywhere on the page
@@ -1346,7 +1346,7 @@ function attachOrientationListener() {
     // Some Safari builds dispatch deviceorientationabsolute instead
     window.addEventListener('deviceorientationabsolute', handleDeviceOrientation, true);
     // Hide enable button once active
-    if (enableCompassBtn) enableCompassBtn.classList.add('hidden');
+    if (AppState.enableCompassBtn) AppState.enableCompassBtn.classList.add('hidden');
 }
 
 function handleDeviceOrientation(e) {
@@ -1453,8 +1453,8 @@ function compassHeadingFromEuler(alpha, beta, gamma) {
 }
 
 // --- Station Selector Modal ---
-const stationModal = document.getElementById('station-modal');
-const closeModalBtn = document.getElementById('close-modal');
+const stationModal = AppState.stationModal || document.getElementById('station-modal');
+const closeModalBtn = AppState.closeModalBtn || document.getElementById('close-modal');
 const stationSearchInput = document.getElementById('station-search');
 const stationListEl = document.getElementById('station-list');
 
@@ -1680,9 +1680,9 @@ function initMap() {
                 }, 800); // Hide after 800ms
                 
                 // SKIP reordering if this moveend was triggered by GPS re-centering
-                if (isGPSRecentering) {
+                if (AppState.isGPSRecentering) {
                     console.log('[moveend] Skipping reorder - GPS re-center in progress');
-                    isGPSRecentering = false; // reset flag
+                    AppState.isGPSRecentering = false; // reset flag
                     return;
                 }
                 
@@ -1713,14 +1713,14 @@ function updateMap() {
     });
 
     // Also remove existing OSRM route layer if present
-    if (routeLayer) {
-        try { map.removeLayer(routeLayer); } catch (e) {}
-        routeLayer = null;
+    if (AppState.routeLayer) {
+        try { AppState.map.removeLayer(AppState.routeLayer); } catch (e) {}
+        AppState.routeLayer = null;
     }
     // Remove bus stations layer if present
-    if (busStationsLayer) {
-        try { map.removeLayer(busStationsLayer); } catch (e) {}
-        busStationsLayer = null;
+    if (AppState.busStationsLayer) {
+        try { AppState.map.removeLayer(AppState.busStationsLayer); } catch (e) {}
+        AppState.busStationsLayer = null;
     }
 
     const station = AppState.currentStation;
@@ -1834,13 +1834,13 @@ function updateMap() {
                     // Show crosshair when tapping station
                     const crosshair = document.getElementById('map-crosshair');
                     if (crosshair) crosshair.classList.add('visible');
-                    map.setView([s.lat, s.lon], map.getZoom(), { animate: true, duration: 0.3 });
+                    AppState.map.setView([s.lat, s.lon], AppState.map.getZoom(), { animate: true, duration: 0.3 });
                 });
                 
                 return marker;
             });
-            busStationsLayer = L.layerGroup(markers).addTo(map);
-        } else if (uiMode === 'idle') {
+            AppState.busStationsLayer = L.layerGroup(markers).addTo(AppState.map);
+        } else if (AppState.uiMode === 'idle') {
             // IDLE MODE: Show all bus stops like in bus mode
             const markers = STATIONS.map(s => {
                 const badge = stationBadgeFor(s.name);
@@ -1857,8 +1857,8 @@ function updateMap() {
                     zIndexOffset: 900
                 });
             });
-            busStationsLayer = L.layerGroup(markers).addTo(map);
-        } else if (uiMode === 'crowd') {
+            AppState.busStationsLayer = L.layerGroup(markers).addTo(AppState.map);
+        } else if (AppState.uiMode === 'crowd') {
             // CROWD MODE: Show user location + nearest station + 100m radius circle
             if (userLat && userLon && station) {
                 // Add user location marker (blue dot)
@@ -1903,7 +1903,7 @@ function updateMap() {
                 const bounds = L.latLngBounds([[userLat, userLon], [station.lat, station.lon]]);
                 const basePaddingTop = 280;
                 const basePaddingBottom = 200;
-                map.fitBounds(bounds, { 
+                AppState.map.fitBounds(bounds, { 
                     paddingTopLeft: [80, basePaddingTop + 100],
                     paddingBottomRight: [80, basePaddingBottom + 100],
                     maxZoom: 17
@@ -1913,11 +1913,11 @@ function updateMap() {
 
         if (uiMode === 'walk' && station) {
             // Calculate and display distance
-            const distance = getDistanceFromLatLonInKm(userLat, userLon, station.lat, station.lon);
-            mapDistanceEl.textContent = `📍 ${distance.toFixed(2)} km away`;
+            const distance = getDistanceFromLatLonInKm(AppState.userLat, AppState.userLon, station.lat, station.lon);
+            AppState.mapDistanceEl.textContent = `📍 ${distance.toFixed(2)} km away`;
         }
 
-        if (uiMode === 'walk' && station) {
+        if (AppState.uiMode === 'walk' && station) {
             // Fit map to show both markers
             // Account for oversized map (160% height at -50% top) - adjust padding to fit visible area
             const bounds = L.latLngBounds([[userLat, userLon], [station.lat, station.lon]]);
@@ -1927,20 +1927,20 @@ function updateMap() {
             const basePaddingBottom = 200;
             
             // Use generous padding to ensure both points are always visible
-            map.fitBounds(bounds, { 
+            AppState.map.fitBounds(bounds, { 
                 paddingTopLeft: [80, basePaddingTop + 100],  // extra generous padding
                 paddingBottomRight: [80, basePaddingBottom + 100],
                 maxZoom: 15 // allow zooming out more for long distances
             });
-        } else if (uiMode === 'idle') {
-            map.setView([userLat, userLon], 16);
+        } else if (AppState.uiMode === 'idle') {
+            AppState.map.setView([AppState.userLat, AppState.userLon], 16);
         }
     } else {
         // No user location
-        if (uiMode === 'walk' && station) {
-            map.setView([station.lat, station.lon], 15);
+        if (AppState.uiMode === 'walk' && station) {
+            AppState.map.setView([station.lat, station.lon], 15);
         }
-        mapDistanceEl.textContent = '📍 Location unavailable';
+        AppState.mapDistanceEl.textContent = '📍 Location unavailable';
     }
 }
 
@@ -2207,7 +2207,7 @@ function hideCrowdRadiusCircle() {
 // Fetch a street route from user -> station using OSRM and draw it on the map
 async function renderOsrmRoute(fromLat, fromLon, toLat, toLon) {
     // Sequence guard to avoid stale routes drawing over the current one
-    const seq = ++osrmSeq;
+    const seq = ++AppState.osrmSeq;
     // Use the foot-only server to avoid accidentally getting car profiles from the demo
     const candidates = [
         `https://routing.openstreetmap.de/routed-foot/route/v1/foot/${fromLon},${fromLat};${toLon},${toLat}?overview=full&geometries=geojson&steps=true&annotations=duration,distance`
@@ -2247,21 +2247,21 @@ async function renderOsrmRoute(fromLat, fromLon, toLat, toLon) {
 
     if (!route) {
         // No valid walking route from OSRM sources — draw fallback dashed path and show em dash
-        if (seq === osrmSeq && map) {
+        if (seq === AppState.osrmSeq && AppState.map) {
             // Remove any existing route layer before drawing fallback
-            if (routeLayer) {
-                try { map.removeLayer(routeLayer); } catch {}
-                routeLayer = null;
+            if (AppState.routeLayer) {
+                try { AppState.map.removeLayer(AppState.routeLayer); } catch {}
+                AppState.routeLayer = null;
             }
             const latlngs = [ [fromLat, fromLon], [toLat, toLon] ];
-            const s = computeWalkDash(map ? map.getZoom() : 15);
-            routeLayer = L.polyline(latlngs, {
+            const s = computeWalkDash(AppState.map ? AppState.map.getZoom() : 15);
+            AppState.routeLayer = L.polyline(latlngs, {
                 color: '#2D5872', weight: s.weight, opacity: 0.42, dashArray: s.dash, lineCap: 'round'
-            }).addTo(map);
-            try { map.off('zoomend', applyWalkRouteStyle); } catch {}
-            map.on('zoomend', applyWalkRouteStyle);
-            if (walkTimeText) walkTimeText.textContent = '—';
-            if (calorieTextEl) calorieTextEl.textContent = '— / Kcal';
+            }).addTo(AppState.map);
+            try { AppState.map.off('zoomend', applyWalkRouteStyle); } catch {}
+            AppState.map.on('zoomend', applyWalkRouteStyle);
+            if (AppState.walkTimeText) AppState.walkTimeText.textContent = '—';
+            if (AppState.calorieTextEl) AppState.calorieTextEl.textContent = '— / Kcal';
         }
         return;
     }
@@ -2280,18 +2280,18 @@ async function renderOsrmRoute(fromLat, fromLon, toLat, toLon) {
             steps_count: (route.legs && route.legs[0] && route.legs[0].steps) ? route.legs[0].steps.length : 0
         });
     } catch {}
-    if (seq === osrmSeq && map) {
+    if (seq === AppState.osrmSeq && AppState.map) {
         // Remove any existing route layer before drawing latest route
-        if (routeLayer) {
-            try { map.removeLayer(routeLayer); } catch {}
-            routeLayer = null;
+        if (AppState.routeLayer) {
+            try { AppState.map.removeLayer(AppState.routeLayer); } catch {}
+            AppState.routeLayer = null;
         }
-        const s = computeWalkDash(map ? map.getZoom() : 15);
-        routeLayer = L.polyline(coords, { color: '#2D5872', weight: s.weight, opacity: 0.42, dashArray: s.dash, lineCap: 'round' }).addTo(map);
-        try { map.off('zoomend', applyWalkRouteStyle); } catch {}
-        map.on('zoomend', applyWalkRouteStyle);
+        const s = computeWalkDash(AppState.map ? AppState.map.getZoom() : 15);
+        AppState.routeLayer = L.polyline(coords, { color: '#2D5872', weight: s.weight, opacity: 0.42, dashArray: s.dash, lineCap: 'round' }).addTo(AppState.map);
+        try { AppState.map.off('zoomend', applyWalkRouteStyle); } catch {}
+        AppState.map.on('zoomend', applyWalkRouteStyle);
         try {
-            const bounds = routeLayer.getBounds();
+            const bounds = AppState.routeLayer.getBounds();
             
             // Base padding for oversized map (160% height at -50% top)
             const basePaddingTop = 280;
@@ -2299,7 +2299,7 @@ async function renderOsrmRoute(fromLat, fromLon, toLat, toLon) {
             
             // Use generous padding to ensure full route is always visible
             // Don't try to calculate distance - just use large enough padding
-            map.fitBounds(bounds, { 
+            AppState.map.fitBounds(bounds, { 
                 paddingTopLeft: [80, basePaddingTop + 100],  // extra generous padding
                 paddingBottomRight: [80, basePaddingBottom + 100],
                 maxZoom: 15 // allow zooming out more for long routes
@@ -2340,13 +2340,13 @@ function setUIMode(mode, station) {
     if (map && userLat && userLon) {
         if (mode === 'idle') {
             console.log('[setUIMode] Idle mode - centering on GPS');
-            map.setView([userLat, userLon], 16, { animate: true, duration: 0.3 });
+            AppState.map.setView([AppState.userLat, AppState.userLon], 16, { animate: true, duration: 0.3 });
         } else if (mode === 'walk') {
             console.log('[setUIMode] Walk mode - centering on GPS');
-            map.setView([userLat, userLon], 15, { animate: true, duration: 0.3 });
+            AppState.map.setView([AppState.userLat, AppState.userLon], 15, { animate: true, duration: 0.3 });
         } else if (mode === 'bus') {
             console.log('[setUIMode] Bus mode - centering on GPS');
-            map.setView([userLat, userLon], 14, { animate: true, duration: 0.3 });
+            AppState.map.setView([AppState.userLat, AppState.userLon], 14, { animate: true, duration: 0.3 });
         } else if (mode === 'crowd') {
             console.log('[setUIMode] Crowd mode - will fit bounds to user + station');
             // Map will be fitted in updateMap() to show both user and station
@@ -2490,11 +2490,11 @@ function setUIMode(mode, station) {
     if (AppState.mapInitialized) updateMap();
 
     // Toggle header badges: settings only on idle; back on walk/bus/crowd
-    if (settingsBtn) {
-        if (mode === 'idle') settingsBtn.classList.remove('hidden');
-        else settingsBtn.classList.add('hidden');
+    if (AppState.settingsBtn) {
+        if (mode === 'idle') AppState.settingsBtn.classList.remove('hidden');
+        else AppState.settingsBtn.classList.add('hidden');
     }
-    if (backBtn) {
+    if (AppState.backBtn) {
         if (mode === 'idle') backBtn.classList.add('hidden');
         else backBtn.classList.remove('hidden');
     }
@@ -2511,28 +2511,28 @@ function setUIMode(mode, station) {
 // --- Event Listeners ---
 
 // Floating Station Selector Click
-if (stationSelectorTrigger) {
-    stationSelectorTrigger.addEventListener('click', () => {
+if (AppState.stationSelectorTrigger) {
+    AppState.stationSelectorTrigger.addEventListener('click', () => {
         showStationSelector();
     });
 }
 
 // Location Button - Center map on user location
-if (locateBtn) {
-    locateBtn.addEventListener('click', () => {
-        if (userLat && userLon) {
+if (AppState.locateBtn) {
+    AppState.locateBtn.addEventListener('click', () => {
+        if (AppState.userLat && AppState.userLon) {
             // Center map on user location with animation
-            map.flyTo([userLat, userLon], 16, {
+            AppState.map.flyTo([AppState.userLat, AppState.userLon], 16, {
                 duration: 1.5,
                 easeLinearity: 0.5
             });
 
             // Visual feedback
-            locateBtn.style.background = 'var(--primary-color)';
-            locateBtn.style.color = 'white';
+            AppState.locateBtn.style.background = 'var(--primary-color)';
+            AppState.locateBtn.style.color = 'white';
             setTimeout(() => {
-                locateBtn.style.background = 'white';
-                locateBtn.style.color = '#333';
+                AppState.locateBtn.style.background = 'white';
+                AppState.locateBtn.style.color = '#333';
             }, 300);
         } else {
             // Try to get location if not available
@@ -2542,27 +2542,27 @@ if (locateBtn) {
 }
 
 // Quick Actions: Bus and Walk
-if (actionWalkBtn) {
-    actionWalkBtn.addEventListener('click', () => {
+if (AppState.actionWalkBtn) {
+    AppState.actionWalkBtn.addEventListener('click', () => {
         setUIMode('walk');
     });
     // iOS Safari/PWA: ensure tap triggers even if click is swallowed
-    actionWalkBtn.addEventListener('touchend', (e) => {
+    AppState.actionWalkBtn.addEventListener('touchend', (e) => {
         e.preventDefault();
         setUIMode('walk');
     }, { passive: false });
-    actionWalkBtn.addEventListener('pointerup', () => { setUIMode('walk'); });
+    AppState.actionWalkBtn.addEventListener('pointerup', () => { setUIMode('walk'); });
 }
-if (actionBusBtn) {
-    actionBusBtn.addEventListener('click', () => {
+if (AppState.actionBusBtn) {
+    AppState.actionBusBtn.addEventListener('click', () => {
         setUIMode('bus');
     });
     // iOS Safari/PWA: ensure tap triggers even if click is swallowed
-    actionBusBtn.addEventListener('touchend', (e) => {
+    AppState.actionBusBtn.addEventListener('touchend', (e) => {
         e.preventDefault();
         setUIMode('bus');
     }, { passive: false });
-    actionBusBtn.addEventListener('pointerup', () => { setUIMode('bus'); });
+    AppState.actionBusBtn.addEventListener('pointerup', () => { setUIMode('bus'); });
 }
 
 // Map button - show full-screen bus map
@@ -3393,8 +3393,8 @@ function setupPanelDrag() {
                     // Re-center map on GPS when pulling up from 20vh (ALL screens)
                     if (userLat && userLon && target > circlesHook + 10) {
                         console.log('[MAP] Re-centering on GPS after pulling up from 20vh');
-                        isGPSRecentering = true; // Set flag to prevent reordering
-                        map.setView([userLat, userLon], map.getZoom(), { animate: true, duration: 0.3 });
+                        AppState.isGPSRecentering = true; // Set flag to prevent reordering
+                        AppState.map.setView([AppState.userLat, AppState.userLon], AppState.map.getZoom(), { animate: true, duration: 0.3 });
                     }
                     
                     lastMoves = [];
@@ -3475,8 +3475,8 @@ function setupPanelDrag() {
             // Re-center map on GPS when pulling up from 20vh (ALL screens)
             if (userLat && userLon && target > circlesHook + 10) {
                 console.log('[MAP] Re-centering on GPS after pulling up from 20vh');
-                isGPSRecentering = true; // Set flag to prevent reordering
-                map.setView([userLat, userLon], map.getZoom(), { animate: true, duration: 0.3 });
+                AppState.isGPSRecentering = true; // Set flag to prevent reordering
+                AppState.map.setView([AppState.userLat, AppState.userLon], AppState.map.getZoom(), { animate: true, duration: 0.3 });
             }
             
             lastMoves = [];
