@@ -2366,11 +2366,11 @@ function setUIMode(mode, station) {
     }
 
     // Basemap policy: always use clean no-labels + labels overlay in ALL modes
-    if (map && walkTileLayer) {
+    if (AppState.map && AppState.walkTileLayer) {
         try {
-            if (map.hasLayer(baseTileLayer)) map.removeLayer(baseTileLayer);
-            if (!map.hasLayer(walkTileLayer)) walkTileLayer.addTo(map);
-            if (walkLabelsLayer && !map.hasLayer(walkLabelsLayer)) walkLabelsLayer.addTo(map);
+            if (AppState.map.hasLayer(AppState.baseTileLayer)) AppState.map.removeLayer(AppState.baseTileLayer);
+            if (!AppState.map.hasLayer(AppState.walkTileLayer)) AppState.walkTileLayer.addTo(AppState.map);
+            if (AppState.walkLabelsLayer && !AppState.map.hasLayer(AppState.walkLabelsLayer)) AppState.walkLabelsLayer.addTo(AppState.map);
         } catch (e) { /* no-op */ }
     }
     if (AppState.routesListEl) {
