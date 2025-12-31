@@ -4434,3 +4434,16 @@ if (window.CrowdSourcing) {
     console.log('[Crowd] 📊 Crowd-Sourcing Module Loaded');
     console.log('[Crowd] Stats:', window.CrowdSourcing.getStats());
 }
+
+
+// Prevent double-tap zoom on Safari (iOS browser)
+// PWA already respects user-scalable=no, but Safari browser ignores it
+let lastTouchEnd = 0;
+document.addEventListener('touchend', (e) => {
+    const now = Date.now();
+    if (now - lastTouchEnd <= 300) {
+        // Double tap detected - prevent default zoom behavior
+        e.preventDefault();
+    }
+    lastTouchEnd = now;
+}, { passive: false });
