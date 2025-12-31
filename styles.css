@@ -32,7 +32,6 @@
     margin: 0;
     padding: 0;
     -webkit-tap-highlight-color: transparent;
-    touch-action: manipulation; /* Prevents double-tap zoom */
 }
 
 body {
@@ -48,7 +47,6 @@ body {
     margin: 0;
     padding: 0;
     /* NO padding on body - fixed elements handle safe area themselves */
-    touch-action: manipulation; /* Prevent double-tap zoom */
 }
 
 /* Prevent page rubber-band globally; only internal containers may scroll */
@@ -56,7 +54,6 @@ html, body {
     height: 100%;
     overscroll-behavior: none;
     overscroll-behavior-y: none;
-    touch-action: manipulation; /* Prevent double-tap zoom */
 }
 
 .app-container {
