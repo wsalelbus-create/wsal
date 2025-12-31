@@ -4436,46 +4436,56 @@ if (window.CrowdSourcing) {
 }
 
 
-// Prevent double-tap zoom in Safari browser (iOS) - GLOBAL SOLUTION
-// Safari's double-tap zoom happens between touchstart events, so we must prevent it there
-let lastTapTime = 0;
-let lastTapX = 0;
-let lastTapY = 0;
-
-document.addEventListener('touchstart', (e) => {
-    const now = Date.now();
-    const touch = e.touches[0];
-    const timeSinceLastTap = now - lastTapTime;
-    const distanceX = Math.abs(touch.clientX - lastTapX);
-    const distanceY = Math.abs(touch.clientY - lastTapY);
+// Prevent double-tap zoom in Safari browser (iOS) - AGGRESSIVE SOLUTION for iOS 15.1
+// iOS 15.1 Safari is very stubborn about double-tap zoom
+// We need to intercept touches VERY early and stop propagation completely
+(function() {
+    let lastTapTime = 0;
+    let lastTapX = 0;
+    let lastTapY = 0;
     
-    // If this is a double-tap (within 300ms and same location within 20px)
-    if (timeSinceLastTap < 300 && timeSinceLastTap > 0 && distanceX < 20 && distanceY < 20) {
-        // Prevent the second tap to stop Safari's zoom
+    const preventDoubleTapZoom = function(e) {
+        const now = Date.now();
+        const touch = e.touches[0];
+        if (!touch) return;
+        
+        const timeSinceLastTap = now - lastTapTime;
+        const distanceX = Math.abs(touch.clientX - lastTapX);
+        const distanceY = Math.abs(touch.clientY - lastTapY);
+        
+        // If this is a double-tap (within 300ms and same location within 20px)
+        if (timeSinceLastTap < 300 && timeSinceLastTap > 0 && distanceX < 20 && distanceY < 20) {
+            // AGGRESSIVELY prevent the second tap
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+            console.log('[Zoom Prevention] Blocked double-tap zoom at', touch.clientX, touch.clientY);
+            return false;
+        }
+        
+        lastTapTime = now;
+        lastTapX = touch.clientX;
+        lastTapY = touch.clientY;
+    };
+    
+    // Register as early as possible with capture
+    document.addEventListener('touchstart', preventDoubleTapZoom, { passive: false, capture: true });
+    
+    // Also prevent dblclick as backup
+    document.addEventListener('dblclick', (e) => {
         e.preventDefault();
         e.stopPropagation();
-        console.log('[Zoom Prevention] Blocked double-tap zoom');
-    }
+    }, { passive: false, capture: true });
     
-    lastTapTime = now;
-    lastTapX = touch.clientX;
-    lastTapY = touch.clientY;
-}, { passive: false, capture: true });
-
-// Also prevent dblclick as backup
-document.addEventListener('dblclick', (e) => {
-    e.preventDefault();
-}, { passive: false });
-
-// Prevent gesturestart which Safari uses for pinch zoom
-document.addEventListener('gesturestart', (e) => {
-    e.preventDefault();
-}, { passive: false });
-
-document.addEventListener('gesturechange', (e) => {
-    e.preventDefault();
-}, { passive: false });
-
-document.addEventListener('gestureend', (e) => {
-    e.preventDefault();
+    // Prevent gesturestart which Safari uses for pinch zoom
+    document.addEventListener('gesturestart', (e) => {
+        e.preventDefault();
+    }, { passive: false });
+    
+    document.addEventListener('gesturechange', (e) => {
+        e.preventDefault();
+    }, { passive: false });
+    
+    document.addEventListener('gestureend', (e) => {
+        e.preventDefault();
 }, { passive: false });
