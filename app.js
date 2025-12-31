@@ -2,42 +2,11 @@ function shouldShowCone() {
     const hasPermissionApi = !!(window.DeviceOrientationEvent && typeof DeviceOrientationEvent.requestPermission === 'function');
     if (hasPermissionApi) {
         // On iOS 13+, show only when explicit permission granted and we have a heading fix
-        return orientationPermissionGranted && hasHeadingFix;
+        return AppState.orientationPermissionGranted && AppState.hasHeadingFix;
     }
 
-function isStandalonePWA() {
-    try {
-        return (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) || !!window.navigator.standalone;
-    } catch { return false; }
-}
-
-// Keep skyline anchored identically in Safari and PWA. In PWA we avoid subtracting
-// extra safe-area from the bottom and we remove large side overscan that can look cut.
-function applyPWASkylineAnchoring() {
-    try {
-        const panel = arrivalsPanel || document.querySelector('.arrivals-panel');
-        const sky = panel ? panel.querySelector('#skyline-inline') : null;
-        if (!panel || !sky) return;
-        // Defer anchoring to CSS for both Safari and PWA so values are identical
-        sky.style.bottom = '';
-        sky.style.left = '';
-        sky.style.right = '';
-    } catch {}
-}
-
-// Make skyline height consistent across Safari and iOS PWA
-function applySkylineSizing() {
-    try {
-        const panel = arrivalsPanel || document.querySelector('.arrivals-panel');
-        if (!panel) return;
-        // Fixed height for consistency - no dynamic calculations
-        const h = 180; // smaller, fixed height identical in Safari and PWA
-        panel.style.setProperty('--skyline-max-height', `${h}px`);
-    } catch {}
-}
-
     // On other platforms, show after we have any heading fix
-    return hasHeadingFix;
+    return AppState.hasHeadingFix;
 }
 
 // Normalize viewport units across Safari browser and iOS PWA standalone
@@ -2367,13 +2336,13 @@ function setUIMode(mode, station) {
     }
 
     // Toggle map walking badge and calorie badge visibility
-    if (walkingBadgeEl) {
-        if (mode === 'walk') walkingBadgeEl.classList.remove('hidden');
-        else walkingBadgeEl.classList.add('hidden');
+    if (AppState.walkingBadgeEl) {
+        if (mode === 'walk') AppState.walkingBadgeEl.classList.remove('hidden');
+        else AppState.walkingBadgeEl.classList.add('hidden');
     }
-    if (calorieBadgeEl) {
-        if (mode === 'walk') calorieBadgeEl.classList.remove('hidden');
-        else calorieBadgeEl.classList.add('hidden');
+    if (AppState.calorieBadgeEl) {
+        if (mode === 'walk') AppState.calorieBadgeEl.classList.remove('hidden');
+        else AppState.calorieBadgeEl.classList.add('hidden');
     }
 
     // Toggle arrivals panel visibility
@@ -2902,9 +2871,9 @@ if (compassBtn) {
         }, 500);
         
         // If we have a current heading, reapply it immediately
-        if (currentHeading !== null) {
-            smoothedHeading = currentHeading;
-            hasHeadingFix = true;
+        if (AppState.currentHeading !== null) {
+            AppState.smoothedHeading = AppState.currentHeading;
+            AppState.hasHeadingFix = true;
             
             // Update cone rotation
             if (userMarker) {
@@ -2928,9 +2897,9 @@ function updateHeadingWithRotation(deg) {
     hasHeadingFix = true;
     
     // Smooth transitions
-    if (smoothedHeading == null) smoothedHeading = currentHeading;
-    const delta = smallestAngleDelta(smoothedHeading, currentHeading);
-    smoothedHeading = normalizeBearing(smoothedHeading + AppState.HEADING_SMOOTH * delta);
+    if (AppState.smoothedHeading == null) AppState.smoothedHeading = AppState.currentHeading;
+    const delta = smallestAngleDelta(AppState.smoothedHeading, AppState.currentHeading);
+    AppState.smoothedHeading = normalizeBearing(AppState.smoothedHeading + AppState.HEADING_SMOOTH * delta);
 
     // Rotate the cone inside the user marker
     if (userMarker) {
