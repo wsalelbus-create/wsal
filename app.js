@@ -4436,13 +4436,38 @@ if (window.CrowdSourcing) {
 }
 
 
-// Prevent double-tap zoom in Safari browser (iOS)
-// The key is to prevent dblclick event which Safari uses to trigger zoom
+// Prevent double-tap zoom in Safari browser (iOS) - GLOBAL SOLUTION
+// Safari's double-tap zoom happens between touchstart events, so we must prevent it there
+let lastTapTime = 0;
+let lastTapX = 0;
+let lastTapY = 0;
+
+document.addEventListener('touchstart', (e) => {
+    const now = Date.now();
+    const touch = e.touches[0];
+    const timeSinceLastTap = now - lastTapTime;
+    const distanceX = Math.abs(touch.clientX - lastTapX);
+    const distanceY = Math.abs(touch.clientY - lastTapY);
+    
+    // If this is a double-tap (within 300ms and same location within 20px)
+    if (timeSinceLastTap < 300 && timeSinceLastTap > 0 && distanceX < 20 && distanceY < 20) {
+        // Prevent the second tap to stop Safari's zoom
+        e.preventDefault();
+        e.stopPropagation();
+        console.log('[Zoom Prevention] Blocked double-tap zoom');
+    }
+    
+    lastTapTime = now;
+    lastTapX = touch.clientX;
+    lastTapY = touch.clientY;
+}, { passive: false, capture: true });
+
+// Also prevent dblclick as backup
 document.addEventListener('dblclick', (e) => {
     e.preventDefault();
 }, { passive: false });
 
-// Also prevent gesturestart which Safari uses for pinch zoom
+// Prevent gesturestart which Safari uses for pinch zoom
 document.addEventListener('gesturestart', (e) => {
     e.preventDefault();
 }, { passive: false });
