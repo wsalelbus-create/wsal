@@ -1211,7 +1211,7 @@ function refreshGeolocation() {
                 }
 
                 // Fallback to default station AFTER error
-                renderStation(currentStation);
+                renderStation(AppState.currentStation);
             },
             {
                 enableHighAccuracy: true,  // Better accuracy on mobile
@@ -1221,7 +1221,7 @@ function refreshGeolocation() {
         );
     } else {
         console.error('Geolocation not supported');
-        renderStation(currentStation);
+        renderStation(AppState.currentStation);
     }
 }
 
@@ -2470,9 +2470,9 @@ function setUIMode(mode, station) {
         else backBtn.classList.remove('hidden');
     }
     // Arabic logo badge only on home (idle)
-    if (arabicTitleEl) {
-        if (mode === 'idle') arabicTitleEl.classList.remove('hidden');
-        else arabicTitleEl.classList.add('hidden');
+    if (AppState.arabicTitleEl) {
+        if (mode === 'idle') AppState.arabicTitleEl.classList.remove('hidden');
+        else AppState.arabicTitleEl.classList.add('hidden');
     }
     
     // Panel is already reset to minimum at the start of this function
