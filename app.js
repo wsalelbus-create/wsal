@@ -1519,7 +1519,7 @@ function initMap() {
     const mapContainer = document.getElementById('map-container');
 
     // Initialize Leaflet map with performance optimizations
-    map = L.map(mapContainer, {
+    AppState.map = L.map(mapContainer, {
         zoomControl: false,
         attributionControl: false,
         preferCanvas: false, // Use SVG for stable line rendering (no thickness change during zoom)
@@ -1542,14 +1542,14 @@ function initMap() {
     } catch {}
 
     // Add OpenStreetMap tiles with IndexedDB caching (kept as fallback, not shown by default)
-    baseTileLayer = L.tileLayer.cached('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    AppState.baseTileLayer = L.tileLayer.cached('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
         maxZoom: 19,
         subdomains: 'abc'
     });
 
     // Clean basemap with clearer landcover (Carto Voyager No Labels)
-    walkTileLayer = L.tileLayer.cached('https://{s}.basemaps.cartocdn.com/rastertiles/voyager_nolabels/{z}/{x}/{y}{r}.png', {
+    AppState.walkTileLayer = L.tileLayer.cached('https://{s}.basemaps.cartocdn.com/rastertiles/voyager_nolabels/{z}/{x}/{y}{r}.png', {
         attribution: '&copy; OpenStreetMap contributors &copy; CARTO',
         maxZoom: 19,
         subdomains: 'abcd',
@@ -1573,7 +1573,7 @@ function initMap() {
     } catch {}
 
     // Labels-only overlay (Carto Voyager Only Labels)
-    walkLabelsLayer = L.tileLayer.cached('https://{s}.basemaps.cartocdn.com/rastertiles/voyager_only_labels/{z}/{x}/{y}{r}.png', {
+    AppState.walkLabelsLayer = L.tileLayer.cached('https://{s}.basemaps.cartocdn.com/rastertiles/voyager_only_labels/{z}/{x}/{y}{r}.png', {
         attribution: '&copy; OpenStreetMap contributors &copy; CARTO',
         maxZoom: 19,
         subdomains: 'abcd',
@@ -1626,7 +1626,7 @@ function initMap() {
             if (isLandscape) return;
             
             const currentH = window._getPanelVisibleHeight ? window._getPanelVisibleHeight() : 0;
-            const minPx = vhToPx(PANEL_MIN_VH); // 40vh
+            const minPx = vhToPx(AppState.PANEL_MIN_VH); // 40vh
             const maxPx = getPanelMaxPx();
             const circlesHook = vhToPx(20); // 20vh
             
@@ -2475,7 +2475,7 @@ function setUIMode(mode, station) {
                 requestAnimationFrame(() => {
                     if (window._setPanelVisibleHeight && window._getPanelVisibleHeight) {
                         const currentH = window._getPanelVisibleHeight();
-                        const minPx = vhToPx(PANEL_MIN_VH);
+                        const minPx = vhToPx(AppState.PANEL_MIN_VH);
                         // Ensure panel is at correct height
                         if (Math.abs(currentH - minPx) > 5) {
                             window._setPanelVisibleHeight(minPx);
@@ -2965,7 +2965,7 @@ function vhToPx(vh) {
             // So 40vh in PWA = more pixels than 40vh in Safari
             // We need to ADD pixels in PWA to make panel sit HIGHER (match Safari visual position)
             const isPWA = (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) || !!window.navigator.standalone;
-            if (isPWA && vh === PANEL_MIN_VH) {
+            if (isPWA && vh === AppState.PANEL_MIN_VH) {
                 // Add ~50px to make panel sit higher in PWA (compensate for missing browser UI)
                 result += 50;
                 console.log(`[vhToPx] PWA compensation: ${vh}vh = ${Math.round(result)}px (added 50px)`);
@@ -3196,7 +3196,7 @@ function setupPanelDrag() {
         }
         if (!dragging) return;
         const delta = startY - y; // drag up -> positive delta, drag down -> negative delta
-        const minPx = vhToPx(PANEL_MIN_VH); // 40vh - initial position
+        const minPx = vhToPx(AppState.PANEL_MIN_VH); // 40vh - initial position
         const maxPx = getPanelMaxPx();
         const circlesHook = vhToPx(20); // 20vh - circles view (MINIMUM allowed when pulling down)
         console.log('[DRAG MOVE] delta:', delta, 'minPx:', minPx, 'maxPx:', maxPx, 'circlesHook:', circlesHook, 'startVisible:', startVisible);
@@ -3278,7 +3278,7 @@ function setupPanelDrag() {
         
         // We'll handle inertia manually; disable CSS transition during the glide
         arrivalsPanel.style.transition = 'none';
-        const minPx = vhToPx(PANEL_MIN_VH);
+        const minPx = vhToPx(AppState.PANEL_MIN_VH);
         const maxPx = getPanelMaxPx();
         // compute velocity using recent samples (~120ms)
         let velocity = 0;
@@ -3500,7 +3500,7 @@ function setupPanelDrag() {
     // Tap-to-toggle for reliability on iOS
     grabber.addEventListener('click', (e) => {
         e.preventDefault();
-        const minPx = vhToPx(PANEL_MIN_VH);
+        const minPx = vhToPx(AppState.PANEL_MIN_VH);
         const maxPx = getPanelMaxPx();
         const mid = (minPx + maxPx) / 2;
         arrivalsPanel.style.transition = 'transform 0.25s ease';
@@ -3559,7 +3559,7 @@ function setupPanelDrag() {
     window.addEventListener('pointerup', () => handleEnd());
 
     // Initialize to collapsed height using translateY (panel moves as a whole)
-    const minPx = vhToPx(PANEL_MIN_VH);
+    const minPx = vhToPx(AppState.PANEL_MIN_VH);
     arrivalsPanel.classList.remove('expanded');
     arrivalsPanel.style.willChange = 'transform';
     setPanelVisibleHeight(minPx);
@@ -3595,8 +3595,8 @@ installViewportPolyfill();
 
 // IMMEDIATELY position panel to prevent flash - don't wait for requestAnimationFrame
 if (arrivalsPanel) {
-    const minPx = vhToPx(PANEL_MIN_VH);
-    const maxPx = vhToPx(PANEL_MAX_VH);
+    const minPx = vhToPx(AppState.PANEL_MIN_VH);
+    const maxPx = vhToPx(AppState.PANEL_MAX_VH);
     const offset = Math.max(0, maxPx - minPx);
     arrivalsPanel.style.transform = `translateY(${offset}px)`;
     arrivalsPanel.style.height = `${maxPx}px`;
@@ -3613,11 +3613,11 @@ requestAnimationFrame(() => {
         const recalculate = () => {
             try {
                 installViewportPolyfill();
-                const minPx = vhToPx(PANEL_MIN_VH);
+                const minPx = vhToPx(AppState.PANEL_MIN_VH);
                 const panel = document.querySelector('.arrivals-panel');
                 if (panel && window._setPanelVisibleHeight) {
                     const currentVis = parseFloat(panel.dataset.visibleH || '0');
-                    console.log(`[Panel Init] Current: ${currentVis}px, Target: ${minPx}px, PANEL_MIN_VH: ${PANEL_MIN_VH}vh`);
+                    console.log(`[Panel Init] Current: ${currentVis}px, Target: ${minPx}px, PANEL_MIN_VH: ${AppState.PANEL_MIN_VH}vh`);
                     if (Math.abs(currentVis - minPx) > 5) {
                         panel.style.transition = 'none';
                         window._setPanelVisibleHeight(minPx);
@@ -3775,7 +3775,7 @@ if (crowdBadge) {
                 if (mapInner) {
                     const currentH = window._getPanelVisibleHeight ? window._getPanelVisibleHeight() : 0;
                     const maxPx = getPanelMaxPx();
-                    const minPx = vhToPx(PANEL_MIN_VH);
+                    const minPx = vhToPx(AppState.PANEL_MIN_VH);
                     const panelDelta = circlesHook - currentH;
                     const panelRange = maxPx - minPx;
                     const progress = panelDelta / panelRange;
