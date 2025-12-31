@@ -1660,7 +1660,7 @@ function initMap() {
                     }
                     
                     // Show circles only in idle mode
-                    if (uiMode === 'idle' && userLat && userLon) {
+                    if (AppState.uiMode === 'idle' && AppState.userLat && AppState.userLon) {
                         showDistanceCircles();
                     }
                 }
@@ -1700,7 +1700,7 @@ function initMap() {
 }
 
 function updateMap() {
-    if (!map) return;
+    if (!AppState.map) return;
 
     // Clear existing layers except the persistent user marker and distance circles
     AppState.map.eachLayer(layer => {
@@ -1728,7 +1728,7 @@ function updateMap() {
     // Do not add a station marker by default; markers are controlled by uiMode
 
     // If we have user location, add user marker and draw line
-    if (userLat && userLon) {
+    if (AppState.userLat && AppState.userLon) {
         // Decide initial visibility of the cone based on permission/heading availability
         const showCone = shouldShowCone();
         // Add or update user marker with heading cone + halo + dot
@@ -1785,7 +1785,7 @@ function updateMap() {
             }
         }
 
-        if (uiMode === 'walk' && station) {
+        if (AppState.uiMode === 'walk' && station) {
             // Add target station marker as a pole stop with simplified SVG (user-provided geometry)
             const badge = stationBadgeFor(station.name);
             const poleHtml = `
@@ -1860,9 +1860,9 @@ function updateMap() {
             AppState.busStationsLayer = L.layerGroup(markers).addTo(AppState.map);
         } else if (AppState.uiMode === 'crowd') {
             // CROWD MODE: Show user location + nearest station + 100m radius circle
-            if (userLat && userLon && station) {
+            if (AppState.userLat && AppState.userLon && station) {
                 // Add user location marker (blue dot)
-                L.circleMarker([userLat, userLon], {
+                L.circleMarker([AppState.userLat, AppState.userLon], {
                     radius: 8,
                     fillColor: '#007AFF',
                     color: '#ffffff',
@@ -1911,7 +1911,7 @@ function updateMap() {
             }
         }
 
-        if (uiMode === 'walk' && station) {
+        if (AppState.uiMode === 'walk' && station) {
             // Calculate and display distance
             const distance = getDistanceFromLatLonInKm(AppState.userLat, AppState.userLon, station.lat, station.lon);
             AppState.mapDistanceEl.textContent = `📍 ${distance.toFixed(2)} km away`;
@@ -1978,9 +1978,9 @@ async function getOsrmDrivingDistance(fromLat, fromLon, toLat, toLon) {
 
 // Show distance circles (5, 15, 60 min walking) around user position in idle mode
 function showDistanceCircles() {
-    console.log('[showDistanceCircles] Called - map:', !!map, 'userLat:', userLat, 'userLon:', userLon, 'uiMode:', uiMode);
-    if (!map || !userLat || !userLon) {
-        console.log('[showDistanceCircles] Missing requirements - map:', !!map, 'userLat:', userLat, 'userLon:', userLon);
+    console.log('[showDistanceCircles] Called - map:', !!AppState.map, 'userLat:', AppState.userLat, 'userLon:', AppState.userLon, 'uiMode:', AppState.uiMode);
+    if (!AppState.map || !AppState.userLat || !AppState.userLon) {
+        console.log('[showDistanceCircles] Missing requirements - map:', !!AppState.map, 'userLat:', AppState.userLat, 'userLon:', AppState.userLon);
         return;
     }
     
@@ -2337,7 +2337,7 @@ function setUIMode(mode, station) {
     // ALWAYS center map on GPS location when switching screens
     // This ensures user always sees where they are (blue dot centered)
     // Apply dynamic offset based on current panel position
-    if (map && userLat && userLon) {
+    if (AppState.map && AppState.userLat && AppState.userLon) {
         if (mode === 'idle') {
             console.log('[setUIMode] Idle mode - centering on GPS');
             AppState.map.setView([AppState.userLat, AppState.userLon], 16, { animate: true, duration: 0.3 });
@@ -3365,7 +3365,7 @@ function setupPanelDrag() {
                     
                     // Show/hide distance circles based on final position in idle mode
                     // Only show at 20vh, hide at all other positions
-                    if (uiMode === 'idle' && userLat && userLon) {
+                    if (AppState.uiMode === 'idle' && AppState.userLat && AppState.userLon) {
                         const isAt20vh = Math.abs(target - circlesHook) < 1;
                         console.log('[CIRCLES INERTIA] target:', target, 'circlesHook:', circlesHook, 'isAt20vh:', isAt20vh);
                         
@@ -3391,7 +3391,7 @@ function setupPanelDrag() {
                     }
                     
                     // Re-center map on GPS when pulling up from 20vh (ALL screens)
-                    if (userLat && userLon && target > circlesHook + 10) {
+                    if (AppState.userLat && AppState.userLon && target > circlesHook + 10) {
                         console.log('[MAP] Re-centering on GPS after pulling up from 20vh');
                         AppState.isGPSRecentering = true; // Set flag to prevent reordering
                         AppState.map.setView([AppState.userLat, AppState.userLon], AppState.map.getZoom(), { animate: true, duration: 0.3 });
@@ -3447,9 +3447,9 @@ function setupPanelDrag() {
             
             // Show/hide distance circles based on final position in idle mode
             // Only show at 20vh, hide at all other positions
-            if (uiMode === 'idle' && userLat && userLon) {
+            if (AppState.uiMode === 'idle' && AppState.userLat && AppState.userLon) {
                 const isAt20vh = Math.abs(target - circlesHook) < 1; // Within 1px of 20vh
-                console.log('[CIRCLES] target:', target, 'circlesHook:', circlesHook, 'isAt20vh:', isAt20vh, 'circlesExist:', !!distanceCirclesLayer);
+                console.log('[CIRCLES] target:', target, 'circlesHook:', circlesHook, 'isAt20vh:', isAt20vh, 'circlesExist:', !!AppState.distanceCirclesLayer);
                 
                 if (isAt20vh && !distanceCirclesLayer) {
                     console.log('[CIRCLES] ✅ Showing circles - at 20vh');
@@ -3473,7 +3473,7 @@ function setupPanelDrag() {
             }
             
             // Re-center map on GPS when pulling up from 20vh (ALL screens)
-            if (userLat && userLon && target > circlesHook + 10) {
+            if (AppState.userLat && AppState.userLon && target > circlesHook + 10) {
                 console.log('[MAP] Re-centering on GPS after pulling up from 20vh');
                 AppState.isGPSRecentering = true; // Set flag to prevent reordering
                 AppState.map.setView([AppState.userLat, AppState.userLon], AppState.map.getZoom(), { animate: true, duration: 0.3 });
@@ -3700,7 +3700,7 @@ try {
 // Refresh every minute depending on UI mode
 setInterval(() => {
     try {
-        if (typeof uiMode !== 'undefined' && uiMode === 'bus') {
+        if (typeof AppState.uiMode !== 'undefined' && AppState.uiMode === 'bus') {
             renderBusStations();
         } else {
             if (AppState.currentStation) {
@@ -3726,7 +3726,7 @@ window.addEventListener('orientationchange', () => {
             // Reinitialize panel drag (will check landscape mode)
             setupPanelDrag();
             // Resize map
-            if (map) map.invalidateSize();
+            if (AppState.map) AppState.map.invalidateSize();
         } catch (e) {
             console.error('[Orientation] Error:', e);
         }
