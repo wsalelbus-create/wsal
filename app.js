@@ -1079,6 +1079,8 @@ function calculateArrivals(station) {
 
 // --- UI Updates ---
 function renderStation(station) {
+    if (!station) return; // Safety check
+    
     // Update Floating Badge
     if (AppState.stationNameEl) AppState.stationNameEl.textContent = station.name;
 
@@ -2346,9 +2348,9 @@ function setUIMode(mode, station) {
     }
 
     // Toggle arrivals panel visibility
-    if (routesHeaderEl) {
-        if (mode === 'bus') routesHeaderEl.classList.remove('hidden');
-        else routesHeaderEl.classList.add('hidden');
+    if (AppState.routesHeaderEl) {
+        if (mode === 'bus') AppState.routesHeaderEl.classList.remove('hidden');
+        else AppState.routesHeaderEl.classList.add('hidden');
     }
 
     // Hide the station selector bar in bus mode AND on detailed (3rd) screen AND in crowd mode
@@ -2384,9 +2386,9 @@ function setUIMode(mode, station) {
     }
 
     // Quick actions: visible only on home (idle)
-    if (quickActionsEl) {
-        if (mode === 'idle') quickActionsEl.classList.remove('hidden');
-        else quickActionsEl.classList.add('hidden');
+    if (AppState.quickActionsEl) {
+        if (mode === 'idle') AppState.quickActionsEl.classList.remove('hidden');
+        else AppState.quickActionsEl.classList.add('hidden');
     }
 
     // Skyline: always visible in all modes (ensure not hidden)
