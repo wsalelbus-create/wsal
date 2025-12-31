@@ -4436,30 +4436,10 @@ if (window.CrowdSourcing) {
 }
 
 
-// Prevent double-tap zoom on Safari (iOS browser)
-// Safari disables double-tap zoom if we handle touchend with a slight delay
-// This makes Safari think we're doing custom touch handling
-document.addEventListener('touchend', (e) => {
-    // Don't interfere with draggable panels or interactive elements
-    const target = e.target;
-    const isDraggable = target.closest('.arrivals-panel, .station-selector-card');
-    const isInteractive = target.closest('button, a, input, select, textarea, [role="button"]');
-    
-    if (!isDraggable && !isInteractive) {
-        // Prevent default to disable double-tap zoom
-        e.preventDefault();
-        
-        // Manually trigger click after a tiny delay
-        // This tells Safari we're handling touches, so it disables double-tap zoom
-        const clickEvent = new MouseEvent('click', {
-            bubbles: true,
-            cancelable: true,
-            view: window
-        });
-        setTimeout(() => {
-            target.dispatchEvent(clickEvent);
-        }, 10);
-    }
+// Prevent double-tap zoom in Safari browser (iOS)
+// The key is to prevent dblclick event which Safari uses to trigger zoom
+document.addEventListener('dblclick', (e) => {
+    e.preventDefault();
 }, { passive: false });
 
 // Also prevent gesturestart which Safari uses for pinch zoom
