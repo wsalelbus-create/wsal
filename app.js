@@ -2480,6 +2480,8 @@ function setUIMode(mode, station) {
 }
 
 // --- Event Listeners ---
+// Wrap in DOMContentLoaded to ensure init.js has cached DOM elements first
+document.addEventListener('DOMContentLoaded', () => {
 
 // Floating Station Selector Click
 if (AppState.stationSelectorTrigger) {
@@ -2915,6 +2917,8 @@ function updateHeadingWithRotation(deg) {
         }
     }
 }
+
+}); // End of DOMContentLoaded for event listeners
 
 // Bottom Sheet: drag the arrivals panel up/down, no page bounce
 const mapViewContainer = document.querySelector('.map-view-container');
