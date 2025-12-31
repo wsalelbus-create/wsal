@@ -618,7 +618,7 @@ class CrowdSourcingModule {
         const rejected = this.reports.filter(r => r.errors && r.errors.length > 0);
 
         return {
-            deviceId: this.deviceId.substr(0, 12) + '...',
+            deviceId: this.deviceId ? (this.deviceId.substr(0, 12) + '...') : 'unknown',
             fingerprint: this.fingerprint,
             ipAddress: this.ipAddress || 'fetching...',
             userTrust: this.userTrust.toFixed(2),
