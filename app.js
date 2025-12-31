@@ -1138,8 +1138,8 @@ function initGeolocation() {
                 AppState.userLat = lat;
                 AppState.userLon = lon;
                 const nearest = findNearestStation(AppState.userLat, AppState.userLon);
-                currentStation = nearest;
-                renderStation(currentStation);
+                AppState.currentStation = nearest;
+                renderStation(AppState.currentStation);
 
                 // Still try to get fresh location in background
                 refreshGeolocation();
@@ -1156,8 +1156,8 @@ function initGeolocation() {
         AppState.userLat = AppState.FAKE_LOCATION.lat;
         AppState.userLon = AppState.FAKE_LOCATION.lon;
         const nearest = findNearestStation(AppState.userLat, AppState.userLon);
-        currentStation = nearest;
-        renderStation(currentStation);
+        AppState.currentStation = nearest;
+        renderStation(AppState.currentStation);
         return;
     }
 
@@ -1185,8 +1185,8 @@ function refreshGeolocation() {
                 }));
 
                 const nearest = findNearestStation(AppState.userLat, AppState.userLon);
-                currentStation = nearest;
-                renderStation(currentStation);
+                AppState.currentStation = nearest;
+                renderStation(AppState.currentStation);
 
                 // Begin passive watching for movement/heading updates
                 startGeoWatch();
@@ -1431,7 +1431,7 @@ const stationListEl = document.getElementById('station-list');
 
 function showStationSelector() {
     // Populate station list
-    renderStationList(STATIONS);
+    renderStationList(AppState.STATIONS);
     stationModal.classList.remove('hidden');
     stationSearchInput.value = '';
     stationSearchInput.focus();
@@ -1470,7 +1470,7 @@ function selectStation(station) {
 // Search functionality
 stationSearchInput.addEventListener('input', (e) => {
     const searchTerm = e.target.value.toLowerCase();
-    const filteredStations = STATIONS.filter(station =>
+    const filteredStations = AppState.STATIONS.filter(station =>
         station.name.toLowerCase().includes(searchTerm) ||
         station.address.toLowerCase().includes(searchTerm)
     );
@@ -1779,12 +1779,12 @@ function updateMap() {
                     iconAnchor: [16.385, 64.409]
                 }),
                 zIndexOffset: 1000
-            }).addTo(map);
+            }).addTo(AppState.map);
             // Fetch and draw a realistic street route using OSRM (walking profile)
-            renderOsrmRoute(userLat, userLon, station.lat, station.lon);
-        } else if (uiMode === 'bus') {
+            renderOsrmRoute(AppState.userLat, AppState.userLon, station.lat, station.lon);
+        } else if (AppState.uiMode === 'bus') {
             // Show all stations as badge-only markers (no stick, no shadows)
-            const markers = STATIONS.map(s => {
+            const markers = AppState.STATIONS.map(s => {
                 const badge = stationBadgeFor(s.name);
                 const marker = L.marker([s.lat, s.lon], {
                     icon: L.divIcon({
@@ -1813,7 +1813,7 @@ function updateMap() {
             AppState.busStationsLayer = L.layerGroup(markers).addTo(AppState.map);
         } else if (AppState.uiMode === 'idle') {
             // IDLE MODE: Show all bus stops like in bus mode
-            const markers = STATIONS.map(s => {
+            const markers = AppState.STATIONS.map(s => {
                 const badge = stationBadgeFor(s.name);
                 return L.marker([s.lat, s.lon], {
                     icon: L.divIcon({
@@ -1871,7 +1871,7 @@ function updateMap() {
                 showCrowdRadiusCircle(station.lat, station.lon);
 
                 // Fit map to show both user + station
-                const bounds = L.latLngBounds([[userLat, userLon], [station.lat, station.lon]]);
+                const bounds = L.latLngBounds([[AppState.userLat, AppState.userLon], [station.lat, station.lon]]);
                 const basePaddingTop = 280;
                 const basePaddingBottom = 200;
                 AppState.map.fitBounds(bounds, { 
@@ -1891,7 +1891,7 @@ function updateMap() {
         if (AppState.uiMode === 'walk' && station) {
             // Fit map to show both markers
             // Account for oversized map (160% height at -50% top) - adjust padding to fit visible area
-            const bounds = L.latLngBounds([[userLat, userLon], [station.lat, station.lon]]);
+            const bounds = L.latLngBounds([[AppState.userLat, AppState.userLon], [station.lat, station.lon]]);
             
             // Base padding for oversized map
             const basePaddingTop = 280;
@@ -1956,20 +1956,20 @@ function showDistanceCircles() {
     }
     
     // Don't recreate if already exists
-    if (distanceCirclesLayer) {
+    if (AppState.distanceCirclesLayer) {
         console.log('[showDistanceCircles] Circles already exist, skipping');
         return;
     }
     
     console.log('[showDistanceCircles] ✅ CREATING NEW CIRCLES LAYER');
     // Create layer group with zoom animation disabled
-    distanceCirclesLayer = L.layerGroup();
-    distanceCirclesLayer.addTo(map);
+    AppState.distanceCirclesLayer = L.layerGroup();
+    AppState.distanceCirclesLayer.addTo(AppState.map);
     
     // Disable zoom animation for this layer to prevent thickness changes
-    if (map._zoomAnimated) {
-        distanceCirclesLayer.options = distanceCirclesLayer.options || {};
-        distanceCirclesLayer.options.zoomAnimation = false;
+    if (AppState.map._zoomAnimated) {
+        AppState.distanceCirclesLayer.options = AppState.distanceCirclesLayer.options || {};
+        AppState.distanceCirclesLayer.options.zoomAnimation = false;
     }
     
     // Create circles immediately with realistic walking distances matching Citymapper
@@ -1984,7 +1984,7 @@ function showDistanceCircles() {
         console.log(`[showDistanceCircles] ✅ Creating circle ${i + 1}/3: ${minutes} min, radius: ${radiusMeters}m`);
         
         // Draw circle with fixed weight
-        const circle = L.circle([userLat, userLon], {
+        const circle = L.circle([AppState.userLat, AppState.userLon], {
             radius: radiusMeters,
             color: '#6B7C93',
             fillColor: 'transparent',
@@ -1994,7 +1994,7 @@ function showDistanceCircles() {
             interactive: false
         });
         
-        circle.addTo(distanceCirclesLayer);
+        circle.addTo(AppState.distanceCirclesLayer);
         
         // Apply vector-effect and disable zoom animation on the path
         setTimeout(() => {
@@ -2016,12 +2016,12 @@ function showDistanceCircles() {
         // Calculate label position at top of circle
         // 1 degree latitude ≈ 111,000 meters
         const latOffset = radiusMeters / 111000;
-        const labelLat = userLat + latOffset;
+        const labelLat = AppState.userLat + latOffset;
         
         console.log(`[showDistanceCircles] ✅ Creating label ${i + 1}/3: "${minutes} min" at lat: ${labelLat}`);
         
         // Add text label with walking icon at top of circle
-        const marker = L.marker([labelLat, userLon], {
+        const marker = L.marker([labelLat, AppState.userLon], {
             icon: L.divIcon({
                 className: 'distance-circle-label',
                 html: `<div style="display: flex; align-items: center; gap: 3px; font-size: 11px; font-weight: 600; color: #6B7C93; white-space: nowrap; pointer-events: none; background: transparent;">
@@ -2036,7 +2036,7 @@ function showDistanceCircles() {
             }),
             interactive: false
         });
-        marker.addTo(distanceCirclesLayer);
+        marker.addTo(AppState.distanceCirclesLayer);
         console.log(`[showDistanceCircles] ✅ Label ${i + 1}/3 ADDED TO MAP`);
     }
     
@@ -2045,8 +2045,8 @@ function showDistanceCircles() {
     // Disable zoom animation transform on circles to prevent thickness change
     // The issue is Leaflet applies CSS transform scale during zoom which makes strokes thick
     const fixCirclesDuringZoom = () => {
-        if (!distanceCirclesLayer) return;
-        distanceCirclesLayer.eachLayer(layer => {
+        if (!AppState.distanceCirclesLayer) return;
+        AppState.distanceCirclesLayer.eachLayer(layer => {
             try {
                 const el = layer.getElement ? layer.getElement() : null;
                 if (el && el.parentElement) {
@@ -2060,27 +2060,27 @@ function showDistanceCircles() {
     };
     
     // Apply fix after each zoom
-    map.on('zoomend', fixCirclesDuringZoom);
-    map.on('moveend', fixCirclesDuringZoom);
+    AppState.map.on('zoomend', fixCirclesDuringZoom);
+    AppState.map.on('moveend', fixCirclesDuringZoom);
     
     // Apply immediately
     setTimeout(fixCirclesDuringZoom, 100);
     
     // Store reference for cleanup
-    distanceCirclesLayer._fixZoom = fixCirclesDuringZoom;
+    AppState.distanceCirclesLayer._fixZoom = fixCirclesDuringZoom;
 }
 
 // Hide distance circles
 function hideDistanceCircles() {
-    if (distanceCirclesLayer && map) {
+    if (AppState.distanceCirclesLayer && AppState.map) {
         try {
             // Remove zoom listeners
-            if (distanceCirclesLayer._fixZoom) {
-                map.off('zoomend', distanceCirclesLayer._fixZoom);
-                map.off('moveend', distanceCirclesLayer._fixZoom);
+            if (AppState.distanceCirclesLayer._fixZoom) {
+                AppState.map.off('zoomend', AppState.distanceCirclesLayer._fixZoom);
+                AppState.map.off('moveend', AppState.distanceCirclesLayer._fixZoom);
             }
-            map.removeLayer(distanceCirclesLayer);
-            distanceCirclesLayer = null;
+            AppState.map.removeLayer(AppState.distanceCirclesLayer);
+            AppState.distanceCirclesLayer = null;
         } catch (e) {}
     }
 }
@@ -2402,9 +2402,9 @@ function setUIMode(mode, station) {
     if (panelEl) {
         panelEl.classList.add('panel-green');
         // Use bus-mode behavior on Bus list AND on detailed (3rd) screen to unify UX
-        if ((mode === 'bus') || (mode === 'walk' && busDetailActive)) panelEl.classList.add('bus-mode');
+        if ((mode === 'bus') || (mode === 'walk' && AppState.busDetailActive)) panelEl.classList.add('bus-mode');
         else panelEl.classList.remove('bus-mode');
-        if (mode === 'walk' && busDetailActive) {
+        if (mode === 'walk' && AppState.busDetailActive) {
             panelEl.classList.add('no-selector');
         } else {
             panelEl.classList.remove('no-selector');
@@ -3160,7 +3160,7 @@ function setupPanelDrag() {
                 dragging = true;
                 panelDragging = true;
                 arrivalsPanel.style.transition = 'none';
-                console.log('[DRAG START] dy:', dy, 'uiMode:', uiMode, 'busDetailActive:', busDetailActive, 'expanded:', arrivalsPanel.classList.contains('expanded'), 'startVisible:', startVisible, 'startY:', startY, 'currentY:', y);
+                console.log('[DRAG START] dy:', dy, 'uiMode:', AppState.uiMode, 'busDetailActive:', AppState.busDetailActive, 'expanded:', arrivalsPanel.classList.contains('expanded'), 'startVisible:', startVisible, 'startY:', startY, 'currentY:', y);
             } else {
                 return; // not enough movement yet
             }
@@ -3340,10 +3340,10 @@ function setupPanelDrag() {
                         const isAt20vh = Math.abs(target - circlesHook) < 1;
                         console.log('[CIRCLES INERTIA] target:', target, 'circlesHook:', circlesHook, 'isAt20vh:', isAt20vh);
                         
-                        if (isAt20vh && !distanceCirclesLayer) {
+                        if (isAt20vh && !AppState.distanceCirclesLayer) {
                             console.log('[CIRCLES] ✅ Showing circles - at 20vh (inertia)');
                             showDistanceCircles();
-                        } else if (!isAt20vh && distanceCirclesLayer) {
+                        } else if (!isAt20vh && AppState.distanceCirclesLayer) {
                             console.log('[CIRCLES] ❌ Hiding circles - not at 20vh (inertia)');
                             hideDistanceCircles();
                         }
@@ -3422,10 +3422,10 @@ function setupPanelDrag() {
                 const isAt20vh = Math.abs(target - circlesHook) < 1; // Within 1px of 20vh
                 console.log('[CIRCLES] target:', target, 'circlesHook:', circlesHook, 'isAt20vh:', isAt20vh, 'circlesExist:', !!AppState.distanceCirclesLayer);
                 
-                if (isAt20vh && !distanceCirclesLayer) {
+                if (isAt20vh && !AppState.distanceCirclesLayer) {
                     console.log('[CIRCLES] ✅ Showing circles - at 20vh');
                     showDistanceCircles();
-                } else if (!isAt20vh && distanceCirclesLayer) {
+                } else if (!isAt20vh && AppState.distanceCirclesLayer) {
                     console.log('[CIRCLES] ❌ Hiding circles - not at 20vh');
                     hideDistanceCircles();
                 }
@@ -3625,8 +3625,8 @@ if (window.TrafficSampler) {
     
     // Clear cached traffic speeds every 3 minutes to get fresh data
     setInterval(() => {
-        if (window.STATIONS) {
-            STATIONS.forEach(station => {
+        if (window.AppState && window.AppState.STATIONS) {
+            AppState.STATIONS.forEach(station => {
                 station.routes.forEach(route => {
                     delete route.trafficSpeed; // Clear cache
                 });
@@ -3789,7 +3789,7 @@ function openCrowdPanel() {
     if (!crowdPanel) return;
     
     // Find nearest station
-    nearestCrowdStation = userLat && userLon ? findNearestStation(userLat, userLon) : currentStation;
+    nearestCrowdStation = AppState.userLat && AppState.userLon ? findNearestStation(AppState.userLat, AppState.userLon) : AppState.currentStation;
     if (!nearestCrowdStation) {
         showCrowdFeedback('📍 Please enable location to report', 'error');
         return;
@@ -3798,8 +3798,8 @@ function openCrowdPanel() {
     // Calculate distance and status
     let distanceText = '';
     let distanceStatus = 'unknown';
-    if (userLat && userLon) {
-        const distKm = getDistanceFromLatLonInKm(userLat, userLon, nearestCrowdStation.lat, nearestCrowdStation.lon);
+    if (AppState.userLat && AppState.userLon) {
+        const distKm = getDistanceFromLatLonInKm(AppState.userLat, AppState.userLon, nearestCrowdStation.lat, nearestCrowdStation.lon);
         const distMeters = Math.round(distKm * 1000);
         
         if (distMeters < 50) {
@@ -4097,7 +4097,7 @@ function populateOnBusRoutes() {
     
     // Get all unique routes from all stations
     const allRoutes = new Map();
-    STATIONS.forEach(station => {
+    AppState.STATIONS.forEach(station => {
         station.routes.forEach(route => {
             if (!allRoutes.has(route.number)) {
                 allRoutes.set(route.number, route);
@@ -4345,7 +4345,7 @@ function showGPSThankYouScreen(result) {
 
 // Helper function to find route by number
 function findRouteByNumber(routeNumber) {
-    for (const station of STATIONS) {
+    for (const station of AppState.STATIONS) {
         const route = station.routes.find(r => r.number === routeNumber);
         if (route) return route;
     }
