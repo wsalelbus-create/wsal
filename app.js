@@ -1705,7 +1705,7 @@ function updateMap() {
         // Add or update user marker with heading cone + halo + dot
         const markerHtml = `
             <div class="user-orientation" style="position: relative; pointer-events: none; width: 100%; height: 100%;">
-                <div class="user-heading-rotor" style="position:absolute; left:50%; top:50%; transform: translate(-50%, -50%) rotate(${currentHeading ?? 0}deg); transform-origin: 50% 50%; opacity:${showCone?1:0};">
+                <div class="user-heading-rotor" style="position:absolute; left:50%; top:50%; transform: translate(-50%, -50%) rotate(${AppState.currentHeading ?? 0}deg); transform-origin: 50% 50%; opacity:${showCone?1:0};">
                     <svg width="163" height="163" viewBox="0 0 163 163" xmlns="http://www.w3.org/2000/svg" style="overflow: visible;">
                         <defs>
                             <!-- Green fog (bold until mid-cone, then fades) -->
@@ -4357,4 +4357,5 @@ if (window.CrowdSourcing) {
     console.log('[Crowd] 📊 Crowd-Sourcing Module Loaded');
     console.log('[Crowd] Stats:', window.CrowdSourcing.getStats());
 }
+
 
