@@ -1914,7 +1914,7 @@ function updateMap() {
         if (AppState.uiMode === 'walk' && station) {
             // Calculate and display distance
             const distance = getDistanceFromLatLonInKm(AppState.userLat, AppState.userLon, station.lat, station.lon);
-            AppState.mapDistanceEl.textContent = `📍 ${distance.toFixed(2)} km away`;
+            if (AppState.mapDistanceEl) AppState.mapDistanceEl.textContent = `📍 ${distance.toFixed(2)} km away`;
         }
 
         if (AppState.uiMode === 'walk' && station) {
@@ -1940,7 +1940,7 @@ function updateMap() {
         if (AppState.uiMode === 'walk' && station) {
             AppState.map.setView([station.lat, station.lon], 15);
         }
-        AppState.mapDistanceEl.textContent = '📍 Location unavailable';
+        if (AppState.mapDistanceEl) AppState.mapDistanceEl.textContent = '📍 Location unavailable';
     }
 }
 
