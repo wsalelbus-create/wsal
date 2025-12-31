@@ -130,6 +130,7 @@ html, body {
     flex-direction: column;
     align-items: flex-start;
     gap: 6px;
+    touch-action: manipulation;
 }
 .logo-area h1 {
     font-family: 'Cairo', sans-serif;
@@ -373,6 +374,7 @@ html, body {
     flex-direction: column;
     pointer-events: auto; /* re-enable clicks on the card itself */
     overflow: hidden; /* clip rounded corners */
+    touch-action: manipulation;
 }
 
 .selector-row {
@@ -382,6 +384,7 @@ html, body {
     padding: 10px 16px; /* even shorter padding */
     cursor: pointer;
     transition: background 0.2s;
+    touch-action: manipulation;
 }
 
 .selector-row:active {
