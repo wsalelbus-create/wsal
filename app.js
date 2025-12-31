@@ -3756,7 +3756,7 @@ setInterval(() => {
                 if (busDetailActive) {
                     renderBusStationDetail(currentStation);
                 } else {
-                    renderRoutes(currentStation);
+                    renderBusStations();
                 }
             }
         }
