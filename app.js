@@ -4436,14 +4436,27 @@ if (window.CrowdSourcing) {
 }
 
 
-// Prevent double-tap zoom on Safari (iOS browser)
-// PWA already respects user-scalable=no, but Safari browser ignores it
+// Prevent double-tap zoom on Safari (iOS browser) - AGGRESSIVE approach
 let lastTouchEnd = 0;
 document.addEventListener('touchend', (e) => {
     const now = Date.now();
     if (now - lastTouchEnd <= 300) {
         // Double tap detected - prevent default zoom behavior
         e.preventDefault();
+        e.stopPropagation();
     }
     lastTouchEnd = now;
+}, { passive: false, capture: true }); // Added capture: true for earlier interception
+
+// Also prevent gesturestart which Safari uses for zoom
+document.addEventListener('gesturestart', (e) => {
+    e.preventDefault();
+}, { passive: false });
+
+document.addEventListener('gesturechange', (e) => {
+    e.preventDefault();
+}, { passive: false });
+
+document.addEventListener('gestureend', (e) => {
+    e.preventDefault();
 }, { passive: false });
