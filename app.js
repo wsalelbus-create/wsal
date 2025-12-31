@@ -1729,10 +1729,10 @@ function updateMap() {
                 <div class="user-dot" style="position:absolute; left:50%; top:50%; width: 21px; height: 21px; background: #0066CC; border-radius: 50%; border: 3px solid white; box-shadow: 0 2px 8px rgba(0,0,0,0.30); transform: translate(-50%, -50%);"></div>
             </div>`;
 
-        if (userMarker) {
-            try { userMarker.setLatLng([userLat, userLon]); } catch (e) {}
+        if (AppState.userMarker) {
+            try { AppState.userMarker.setLatLng([AppState.userLat, AppState.userLon]); } catch (e) {}
         } else {
-            userMarker = L.marker([userLat, userLon], {
+            AppState.userMarker = L.marker([AppState.userLat, AppState.userLon], {
                 interactive: false,
                 icon: L.divIcon({
                     className: 'custom-marker user-orientation-icon',
@@ -1740,11 +1740,11 @@ function updateMap() {
                     iconSize: [163, 163],
                     iconAnchor: [81.5, 81.5]
                 })
-            }).addTo(map);
+            }).addTo(AppState.map);
         }
         // If userMarker exists but was removed by layer clear, add it back
-        if (userMarker && !map.hasLayer(userMarker)) {
-            try { userMarker.addTo(map); } catch (e) {}
+        if (AppState.userMarker && !AppState.map.hasLayer(AppState.userMarker)) {
+            try { AppState.userMarker.addTo(AppState.map); } catch (e) {}
         }
         // Ensure rotor reflects the latest heading
         const el = AppState.userMarker.getElement();
