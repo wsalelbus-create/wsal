@@ -1111,7 +1111,7 @@ function calculateArrivals(station) {
 // --- UI Updates ---
 function renderStation(station) {
     // Update Floating Badge
-    stationNameEl.textContent = station.name;
+    if (AppState.stationNameEl) AppState.stationNameEl.textContent = station.name;
 
     // Update walking time (OSRM-only; legacy model disabled)
     // updateWalkingTime(station);
@@ -1256,7 +1256,7 @@ function refreshGeolocation() {
 
 // Start continuous position watch (also yields heading when moving)
 function startGeoWatch() {
-    if (geoWatchId != null || !navigator.geolocation) return;
+    if (AppState.geoWatchId != null || !navigator.geolocation) return;
     AppState.geoWatchId = navigator.geolocation.watchPosition(
         (pos) => {
             AppState.userLat = pos.coords.latitude;
